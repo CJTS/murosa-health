@@ -1,0 +1,42 @@
+version: '3'
+
+services:
+  rosbridge:
+    command: bash -c "cd src/murosa_plan_patrol/launch && ros2 launch rosbridge_server rosbridge_websocket_launch.xml"
+    image: planner_nodes
+    network_mode: host
+    ports:
+      - "9090:9090"
+    expose:
+      - "9090"
+  jason:
+    command: bash -c 'cd jason_patrol && ./gradlew run'
+    image: planner_nodes
+    network_mode: host
+  patrol:
+    command: bash -c "cd src/murosa_plan_patrol/launch && ros2 launch murosa_plan_patrol planning.launch.py"
+    image: planner_nodes
+    network_mode: host
+  robot:
+    command: bash -c "cd src/murosa_plan_patrol/launch && ros2 launch murosa_plan_patrol robot.launch.py"
+    environment:
+      - REPLAN=False
+      - PROBLEM_RATE=10
+    image: planner_nodes
+  topic:
+    command: bash -c "cd src/murosa_plan_patrol/launch && ros2 topic echo /move_base/move"
+    image: planner_nodes
+  info:
+    command: bash -c "cd src/murosa_plan_patrol/launch && ros2 topic info /move_base/move"
+    image: planner_nodes
+  sub:
+    command: bash -c 'cd src/murosa_plan_patrol/launch && ros2 topic pub /move_base/move std_msgs/String'
+    image: planner_nodes
+    environment:
+      - REPLAN=False
+      - PROBLEM_RATE=10
+  run:
+    image: planner_nodes
+    environment:
+      - REPLAN=False
+      - PROBLEM_RATE=10
