@@ -19,7 +19,7 @@ def check_task_timePlansys2(index):
         for line in lines:
             alllines = alllines+line
             if "The time of execution of above program is" in line:
-                return float(line.split(':')[1])
+                return float(line.split(':')[2])
     return False
 
 def check_simulation_status(index):
