@@ -43,7 +43,7 @@ def check_simulation_replan_need(index):
     return 'NoReplan'
 
 print('Compiling')
-for i in range(1):
+for i in range(30):
     readFiles('plansys2_%s' % (i + 1))
 
 with open(f'./result.json', 'w') as file:

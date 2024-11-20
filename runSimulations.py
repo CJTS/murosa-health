@@ -41,5 +41,5 @@ def get_compose_file(opened_door, replaning):
     }
 
 print('Simulating')
-for i in range(1):
+for i in range(30):
     runMuRoSAPlanPatrol('plansys2_%s' % (i + 1))
