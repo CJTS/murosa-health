@@ -40,11 +40,15 @@ public class RosEnv extends Environment {
 						PrimitiveMsg<String> msg = unpacker.unpackRosMessage(data);
 						logger.info(msg.data);
 						FIPAMessage decodedMessage = FIPAMessage.decode(msg.data);
+						String regex = "[|]";
+						String[] decodedContent = decodedMessage.getContent().split(regex);
 						clearPercepts();
 
-						if(decodedMessage.getPerformative() == "request") {
-							if(decodedMessage.getContent() == "Start") {
+						if(decodedMessage.getPerformative().equals("request")) {
+							if(decodedMessage.getContent().equals("Start")) {
 								addPercept(Literal.parseLiteral("start"));
+							} else if (decodedContent[0].equals("Create")) {
+								addPercept(Literal.parseLiteral("robot(" + decodedContent[1].toLowerCase() + ")"));
 							}
 						}
 					}
@@ -70,7 +74,7 @@ public class RosEnv extends Environment {
 	public boolean executeAction(String agName, Structure action) {
 		logger.info("executing: " + action + ": " + agName + ".");
 		Publisher navigation = new Publisher("/jason/agent/action", "std_msgs/String", bridge);
-		FIPAMessage message = new FIPAMessage("inform", "agent1", "agent2");
+		FIPAMessage message = new FIPAMessage("inform", "jason", agName);
 		String agentAction = "";
 
 		switch (action.getFunctor()) {

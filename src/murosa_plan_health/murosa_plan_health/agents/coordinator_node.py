@@ -1,11 +1,9 @@
-import random
-from threading import Thread
 from murosa_plan_health.helper import FIPAMessage
 from murosa_plan_health.FIPAPerformatives import FIPAPerformative
 import rclpy
 from rclpy.node import Node
 from interfaces.srv import Message
-from std_msgs.msg import String, Bool
+from std_msgs.msg import String
 
 class Coordinator(Node):
     def __init__(self):
@@ -29,21 +27,30 @@ class Coordinator(Node):
 
         if decoded_msg.content == 'Register':
             if 'Arm' in decoded_msg.sender:
-                self.arms.append(decoded_msg.sender)
+                id = str(len(self.arms) + 1)
+                response.response = id
+                self.arms.append(decoded_msg.sender + id)
             elif 'Robot' in decoded_msg.sender:
-                self.robots.append(decoded_msg.sender)
+                id = str(len(self.robots) + 1)
+                response.response = id
+                self.robots.append(decoded_msg.sender + id)
+                msg = String()
+                msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', 'Jason', 'Create|' + decoded_msg.sender + id).encode()
+                self.jason_publisher.publish(msg)
             elif 'Nurse' in decoded_msg.sender:
-                self.nurses.append(decoded_msg.sender)
+                id = str(len(self.nurses) + 1)
+                response.response = id
+                self.nurses.append(decoded_msg.sender + id)
 
         self.get_logger().info(f'Received: Performative={decoded_msg.performative}, Sender={decoded_msg.sender}, Receiver={decoded_msg.receiver}, Content={decoded_msg.content}')
-        response.response = 'ok'
         return response
 
     def start_mission(self):
         msg = String()
-        msg.data = ""
+        msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', 'Jason', 'Start').encode()
         self.jason_publisher.publish(msg)
         self.get_logger().info('Plans sent')
+        return
 
 def main():
     rclpy.init()

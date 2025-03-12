@@ -10,6 +10,14 @@ class FIPAMessage {
         return performative;
     }
 
+    public String getSender() {
+        return sender;
+    }
+
+    public String getReceiver() {
+        return receiver;
+    }
+
     public void setContent(String content) {
         this.content = content;
     }
@@ -33,7 +41,7 @@ class FIPAMessage {
         Gson gson = new Gson();
         return gson.fromJson(messageStr, FIPAMessage.class);
     }
-    
+
     @Override
     public String toString() {
         return "FIPAMessage{" +

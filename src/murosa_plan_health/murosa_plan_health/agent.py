@@ -1,4 +1,3 @@
-import uuid
 import rclpy
 from rclpy.node import Node
 from interfaces.srv import Message
@@ -10,8 +9,6 @@ class Agent(Node):
     def __init__(self, className):
         super().__init__(className)
         self.className = className
-        self.agentId = uuid.uuid4()
-        self.agentName = str(className) + '-' + str(self.agentId)
 
         # Coordinator Server
         self.cli = self.create_client(Message, 'coordinator')
@@ -42,7 +39,7 @@ class Agent(Node):
 
     def registration(self):
         # Create FIPA message
-        message = FIPAMessage(FIPAPerformative.REQUEST.value, self.agentName, 'Coordinator', 'Register').encode()
+        message = FIPAMessage(FIPAPerformative.REQUEST.value, self.className, 'Coordinator', 'Register').encode()
         ros_msg = Message.Request()
         ros_msg.content = message
         return self.cli.call_async(ros_msg)
@@ -51,6 +48,7 @@ class Agent(Node):
         # Receive messagem from jason
         self.get_logger().info('I heard: "%s"' % msg.data)
         decoded_msg = FIPAMessage.decode(msg.data)
+        self.agentName = str(self.className) + '-' + decoded_msg.content
         response = FIPAMessage(FIPAPerformative.INFORM.value, self.agentName, 'Coordinator').encode()
         self.publisher.publish(response)
         self.get_logger().info('Publishing: "%s"' % response.data)
