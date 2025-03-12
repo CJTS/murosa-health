@@ -52,7 +52,7 @@ RUN . /opt/ros/$ROS_DISTRO/setup.sh && \
   colcon build \
   --packages-select \
   interfaces \
-  murosa_plan_patrol \
+  murosa_plan_health \
   --symlink-install \
   --mixin $OVERLAY_MIXINS
 
@@ -62,17 +62,17 @@ RUN sed --in-place --expression \
   '$isource "$OVERLAY_WS/install/setup.bash"' \
   /ros_entrypoint.sh
 
-RUN pip3 install -r ./src/murosa_plan_patrol/requirements.txt
+RUN pip3 install -r ./src/murosa_plan_health/requirements.txt
 
-COPY jason_patrol/ jason_patrol/
+COPY jason_health/ jason_health/
 COPY gradle-7.4/ /app/gradle-7.4
 COPY entrypoint.sh entrypoint.sh
 
 ENV GRADLE_HOME=/app/gradle-7.4
 ENV PATH=$PATH:$GRADLE_HOME/bin
-ENV PYTHONPATH "${PYTHONPATH}:./src/murosa_plan_patrol/murosa_plan_patrol"
+ENV PYTHONPATH "${PYTHONPATH}:./src/murosa_plan_health/murosa_plan_health"
 ENV JAVA_HOME /usr/lib/jvm/java-17-openjdk-arm64/
 
 RUN chmod +x entrypoint.sh
 
-ENTRYPOINT ["./entrypoint.sh"]
+# ENTRYPOINT ["./entrypoint.sh"]

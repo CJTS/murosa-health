@@ -17,7 +17,7 @@ wait_for_service() {
 
 # Inicia o rosbridge_server em segundo plano
 echo "Iniciando o rosbridge_server..."
-cd src/murosa_plan_patrol/launch
+cd src/murosa_plan_health/launch
 ros2 launch rosbridge_server rosbridge_websocket_launch.xml &
 rosbridge_pid=$!
 
@@ -26,7 +26,7 @@ wait_for_service localhost 9090
 
 # Inicia o Jason em segundo plano
 echo "Iniciando o Jason..."
-cd ../../../jason_patrol
+cd ../../../jason_health
 gradle clean
 gradle run &
 jason_pid=$!
@@ -34,10 +34,10 @@ jason_pid=$!
 # Aguarda alguns segundos para garantir que o Jason esteja rodando
 sleep 10
 
-# Inicia o murosa_plan_patrol em segundo plano
-echo "Iniciando o murosa_plan_patrol..."
-cd ../src/murosa_plan_patrol/launch
-ros2 launch murosa_plan_patrol planning.launch.py &
+# Inicia o murosa_plan_health em segundo plano
+echo "Iniciando o murosa_plan_health..."
+cd ../src/murosa_plan_health/launch
+ros2 launch murosa_plan_health planning.launch.py &
 murosa_pid=$!
 
 # Aguarda todos os processos finalizarem

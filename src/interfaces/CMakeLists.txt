@@ -19,12 +19,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "srv/Error.srv"
-  "srv/HasSample.srv"
-  "srv/NeedPlan.srv"
-  "srv/Replan.srv"
-  "srv/SendPlan.srv"
-  "srv/Action.srv"
+  "srv/Message.srv"
 )
 
 ament_export_dependencies(rosidl_default_runtime)
