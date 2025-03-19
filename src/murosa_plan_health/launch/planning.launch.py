@@ -60,9 +60,4 @@ def generate_launch_description():
             executable='robot',
             name='robot2'
         ),
-        Node(
-            package='murosa_plan_health',
-            executable='arm',
-            name='arm2'
-        ),
     ])

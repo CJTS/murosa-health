@@ -1,6 +1,3 @@
-/* Initial beliefs and rules */
-arm_at(a, room3).
-
 /* Initial goals */
 +!goal <- !m_unload_sample(r, a).
 
@@ -15,5 +12,3 @@ arm_at(a, room3).
     -robot_has_sample(Robot_);
     +arm_has_sample(Arm_);
     a_pick_up_sample(Arm_, Robot_).
-
-+start: true <- !goal.

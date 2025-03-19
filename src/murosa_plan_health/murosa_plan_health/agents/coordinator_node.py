@@ -29,15 +29,15 @@ class Coordinator(Node):
         decoded_msg = FIPAMessage.decode(request.content)
 
         if decoded_msg.content == 'Register':
-            if 'Arm' in decoded_msg.sender:
+            if 'arm' in decoded_msg.sender:
                 id = str(len(self.arms) + 1)
                 response.response = id
                 self.arms.append(decoded_msg.sender + id)
-            elif 'Robot' in decoded_msg.sender:
+            elif 'robot' in decoded_msg.sender:
                 id = str(len(self.robots) + 1)
                 response.response = id
                 self.robots.append(decoded_msg.sender + id)
-            elif 'Nurse' in decoded_msg.sender:
+            elif 'nurse' in decoded_msg.sender:
                 id = str(len(self.nurses) + 1)
                 response.response = id
                 self.nurses.append(decoded_msg.sender + id)

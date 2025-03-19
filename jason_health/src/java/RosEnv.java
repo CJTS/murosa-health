@@ -48,21 +48,20 @@ public class RosEnv extends Environment {
 								String agentRegex = "[,]";
 								String[] agents = decodedContent[1].split(agentRegex);
 								for (String agent: agents) {
-									logger.info(agent.toLowerCase());
-									clearPercepts(agent.toLowerCase());
-									addPercept(agent.toLowerCase(), Literal.parseLiteral("start"));
+									clearPercepts(agent);
+									addPercept(agent, Literal.parseLiteral("start"));
 								}
 							} else if (decodedContent[0].equals("Create")) {
 								try {
 									getEnvironmentInfraTier().getRuntimeServices().createAgent(
-											decodedContent[1].toLowerCase(),     // agent name
-											removeChars(decodedContent[1].toLowerCase(), 1) + ".asl",       // AgentSpeak source
+											decodedContent[1],     // agent name
+											removeChars(decodedContent[1], 1) + ".asl",       // AgentSpeak source
 											null,            // default agent class
 											null,            // default architecture class
 											null,            // default architecture class
 											null,            // default architecture class
 											null);           // default settings
-											getEnvironmentInfraTier().getRuntimeServices().startAgent(decodedContent[1].toLowerCase());
+											getEnvironmentInfraTier().getRuntimeServices().startAgent(decodedContent[1]);
 								} catch (Exception ex) {
 								}
 							}
@@ -80,8 +79,16 @@ public class RosEnv extends Environment {
 								PrimitiveMsg.class);
 						PrimitiveMsg<String> msg = unpacker.unpackRosMessage(data);
 						logger.info(msg.data);
-						clearPercepts();
-						addPercept(Literal.parseLiteral("movebase_result(3)"));
+						FIPAMessage decodedMessage = FIPAMessage.decode(msg.data);
+						String regex = "[|]";
+						String[] decodedContent = decodedMessage.getContent().split(regex);
+						// clearPercepts();
+						// addPercept(Literal.parseLiteral("movebase_result(3)"));
+						if(decodedMessage.getPerformative().equals("inform")) {
+							if(decodedContent[0].equals("Success")) {
+								addPercept(decodedMessage.getSender(), Literal.parseLiteral("success_" + decodedContent[1]));
+							}
+						}
 					}
 				});
 	}

@@ -1,8 +1,4 @@
 /* Initial beliefs and rules */
-robot_at(r, room2).
-nurse_at(n, room1).
-arm_at(a, room3).
-nurse_has_sample(n).
 opened_door(room1).
 opened_door(room2).
 opened_door(room3).
@@ -50,5 +46,3 @@ opened_door(room3).
     -nurse_has_sample(Nurse_);
     +robot_has_sample(Robot_);
     a_deposit(Nurse_, Robot_).
-
-+start: true <- !goal.
