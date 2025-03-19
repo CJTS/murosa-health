@@ -1,20 +1,20 @@
 import rclpy
 from murosa_plan_health.agent import Agent
 
-class Arm(Agent):
+class Robot(Agent):
     def __init__(self, className):
         super().__init__(className)
 
 def main():
     rclpy.init()
-    arm = Arm('Arm')
-    arm.get_logger().info('spin')
+    robot = Robot('Robot')
+    robot.get_logger().info('spin')
     try:
-        rclpy.spin(arm)
+        rclpy.spin(robot)
     except SystemExit:
         rclpy.logging.get_logger("Quitting").info('Done')
-    arm.get_logger().info('stop spin')
-    arm.destroy_node()
+    robot.get_logger().info('stop spin')
+    robot.destroy_node()
     rclpy.shutdown()
 
 if __name__ == '__main__':

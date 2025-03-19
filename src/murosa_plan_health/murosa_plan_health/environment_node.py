@@ -2,7 +2,7 @@ from threading import Thread
 import sys
 import rclpy
 from rclpy.node import Node
-from interfaces.srv import Action
+from interfaces.srv import Message
 import json
 import random
 
@@ -28,7 +28,7 @@ class Environment(Node):
     def start_server(self):
         self.get_logger().info('Starting Environment server')
         self.environment_server = self.create_service(
-            Action, 'environment_server', self.receive_message
+            Message, 'environment_server', self.receive_message
         )
         self.get_logger().info('Environment server started')
 

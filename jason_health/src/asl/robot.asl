@@ -7,10 +7,9 @@ opened_door(room1).
 opened_door(room2).
 opened_door(room3).
 
-/* Initial goals */
-+!goal <- !pickup_and_deliver_sample(room1).
-
 /* Plans */
+
++!has_sample <- !pickup_and_deliver_sample(room1).
 
 +!pickup_and_deliver_sample(Room): robot_at(Robot, RobotRoom) <-
     .print("Robot ", Robot, " collecting sample in room ", Room);
@@ -43,45 +42,10 @@ opened_door(room3).
     !a_close_drawer(Robot_).
 
 +!a_navto(Robot_, Loc_): true <-
-    -robot_at(Robot_, _);
-    +robot_at(Robot_, Loc_);
     a_navto(Robot_, Loc_).
 
 +!result_navto(Robot_, Loc_): true <-
     -robot_at(Robot_, _);
     +robot_at(Robot_, Loc_).
 
-+!a_approach_nurse(Robot_, Nurse_): robot_at(Robot_, Room) & nurse_at(Nurse_, Room) <-
-    +robot_near_nurse(Robot_, Nurse_);
-    a_approach_nurse(Robot_, Nurse_).
-
-+!a_authenticate_nurse(Robot_, Nurse_): robot_near_nurse(Robot_, Nurse_) <-
-    +nurse_authenticated(Robot_, Nurse_);
-    a_authenticate_nurse(Robot_, Nurse_).
-
-+!a_open_drawer(Robot_): not drawer_opened(Robot_) <-
-    +drawer_opened(Robot_);
-    a_open_drawer(Robot_).
-
-+!a_close_drawer(Robot_): drawer_opened(Robot_) <-
-    -drawer_opened(Robot_);
-    a_close_drawer(Robot_).
-
-+!a_deposit(Nurse_, Robot_): robot_at(Robot_, Room) & nurse_at(Nurse_, Room) & nurse_has_sample(Nurse_) <-
-    -nurse_authenticated(Robot_, Nurse_);
-    -robot_near_nurse(Robot_, Nurse_);
-    -nurse_has_sample(Nurse_);
-    +robot_has_sample(Robot_);
-    a_deposit(Nurse_, Robot_).
-
-+!a_approach_arm(Robot_, Arm_): robot_at(Robot_, Room) & arm_at(Arm_, Room) <-
-    +robot_near_arm(Robot_, Arm_);
-    a_approach_arm(Robot_, Arm_).
-
-+!a_pick_up_sample(Arm_, Robot_): robot_at(Robot_, Room) & arm_at(Arm_, Room) & robot_has_sample(Robot_) <-
-    -robot_near_arm(Robot_, Arm_);
-    -robot_has_sample(Robot_);
-    +arm_has_sample(Arm_);
-    a_pick_up_sample(Arm_, Robot_).
-
-+start: true <- !goal.
++start: true <- !has_sample.

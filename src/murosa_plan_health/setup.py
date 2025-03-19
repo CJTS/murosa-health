@@ -23,14 +23,12 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            # 'planner = murosa_plan_health.planner_node:main',
-            # 'coordinator = murosa_plan_health.coordinator_node:main',
-            # 'nurse = murosa_plan_health.nurse_node:main',
-            # 'robot = murosa_plan_health.robot_node:main',
-            # 'arm = murosa_plan_health.arm_node:main',
-            # 'environment = murosa_plan_health.environment_node:main',
+            'environment = murosa_plan_health.environment_node:main',
+            'planner = murosa_plan_health.planner_node:main',
             'coordinator = murosa_plan_health.agents.coordinator_node:main',
             'arm = murosa_plan_health.agents.arm_node:main',
+            'nurse = murosa_plan_health.agents.nurse_node:main',
+            'robot = murosa_plan_health.agents.robot_node:main',
         ],
     },
 )

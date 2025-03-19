@@ -14,11 +14,14 @@ def generate_launch_description():
     return LaunchDescription([
         replan_launch_arg,
         problem_rate_launch_arg,
-        # Node(
-        #     package='murosa_plan_health',
-        #     executable='arm',
-        #     name='arm',
-        # ),
+        Node(
+            package='murosa_plan_health',
+            executable='environment',
+            name=['environment'],
+            parameters=[{
+                'problem_rate': LaunchConfiguration('problem_rate'),
+            }]
+        ),
         Node(
             package='murosa_plan_health',
             executable='coordinator',
@@ -27,32 +30,39 @@ def generate_launch_description():
                 'replan': LaunchConfiguration('replan'),
             }]
         ),
-        # Node(
-        #     package='murosa_plan_health',
-        #     executable='environment',
-        #     name=['environment'],
-        #     parameters=[{
-        #         'problem_rate': LaunchConfiguration('problem_rate'),
-        #     }]
-        # ),
-        # Node(
-        #     package='murosa_plan_health',
-        #     executable='nurse',
-        #     name='nurse'
-        # ),
-        # Node(
-        #     package='murosa_plan_health',
-        #     executable='planner',
-        #     name='planner'
-        # ),
-        # Node(
-        #     package='murosa_plan_health',
-        #     executable='robot',
-        #     name='robot'
-        # ),
+        Node(
+            package='murosa_plan_health',
+            executable='planner',
+            name='planner'
+        ),
+        Node(
+            package='murosa_plan_health',
+            executable='nurse',
+            name='nurse1'
+        ),
+        Node(
+            package='murosa_plan_health',
+            executable='robot',
+            name='robot1'
+        ),
         Node(
             package='murosa_plan_health',
             executable='arm',
-            name='arm'
+            name='arm1'
+        ),
+        Node(
+            package='murosa_plan_health',
+            executable='nurse',
+            name='nurse2'
+        ),
+        Node(
+            package='murosa_plan_health',
+            executable='robot',
+            name='robot2'
+        ),
+        Node(
+            package='murosa_plan_health',
+            executable='arm',
+            name='arm2'
         ),
     ])

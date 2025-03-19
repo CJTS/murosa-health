@@ -25,13 +25,6 @@ opened_door(room3).
     !a_approach_nurse(Robot_, Nurse_);
     !a_authenticate_nurse(Robot_, Nurse_).
 
-+!m_approach_nurse(Robot_, Nurse_, Arm_): nurse_at(Nurse_, Room) & not opened_door(Room) <-
-    .print("m_approach_nurse");
-    !a_open_door(Nurse_, Room);
-    !a_navto(Robot_, Room);
-    !a_approach_nurse(Robot_, Nurse_);
-    !a_authenticate_nurse(Robot_, Nurse_).
-
 +!m_pick_sample(Robot_, Nurse_): robot_at(Robot_, Room) & nurse_at(Nurse_, Room) & nurse_has_sample(Nurse_) <-
     .print("m_pick_sample");
     !a_open_drawer(Robot_);
@@ -40,12 +33,6 @@ opened_door(room3).
 
 +!m_approach_arm(Robot_, Nurse_, Arm_): arm_at(Arm_, Room) & opened_door(Room) <-
     .print("m_approach_arm");
-    !a_navto(Robot_, Room);
-    !a_approach_arm(Robot_, Arm_).
-
-+!m_approach_arm(Robot_, Nurse_, Arm_): arm_at(Arm_, Room) & not opened_door(Room) <-
-    .print("m_approach_arm");
-    !a_open_door(Nurse_, Room);
     !a_navto(Robot_, Room);
     !a_approach_arm(Robot_, Arm_).
 
@@ -60,9 +47,9 @@ opened_door(room3).
     +robot_at(Robot_, Loc_);
     a_navto(Robot_, Loc_).
 
-+!a_open_door(Nurse_, Room_): not opened_door(Room_) <-
-    +opened_door(Room_);
-    a_open_door(Nurse_, Room_).
++!result_navto(Robot_, Loc_): true <-
+    -robot_at(Robot_, _);
+    +robot_at(Robot_, Loc_).
 
 +!a_approach_nurse(Robot_, Nurse_): robot_at(Robot_, Room) & nurse_at(Nurse_, Room) <-
     +robot_near_nurse(Robot_, Nurse_);
@@ -97,4 +84,4 @@ opened_door(room3).
     +arm_has_sample(Arm_);
     a_pick_up_sample(Arm_, Robot_).
 
-!goal.
++start: true <- !has_sample.

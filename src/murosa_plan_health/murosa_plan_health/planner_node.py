@@ -1,4 +1,4 @@
-from interfaces.srv import Action
+from interfaces.srv import Message
 
 import rclpy
 from rclpy.node import Node
@@ -13,7 +13,7 @@ class Planner(Node):
         super().__init__('Planner')
         self.get_logger().info('Starting Planner server')
         self.planner_communication_sync_server = self.create_service(
-            Action, 'planner_communication_sync_server', self.receive_sync_message
+            Message, 'planner_communication_sync_server', self.receive_sync_message
         )
         self.state = init_state
         self.get_logger().info('Planner server started')

@@ -42,13 +42,29 @@ public class RosEnv extends Environment {
 						FIPAMessage decodedMessage = FIPAMessage.decode(msg.data);
 						String regex = "[|]";
 						String[] decodedContent = decodedMessage.getContent().split(regex);
-						clearPercepts();
 
 						if(decodedMessage.getPerformative().equals("request")) {
-							if(decodedMessage.getContent().equals("Start")) {
-								addPercept(Literal.parseLiteral("start"));
+							if(decodedContent[0].equals("Start")) {
+								String agentRegex = "[,]";
+								String[] agents = decodedContent[1].split(agentRegex);
+								for (String agent: agents) {
+									logger.info(agent.toLowerCase());
+									clearPercepts(agent.toLowerCase());
+									addPercept(agent.toLowerCase(), Literal.parseLiteral("start"));
+								}
 							} else if (decodedContent[0].equals("Create")) {
-								addPercept(Literal.parseLiteral("robot(" + decodedContent[1].toLowerCase() + ")"));
+								try {
+									getEnvironmentInfraTier().getRuntimeServices().createAgent(
+											decodedContent[1].toLowerCase(),     // agent name
+											removeChars(decodedContent[1].toLowerCase(), 1) + ".asl",       // AgentSpeak source
+											null,            // default agent class
+											null,            // default architecture class
+											null,            // default architecture class
+											null,            // default architecture class
+											null);           // default settings
+											getEnvironmentInfraTier().getRuntimeServices().startAgent(decodedContent[1].toLowerCase());
+								} catch (Exception ex) {
+								}
 							}
 						}
 					}
@@ -114,5 +130,12 @@ public class RosEnv extends Environment {
 	@Override
 	public void stop() {
 		super.stop();
+	}
+
+	public static String removeChars(String str, int numberOfCharactersToRemove) {
+		if(str != null && !str.trim().isEmpty()) {
+			return str.substring(0, str.length() - numberOfCharactersToRemove);
+		}
+		return "";
 	}
 }
