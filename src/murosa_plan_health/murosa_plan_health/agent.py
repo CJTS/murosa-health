@@ -4,12 +4,15 @@ from interfaces.srv import Message, Action
 from murosa_plan_health.FIPAPerformatives import FIPAPerformative
 from murosa_plan_health.helper import FIPAMessage
 from std_msgs.msg import String, Bool
+from murosa_plan_health.ActionResults import ActionResult
 
 class Agent(Node):
     def __init__(self, className):
         super().__init__(className)
         self.className = className.lower()
         self.actions = []
+        self.wating_response = []
+        self.wating = False
 
         # Coordinator Client
         self.cli = self.create_client(Message, 'coordinator')
@@ -41,7 +44,7 @@ class Agent(Node):
 
         # Subscriber para falar com outros agentes
         self.agents_subscription = self.create_subscription(
-            String, '/agent/agent/action', self.shutdown_callback, 10
+            String, '/agent/agent/action', self.respond_agent, 10
         )
 
         self.initialize()
@@ -81,6 +84,46 @@ class Agent(Node):
             self.get_logger().info("Recebido sinal de desligamento, finalizando...")
             raise SystemExit
 
+    def ask_for_agent(self, agent, action):
+        msg = String()
+        msg.data = FIPAMessage(FIPAPerformative.QUERY.value, self.agentName, agent, 'Ready|' + action).encode()
+        self.agents_publisher.publish(msg)
+        self.wating_response.append((self.agentName, action))
+
+    def acting_for_agent(self, agent, action):
+        msg = String()
+        msg.data = FIPAMessage(FIPAPerformative.QUERY.value, self.agentName, agent, 'Done|' + action).encode()
+        self.agents_publisher.publish(msg)
+        self.wating_response.append((self.agentName, action))
+
+    def respond_agent(self, msg):
+        self.get_logger().info('I heard: "%s"' % msg.data)
+        decoded_msg = FIPAMessage.decode(msg.data)
+        if not self.is_for_me(decoded_msg):
+            self.get_logger().info('And it is not for me')
+            return
+
+        self.get_logger().info('And it is for me')
+        if "Ready" == decoded_msg.content.split("|")[0]:
+            if all(decoded_msg.content.split("|")[1] not in action for action in self.wating_response):
+                self.get_logger().info('No there yet')
+                self.wating_response.append((decoded_msg.sender, decoded_msg.content.split("|")[1]))
+            else:
+                self.get_logger().info('Ready to act')
+                self.acting_for_agent(decoded_msg.sender, decoded_msg.content.split("|")[1])
+        elif "Done" == decoded_msg.content.split("|")[0]:
+            if len(self.actions) > 0:
+                self.get_logger().info('Finished action')
+                msg = String()
+                action = self.actions.pop()
+                msg.data = FIPAMessage(FIPAPerformative.INFORM.value, self.agentName, 'Jason', 'Success|' + ",".join(action)).encode()
+                self.publisher.publish(msg)
+                self.get_logger().info('Publishing: "%s"' % msg.data)
+                self.wating = False
+                self.acting_for_agent(decoded_msg.sender, decoded_msg.content.split("|")[1])
+            else:
+                self.get_logger().info('Already finished action')
+
     def add_action(self, msg):
         self.actions.append(msg.content.split(","))
 
@@ -88,13 +131,23 @@ class Agent(Node):
         if(len(self.actions) > 0):
             self.get_logger().info('Acting')
             action = self.actions.pop()
-            self.choose_action(action)
-            msg = String()
-            msg.data = FIPAMessage(FIPAPerformative.INFORM.value, self.agentName, 'Jason', 'Success|' + ",".join(action)).encode()
-            self.publisher.publish(msg)
-            self.get_logger().info('Publishing: "%s"' % msg.data)
+            result = self.choose_action(action)
+            if result == ActionResult.SUCCESS:
+                msg = String()
+                msg.data = FIPAMessage(FIPAPerformative.INFORM.value, self.agentName, 'Jason', 'Success|' + ",".join(action)).encode()
+                self.publisher.publish(msg)
+                self.get_logger().info('Publishing: "%s"' % msg.data)
+            elif result == ActionResult.FAILURE:
+                msg = String()
+                msg.data = FIPAMessage(FIPAPerformative.INFORM.value, self.agentName, 'Jason', 'Failure|' + ",".join(action)).encode()
+                self.publisher.publish(msg)
+                self.get_logger().info('Publishing: "%s"' % msg.data)
+            elif result == ActionResult.WAITING:
+                self.wating = True
+                self.actions.append(action)
 
     def run(self):
         while rclpy.ok():
             rclpy.spin_once(self, timeout_sec=0.001)
-            self.act()
+            if not self.wating:
+                self.act()

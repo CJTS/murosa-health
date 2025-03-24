@@ -1,5 +1,6 @@
 import rclpy
 from murosa_plan_health.agent import Agent
+from murosa_plan_health.ActionResults import ActionResult
 
 from interfaces.srv import Action
 
@@ -8,28 +9,33 @@ class Arm(Agent):
         super().__init__(className)
 
     def choose_action(self, actionTuple):
-        if actionTuple[0] == 'a_approach_arm':
-            self.get_logger().info('Doing a_approach_arm')
-            response = self.a_approach_arm(actionTuple[1], actionTuple[2])
-            self.get_logger().info(response.observation)
-        elif actionTuple[0] == 'a_pick_up_sample':
+        future = None
+
+        if actionTuple[0] == 'a_pick_up_sample':
             self.get_logger().info('Doing a_pick_up_sample')
             response = self.a_pick_up_sample(actionTuple[1], actionTuple[2])
+            return ActionResult.WAITING
+
+        if future != None:
+            self.get_logger().info("Wating for response")
+            rclpy.spin_until_future_complete(self, future)
+            response = future.result()
             self.get_logger().info(response.observation)
 
-        if not response.observation == 'success':
-            return False
-        return True
+            if not response.observation == 'success':
+                self.pos = actionTuple[2]
+                return ActionResult.FAILURE
 
-    def a_approach_arm(self, robot, arm):
-        self.action_request = Action.Request()
-        self.action_request.action = ','.join(('a_approach_arm', robot, arm))
-        return self.environment_client.call_async(self.action_request)
+        return ActionResult.SUCCESS
 
     def a_pick_up_sample(self, arm, robot):
-        self.action_request = Action.Request()
-        self.action_request.action = ','.join(('a_pick_up_sample', arm, robot))
-        return self.robot_communication_sync_client.call(self.action_request)
+        self.get_logger().info("a_pick_up_sample")
+        if all('a_pick_up_sample' not in action for action in self.wating_response):
+            self.get_logger().info("Here first, waiting for robot")
+            self.ask_for_agent(robot, 'a_pick_up_sample')
+        else:
+            self.get_logger().info("Robot is waiting, send action message")
+            self.acting_for_agent(robot, 'a_pick_up_sample')
 
 def main():
     rclpy.init()

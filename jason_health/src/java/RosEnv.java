@@ -43,14 +43,14 @@ public class RosEnv extends Environment {
 						String regex = "[|]";
 						String[] decodedContent = decodedMessage.getContent().split(regex);
 
+						clearPercepts();
 						if(decodedMessage.getPerformative().equals("request")) {
 							if(decodedContent[0].equals("Start")) {
 								String agentRegex = "[,]";
 								String[] agents = decodedContent[1].split(agentRegex);
-								for (String agent: agents) {
-									clearPercepts(agent);
-									addPercept(agent, Literal.parseLiteral("start"));
-								}
+								addPercept(agents[0], Literal.parseLiteral("start(" + decodedContent[1] + ")"));
+								addPercept(agents[2], Literal.parseLiteral("start(" + decodedContent[1] + ")"));
+								addPercept(agents[4], Literal.parseLiteral("start(" + decodedContent[1] + ")"));
 							} else if (decodedContent[0].equals("Create")) {
 								try {
 									getEnvironmentInfraTier().getRuntimeServices().createAgent(
@@ -65,7 +65,13 @@ public class RosEnv extends Environment {
 								} catch (Exception ex) {
 								}
 							}
+						} else if(decodedMessage.getPerformative().equals("inform")) {
+							if (decodedContent[0].equals("Belief")) {
+								logger.info(decodedContent[1]);
+								addPercept(Literal.parseLiteral(decodedContent[1]));
+							}
 						}
+
 					}
 				});
 
@@ -82,11 +88,31 @@ public class RosEnv extends Environment {
 						FIPAMessage decodedMessage = FIPAMessage.decode(msg.data);
 						String regex = "[|]";
 						String[] decodedContent = decodedMessage.getContent().split(regex);
-						// clearPercepts();
-						// addPercept(Literal.parseLiteral("movebase_result(3)"));
+						String agentActionRegex = "[,]";
+						String[] agents = decodedContent[1].split(agentActionRegex);
+
+						clearPercepts(decodedMessage.getSender());
 						if(decodedMessage.getPerformative().equals("inform")) {
 							if(decodedContent[0].equals("Success")) {
-								addPercept(decodedMessage.getSender(), Literal.parseLiteral("success_" + decodedContent[1]));
+								switch (agents[0]) {
+									case "a_navto":
+									case "a_open_door":
+									case "a_approach_nurse":
+									case "a_authenticate_nurse":
+									case "a_deposit":
+									case "a_approach_arm":
+									case "a_pick_up_sample":
+										addPercept(decodedMessage.getSender(), Literal.parseLiteral("success_" + agents[0] + "("  + agents[1] + "," + agents[2] + ")"));
+										break;
+									case "a_open_drawer":
+									case "a_close_drawer":
+										addPercept(decodedMessage.getSender(), Literal.parseLiteral("success_" + agents[0] + "("  + agents[1] + ")"));
+										break;
+									default:
+										logger.log(Level.INFO, "executing: {0}, but not implemented!");
+										break;
+								}
+
 							}
 						}
 					}

@@ -20,9 +20,9 @@ class Environment(Node):
             100 - closed_door_percentage, closed_door_percentage), k=1)
 
         self.state = {
-            'loc': {'nurse1': 'room1','nurse2': 'room3', 'robot1': 'room2', 'robot2': 'room2', 'arm1': 'room4'},
+            'loc': {'nurse1': 'room1','nurse2': 'room3', 'robot1': 'room2', 'robot2': 'room2', 'arm1': 'room4', 'arm2': 'room4'},
             'doors': {'room1': True, 'room2': True, 'room3': closed_door[0], 'room4': True},
-            'sample': {'nurse1': False, 'nurse2': False, 'robot1': False, 'robot2': False, 'arm1': False}
+            'sample': {'nurse1': False, 'nurse2': False, 'robot1': False, 'robot2': False, 'arm1': False, 'arm2': False}
         }
 
     def start_server(self):
@@ -33,9 +33,7 @@ class Environment(Node):
         self.get_logger().info('Environment server started')
 
     def receive_message(self, request, response):
-        self.get_logger().info('Receiving message: %s' % request.action)
         actionTuple = tuple(request.action.split(','))
-        self.get_logger().info('Action: %s' % actionTuple[0])
         response.observation = 'success'
 
         if actionTuple[0] == 'a_navto' and not self.state['doors'][actionTuple[2]]:
@@ -45,8 +43,9 @@ class Environment(Node):
             response.observation = 'success'
         elif actionTuple[0] == 'monitor':
             response.observation = json.dumps(self.state)
+        elif actionTuple[0] == 'a_create_sample':
+            self.state['sample'][actionTuple[1]] = True
 
-        self.get_logger().info('Responding')
         return response
 
     def run(self):
