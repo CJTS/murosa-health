@@ -24,3 +24,6 @@ opened_door(room3).
     .print("a_pick_up_sample complete");
     +arm_has_sample(Arm_);
     -nurse_has_sample(_).
+
++robot_closed_drawer(Robot_): robot_at(Robot_, Room1_) & amr_arm(Arm_, Room_) <-
+    -drawer_opened(Robot_).

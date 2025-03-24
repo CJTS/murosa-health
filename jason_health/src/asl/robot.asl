@@ -125,8 +125,18 @@ collecting & has_sample <- close_drawer
     .print("Picking up sample");
     a_pick_up_sample(Arm_, Robot_).
 
-+success_a_pick_up_sample(Robot_): collecting(Robot_) & not drawer_opened(Robot_) & robot_at(Robot_, Room) & arm_at(Arm_, Room) <-
++success_a_pick_up_sample(Arm_, Robot_): collecting(Robot_) & robot_at(Robot_, Room) & arm_at(Arm_, Room) <-
     .print("Drawer opened complete");
     -robot_near_arm(Robot_, Arm_);
     -robot_has_sample(Robot_);
-    -collecting(Robot_).
+    -collecting(Robot_);
+    !a_close_drawer(Robot_).
+
++!a_close_drawer(Robot_): not collecting(Robot_) & not robot_has_sample(Robot_) & robot_at(Robot_, Room) & arm_at(Arm_, Room) <-
+    .print("Closing drawer");
+    a_close_drawer(Robot_).
+
++success_a_close_drawer(Robot_): not collecting(Robot_) & not robot_has_sample(Robot_) & robot_at(Robot_, Room) & arm_at(Arm_, Room) <-
+    .print("Drawer closed");
+    -drawer_opened(Robot_);
+    .send(Arm_,tell,robot_closed_drawer(Robot_)).
