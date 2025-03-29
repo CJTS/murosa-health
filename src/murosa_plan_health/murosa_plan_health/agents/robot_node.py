@@ -3,7 +3,7 @@ from murosa_plan_health.agent import Agent
 from murosa_plan_health.FIPAPerformatives import FIPAPerformative
 from murosa_plan_health.ActionResults import ActionResult
 from murosa_plan_health.helper import FIPAMessage
-from interfaces.srv import Action
+from interfaces.srv import Action, Message
 
 class Robot(Agent):
     def __init__(self, className):
@@ -52,18 +52,20 @@ class Robot(Agent):
                 self.pos = actionTuple[2]
             elif response.observation == 'door closed':
                 self.notifyError(
-                    ','.join(('error', 'door_closed', actionTuple[2]))
+                    ','.join(('door_closed', actionTuple[2]))
                 )
                 return ActionResult.FAILURE
 
         return ActionResult.SUCCESS
 
     def notifyError(self, error):
-        self.action_request = Action.Request()
-        self.action_request.action = error
-        return self.coordinator_communication_sync_client.call(
-            self.action_request
-        )
+        message = FIPAMessage(FIPAPerformative.INFORM.value, self.agentName, 'Coordinator', 'ERROR|' + error).encode()
+        ros_msg = Message.Request()
+        ros_msg.content = message
+        future = self.cli.call_async(ros_msg)
+        rclpy.spin_until_future_complete(self, future)
+        response = future.result()
+        self.get_logger().info('%s' % (response.response))
 
     def a_navto(self, robot, room):
         self.action_request = Action.Request()

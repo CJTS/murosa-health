@@ -21,7 +21,7 @@ class Environment(Node):
 
         self.state = {
             'loc': {'nurse1': 'room1','nurse2': 'room3', 'robot1': 'room2', 'robot2': 'room2', 'arm1': 'room4', 'arm2': 'room4'},
-            'doors': {'room1': True, 'room2': True, 'room3': closed_door[0], 'room4': True},
+            'doors': {'room1': closed_door[0], 'room2': True, 'room3': closed_door[0], 'room4': True},
             'sample': {'nurse1': False, 'nurse2': False, 'robot1': False, 'robot2': False, 'arm1': False, 'arm2': False}
         }
 

@@ -18,6 +18,10 @@ class Coordinator(Node):
         self.missions = []
         self.register_queue = []
         self.samples_queue = []
+        self.missions_with_error = []
+        self.declare_parameter('replan', rclpy.Parameter.Type.BOOL)
+        replan_param = self.get_parameter('replan').get_parameter_value().bool_value
+        self.should_replan = replan_param
 
         # Coordinator server
         self._action_server = self.create_service(
@@ -33,25 +37,38 @@ class Coordinator(Node):
         while not self.environment_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('environment service not available, waiting again...')
 
+        self.planner_communication_sync_client = self.create_client(
+            Action, 'planner_communication_sync_server'
+        )
+        while not self.planner_communication_sync_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('planner sync service not available, waiting again...')
+
+
     def execute_callback(self, request, response):
         decoded_msg = FIPAMessage.decode(request.content)
 
-        if decoded_msg.content == 'Register':
-            if 'arm' in decoded_msg.sender:
-                id = str(len(self.arms) + 1)
-                response.response = id
-                self.arms.append(decoded_msg.sender + id)
-            elif 'robot' in decoded_msg.sender:
-                id = str(len(self.robots) + 1)
-                response.response = id
-                self.robots.append(decoded_msg.sender + id)
-            elif 'nurse' in decoded_msg.sender:
-                id = str(len(self.nurses) + 1)
-                response.response = id
-                self.nurses.append(decoded_msg.sender + id)
-            self.register_queue.append(decoded_msg.sender + id)
-        elif decoded_msg.content == 'HasSample':
-            self.samples_queue.append('Belief|nurse_has_sample(' + decoded_msg.sender + ')')
+        if decoded_msg.performative == FIPAPerformative.REQUEST.value:
+            if decoded_msg.content == 'Register':
+                if 'arm' in decoded_msg.sender:
+                    id = str(len(self.arms) + 1)
+                    response.response = id
+                    self.arms.append(decoded_msg.sender + id)
+                elif 'robot' in decoded_msg.sender:
+                    id = str(len(self.robots) + 1)
+                    response.response = id
+                    self.robots.append(decoded_msg.sender + id)
+                elif 'nurse' in decoded_msg.sender:
+                    id = str(len(self.nurses) + 1)
+                    response.response = id
+                    self.nurses.append(decoded_msg.sender + id)
+                self.register_queue.append(decoded_msg.sender + id)
+            elif decoded_msg.content == 'HasSample':
+                self.samples_queue.append('Belief|nurse_has_sample(' + decoded_msg.sender + ')')
+        elif decoded_msg.performative == FIPAPerformative.INFORM.value:
+            if "ERROR" in decoded_msg.content:
+                self.get_logger().info('Error found')
+                mission = [mission for mission in self.missions if decoded_msg.sender in mission]
+                self.missions_with_error.append(mission[0])
 
         self.get_logger().info(f'Received: Performative={decoded_msg.performative}, Sender={decoded_msg.sender}, Receiver={decoded_msg.receiver}, Content={decoded_msg.content}')
         return response
@@ -97,9 +114,21 @@ class Coordinator(Node):
         response = future.result()
         self.state = json.loads(response.observation)
 
+        self.update_planner_state(response.observation)
+
         for key, value in self.state['sample'].items():
             if value and all(key not in team for team in self.missions):
                 self.start_mission(key)
+
+    def send_update_state_request(self, state):
+        self.update_state_request = Action.Request()
+        self.update_state_request.action = state
+        return self.planner_communication_sync_client.call_async(self.update_state_request)
+
+    def update_planner_state(self, state):
+        future = self.send_update_state_request('|'.join(('update_state', state)))
+        rclpy.spin_until_future_complete(self, future)
+        response = future.result()
 
     def register_agents(self):
         if(len(self.register_queue) > 0):
@@ -115,12 +144,45 @@ class Coordinator(Node):
             msg.data = FIPAMessage(FIPAPerformative.INFORM.value, 'Coordinator', 'Jason', sample).encode()
             self.jason_publisher.publish(msg)
 
+    def fix_plan(self, mission):
+        self.get_logger().info(",".join(mission))
+
+        arm = mission[0]
+        robot = mission[2]
+        nurse = mission[4]
+        self.get_logger().info('Creating plan for: %s, %s, %s ' % (
+            robot, nurse, arm
+        ))
+        future = self.send_need_plan_request(robot, nurse, arm)
+        rclpy.spin_until_future_complete(self, future)
+        plan_response = future.result()
+        self.get_logger().info('Plan received for: %s, %s, %s ' % (
+            robot, nurse, arm
+        ))
+        self.get_logger().info(plan_response.observation)
+        self.current_plan = plan_response.observation.split('/')
+
+        for action in self.current_plan:
+            self.get_logger().info(action)
+
+    def fix_missions(self):
+        if len(self.missions_with_error) > 0:
+            mission = self.missions_with_error.pop()
+            self.fix_plan(mission)
+
     def run(self):
         while rclpy.ok():
             rclpy.spin_once(self, timeout_sec=0.001)
             self.check_env()
             self.register_agents()
             self.register_sample()
+            self.fix_missions()
+
+    def send_need_plan_request(self, robotid, nurseid, armid):
+        self.action_request = Action.Request()
+        self.action_request.action = ','.join(
+            ('need_plan', robotid, nurseid, armid))
+        return self.planner_communication_sync_client.call_async(self.action_request)
 
 def main():
     rclpy.init()

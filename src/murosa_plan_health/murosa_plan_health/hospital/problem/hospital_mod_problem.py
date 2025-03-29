@@ -7,9 +7,9 @@ from murosa_plan_health.ipyhop import State, MultiGoal
 
 # ******************************************        Problem Definition      ****************************************** #
 init_state = State('init_state')
-init_state.loc = { 'nurse1': 'Room1', 'robot1': 'Room2', 'arm1': 'Room3' }
-init_state.doors = { 'Room1': True, 'Room2': True, 'Room3': True }
-init_state.sample = { 'nurse1': True, 'robot1': False, 'arm1': False }
+init_state.loc = { 'nurse1': 'room1','nurse2': 'room3', 'robot1': 'room2', 'robot2': 'room2', 'arm1': 'room4', 'arm2': 'room4' }
+init_state.doors = { 'room1': False, 'room2': True, 'room3': True, 'room4': True }
+init_state.sample = { 'nurse1': True, 'nurse2': True, 'robot1': False, 'robot2': False, 'arm1': False, 'arm2': False }
 
 # ******************************************    Demo / Test Routine         ****************************************** #
 if __name__ == '__main__':
