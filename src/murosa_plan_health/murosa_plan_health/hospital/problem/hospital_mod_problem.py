@@ -3,7 +3,7 @@
 File Description: Hospital mod problem file. Initial state and task list for the planning problem is defined here.
 """
 # ******************************************    Libraries to be imported    ****************************************** #
-from murosa_plan_health.ipyhop import State, MultiGoal
+from murosa_plan_health.ipyhop import State
 
 # ******************************************        Problem Definition      ****************************************** #
 init_state = State('init_state')

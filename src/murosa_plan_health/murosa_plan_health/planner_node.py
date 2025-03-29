@@ -42,7 +42,10 @@ class Planner(Node):
             self.get_logger().info('Sending response')
             return response
         elif actionTuple[0] == 'update_state':
-            self.state = json.loads(actionTuple[1])
+            state = json.loads(actionTuple[1])
+            self.state.loc = state['loc']
+            self.state.doors = state['doors']
+            self.state.sample = state['sample']
             return response
 
         response.observation = 'success'

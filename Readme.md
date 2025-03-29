@@ -12,7 +12,7 @@ Then you can use python script to run the simulation
 
 or you can run a single execution with
 
-```$ podman-compose -f experiment_trials.yaml up run ```
+```$ podman-compose -f experiment_trials.yaml up health ```
 
 ## podman help
 

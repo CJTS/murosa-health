@@ -1,3 +1,4 @@
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -8,6 +9,7 @@ import jason.asSyntax.NumberTermImpl;
 import jason.asSyntax.Structure;
 import jason.asSyntax.Pred;
 import jason.asSyntax.Literal;
+import jason.asSyntax.Term;
 import jason.environment.Environment;
 import ros.Publisher;
 import ros.RosBridge;
@@ -67,7 +69,8 @@ public class RosEnv extends Environment {
 							}
 						} else if(decodedMessage.getPerformative().equals("inform")) {
 							if (decodedContent[0].equals("Belief")) {
-								logger.info(decodedContent[1]);
+								addPercept(Literal.parseLiteral(decodedContent[1]));
+							} else if (decodedContent[0].equals("Action")) {
 								addPercept(Literal.parseLiteral(decodedContent[1]));
 							}
 						}
@@ -94,25 +97,7 @@ public class RosEnv extends Environment {
 						clearPercepts(decodedMessage.getSender());
 						if(decodedMessage.getPerformative().equals("inform")) {
 							if(decodedContent[0].equals("Success")) {
-								switch (agents[0]) {
-									case "a_navto":
-									case "a_open_door":
-									case "a_approach_nurse":
-									case "a_authenticate_nurse":
-									case "a_deposit":
-									case "a_approach_arm":
-									case "a_pick_up_sample":
-										addPercept(decodedMessage.getSender(), Literal.parseLiteral("success_" + agents[0] + "("  + agents[1] + "," + agents[2] + ")"));
-										break;
-									case "a_open_drawer":
-									case "a_close_drawer":
-										addPercept(decodedMessage.getSender(), Literal.parseLiteral("success_" + agents[0] + "("  + agents[1] + ")"));
-										break;
-									default:
-										logger.log(Level.INFO, "executing: {0}, but not implemented!");
-										break;
-								}
-
+								addPercept(decodedMessage.getSender(), Literal.parseLiteral("success_" + formatFunction(agents) + ")"));
 							}
 						}
 					}
@@ -126,27 +111,12 @@ public class RosEnv extends Environment {
 		FIPAMessage message = new FIPAMessage("inform", "jason", agName);
 		String agentAction = "";
 
-		switch (action.getFunctor()) {
-			case "a_navto":
-			case "a_open_door":
-			case "a_approach_nurse":
-			case "a_authenticate_nurse":
-			case "a_deposit":
-			case "a_approach_arm":
-			case "a_pick_up_sample":
-				message.setContent(action.getFunctor() + "," + action.getTerm(0).toString() + "," + action.getTerm(1).toString());
-				break;
-			case "a_open_drawer":
-			case "a_close_drawer":
-				message.setContent(action.getFunctor() + "," + action.getTerm(0).toString());
-				break;
-			case "end":
-				end();
-				break;
-			default:
-				logger.log(Level.INFO, "executing: {0}, but not implemented!", action);
-				break;
+		List<Term> terms = action.getTerms();
+		String termsStr = action.getFunctor();
+		for (Term term : terms) {
+			termsStr +=  "," + term.toString();
 		}
+		message.setContent(termsStr);
 
 		agentAction = message.encode();
 		navigation.publish(new PrimitiveMsg<String>(agentAction));
@@ -170,5 +140,16 @@ public class RosEnv extends Environment {
 			return str.substring(0, str.length() - numberOfCharactersToRemove);
 		}
 		return "";
+	}
+
+	public static String formatFunction(String[] input) {
+		if (input == null || input.length < 2) {
+			throw new IllegalArgumentException("O array deve conter pelo menos um nome de função e um parâmetro.");
+		}
+
+		String functionName = input[0];
+		String parameters = String.join(", ", java.util.Arrays.copyOfRange(input, 1, input.length));
+
+		return functionName + "(" + parameters + ")";
 	}
 }

@@ -128,7 +128,7 @@ class Coordinator(Node):
     def update_planner_state(self, state):
         future = self.send_update_state_request('|'.join(('update_state', state)))
         rclpy.spin_until_future_complete(self, future)
-        response = future.result()
+        return future.result()
 
     def register_agents(self):
         if(len(self.register_queue) > 0):
@@ -163,7 +163,9 @@ class Coordinator(Node):
         self.current_plan = plan_response.observation.split('/')
 
         for action in self.current_plan:
-            self.get_logger().info(action)
+            msg = String()
+            msg.data = FIPAMessage(FIPAPerformative.INFORM.value, 'Coordinator', 'Jason', 'Action|' + action).encode()
+            self.jason_publisher.publish(msg)
 
     def fix_missions(self):
         if len(self.missions_with_error) > 0:
@@ -180,7 +182,7 @@ class Coordinator(Node):
 
     def send_need_plan_request(self, robotid, nurseid, armid):
         self.action_request = Action.Request()
-        self.action_request.action = ','.join(
+        self.action_request.action = '|'.join(
             ('need_plan', robotid, nurseid, armid))
         return self.planner_communication_sync_client.call_async(self.action_request)
 
