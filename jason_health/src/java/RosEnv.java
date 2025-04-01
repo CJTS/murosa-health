@@ -9,6 +9,7 @@ import jason.asSyntax.NumberTermImpl;
 import jason.asSyntax.Structure;
 import jason.asSyntax.Pred;
 import jason.asSyntax.Literal;
+import jason.asSyntax.LiteralImpl;
 import jason.asSyntax.Term;
 import jason.environment.Environment;
 import ros.Publisher;
@@ -71,10 +72,20 @@ public class RosEnv extends Environment {
 							if (decodedContent[0].equals("Belief")) {
 								addPercept(Literal.parseLiteral(decodedContent[1]));
 							} else if (decodedContent[0].equals("Action")) {
-								addPercept(Literal.parseLiteral(decodedContent[1]));
+								String actionsRegex = "[,]";
+								String[] actionParts = decodedContent[1].split(actionsRegex);
+								Structure act = new Structure(actionParts[0]);
+
+								for (int i = 1; i < actionParts.length; i++) {
+									act.addTerm(new LiteralImpl(actionParts[i]));
+								}
+
+								Boolean result = executeAction(actionParts[1], act);
+								logger.info(result.toString());
+
+								// addPercept(actionParts[1], Literal.parseLiteral(formatFunction(actionParts)));
 							}
 						}
-
 					}
 				});
 

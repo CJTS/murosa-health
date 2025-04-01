@@ -2,7 +2,7 @@ import rclpy
 from rclpy.node import Node
 from interfaces.srv import Message, Action
 from murosa_plan_health.FIPAPerformatives import FIPAPerformative
-from murosa_plan_health.helper import FIPAMessage
+from murosa_plan_health.helper import FIPAMessage, action_string_to_tuple
 from std_msgs.msg import String, Bool
 from murosa_plan_health.ActionResults import ActionResult
 
@@ -11,6 +11,7 @@ class Agent(Node):
         super().__init__(className)
         self.className = className.lower()
         self.actions = []
+        self.plan = []
         self.wating_response = []
         self.wating = False
 
@@ -26,13 +27,21 @@ class Agent(Node):
         while not self.environment_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('environment service not available, waiting again...')
 
-        # Subscriber para falar com o Jason (Ação move)
+        # Subscriber para falar com o Jason (Ação)
         self.subscription = self.create_subscription(
             String, '/jason/agent/action', self.listener_callback, 10
         )
 
-        # Publisher para falar o resultado da ação
+        # Subscriber para falar com o Coordenador (Ação)
+        self.subscription = self.create_subscription(
+            String, '/coordinator/agent/plan', self.listener_plan_callback, 10
+        )
+
+        # Publisher para falar o resultado da ação para o Jason
         self.publisher = self.create_publisher(String, '/agent/jason/result', 10)
+
+        # Publisher para falar o resultado da ação para o coordenador
+        self.publisher_coordinator = self.create_publisher(String, '/agent/coordinator/result', 10)
 
         # Subscriber para indicar fim da execução
         self.end_subscription = self.create_subscription(
@@ -75,6 +84,19 @@ class Agent(Node):
         self.get_logger().info('And it is for me')
         ## Perform action
         self.add_action(decoded_msg)
+
+    def listener_plan_callback(self, msg):
+        # Receive messagem from jason
+        self.get_logger().info('I heard: "%s"' % msg.data)
+        decoded_msg = FIPAMessage.decode(msg.data)
+        if not self.is_for_me(decoded_msg):
+            self.get_logger().info('And it is not for me')
+            return
+
+        self.get_logger().info('And it is for me')
+        ## Perform action
+        message = decoded_msg.content.split('|')
+        self.plan = list(map(action_string_to_tuple, message[1].split('/')))
 
     def is_for_me(self, msg):
         return msg.receiver == self.agentName
@@ -128,7 +150,13 @@ class Agent(Node):
         self.actions.append(msg.content.split(","))
 
     def act(self):
-        if(len(self.actions) > 0):
+        if(len(self.plan) > 0) :
+            action = self.plan.pop()
+            result = self.choose_action(action)
+            if result == ActionResult.WAITING:
+                self.wating = True
+                self.plan.append(action)
+        elif(len(self.actions) > 0):
             self.get_logger().info('Acting')
             action = self.actions.pop()
             result = self.choose_action(action)

@@ -1,9 +1,9 @@
 import rclpy
 import json
 from rclpy.node import Node
-from interfaces.srv import Message, Action
+from interfaces.srv import Message, Action, SendPlan
 from std_msgs.msg import String
-from murosa_plan_health.helper import FIPAMessage
+from murosa_plan_health.helper import FIPAMessage, action_string_to_tuple, action_tuple_to_string
 from murosa_plan_health.FIPAPerformatives import FIPAPerformative
 
 class Coordinator(Node):
@@ -30,6 +30,12 @@ class Coordinator(Node):
             self.execute_callback
         )
         self.jason_publisher = self.create_publisher(String, '/coordinator/jason/plan', 10)
+        self.agent_publisher = self.create_publisher(String, '/coordinator/agent/plan', 10)
+
+        # Subscriber para falar com os agents (Ação)
+        self.subscription = self.create_subscription(
+            String, '/agent/coordinator/action', self.listener_callback, 10
+        )
 
         self.environment_client = self.create_client(
             Action, 'environment_server'
@@ -43,6 +49,8 @@ class Coordinator(Node):
         while not self.planner_communication_sync_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('planner sync service not available, waiting again...')
 
+    def listener_callback(self):
+        return
 
     def execute_callback(self, request, response):
         decoded_msg = FIPAMessage.decode(request.content)
@@ -161,11 +169,51 @@ class Coordinator(Node):
         ))
         self.get_logger().info(plan_response.observation)
         self.current_plan = plan_response.observation.split('/')
+        self.split_plans(nurse, robot, arm)
+        self.send_plans_request(nurse, robot, arm)
 
-        for action in self.current_plan:
-            msg = String()
-            msg.data = FIPAMessage(FIPAPerformative.INFORM.value, 'Coordinator', 'Jason', 'Action|' + action).encode()
-            self.jason_publisher.publish(msg)
+        # for action in self.current_plan:
+        #     msg = String()
+        #     msg.data = FIPAMessage(FIPAPerformative.INFORM.value, 'Coordinator', 'Jason', 'Action|' + action).encode()
+        #     self.jason_publisher.publish(msg)
+
+    def split_plans(self, nurse, robot, arm):
+        self.nursesActions = []
+        self.robotsActions = []
+        self.armsActions = []
+        tuples = map(action_string_to_tuple, self.current_plan)
+
+        for action in tuples:
+            if nurse in action:
+                self.nursesActions.append(action)
+            if robot in action:
+                self.robotsActions.append(action)
+            if arm in action:
+                self.armsActions.append(action)
+
+        self.plans_actions = len(self.robotsActions)
+
+    def send_plans_request(self, nurse, robot, arm):
+        self.get_logger().info('Sending plans')
+        send_plan_request_nurse = String()
+        send_plan_request_nurse.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', nurse, 'Plan|' + '/'.join(list(map(
+            action_tuple_to_string, self.nursesActions
+        )))).encode()
+        self.agent_publisher.publish(send_plan_request_nurse)
+
+        send_plan_request_robot = String()
+        send_plan_request_robot.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', robot, 'Plan|' + '/'.join(list(map(
+            action_tuple_to_string, self.robotsActions
+        )))).encode()
+        self.agent_publisher.publish(send_plan_request_robot)
+
+        send_plan_request_arm = String()
+        send_plan_request_arm.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', arm, 'Plan|' + '/'.join(list(map(
+            action_tuple_to_string, self.armsActions
+        )))).encode()
+        self.agent_publisher.publish(send_plan_request_arm)
+        self.get_logger().info('Plans sent')
+
 
     def fix_missions(self):
         if len(self.missions_with_error) > 0:
