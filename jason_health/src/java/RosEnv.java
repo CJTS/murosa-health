@@ -1,3 +1,5 @@
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -55,15 +57,17 @@ public class RosEnv extends Environment {
 								addPercept(agents[2], Literal.parseLiteral("start(" + decodedContent[1] + ")"));
 								addPercept(agents[4], Literal.parseLiteral("start(" + decodedContent[1] + ")"));
 							} else if (decodedContent[0].equals("Create")) {
+								Collection<String> collection = new ArrayList<String>();
+								collection.add("DynamicAgent");
 								try {
 									getEnvironmentInfraTier().getRuntimeServices().createAgent(
 											decodedContent[1],     // agent name
 											removeChars(decodedContent[1], 1) + ".asl",       // AgentSpeak source
 											null,            // default agent class
-											null,            // default architecture class
-											null,            // default architecture class
-											null,            // default architecture class
-											null);           // default settings
+											collection,            // default architecture class
+											null,            // bbpars
+											null,            // settings
+											null);           // father
 											getEnvironmentInfraTier().getRuntimeServices().startAgent(decodedContent[1]);
 								} catch (Exception ex) {
 								}

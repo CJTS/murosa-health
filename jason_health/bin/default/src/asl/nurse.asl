@@ -53,8 +53,17 @@ collecting & has_sample <- close_drawer
 
 +robot_closed_drawer(Robot_): nurse_authenticated(Robot_, Nurse_) & robot_at(Robot_, Room1_) & nurse_at(Nurse_, Room_) <-
     -drawer_opened(Robot_);
-    -nurse_authenticated(Robot_, Nurse_);
-    !a_deposit(Robot_, Nurse_).
+    -nurse_authenticated(Robot_, Nurse_).
 
++!G[scheme(S)] <- G; .print("Doing ", G, " - Scheme ", S).
 
-+add_action(Plan_): true <- .add_plan(Plan_).
+-!G[error(no_relevant)] : teacher(T) <-
+    .send(T, askHow, { +!G }, Plans);
+    .add_plan(Plans);
+    !G.
+
+-!G[error(no_relevant)] : true <-
+    .print("no_relevant ", G).
+
+start(arm1, room3, robot1, room2, nurse1, room1).
+robot_arrived(robot1, room1).
