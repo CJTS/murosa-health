@@ -16,6 +16,7 @@ def agents_as_bdi_variabel(agents):
 def generate_bdi(agents, actions):
     bdies = defaultdict(list)
     i = 0
+    # Da primeira ate a penultima ação
     while i < len(actions) - 1:
         current_action = actions[i]
         next_action = actions[i + 1]
@@ -29,6 +30,8 @@ def generate_bdi(agents, actions):
 
         action1_with_params = f"{action1}({', '.join(agents_as_bdi_variabel(params1))})"
         action2_with_params = f"{action2}({', '.join(agents_as_bdi_variabel(params2))})"
+
+        print(action1_with_params)
 
         # Verifica quantas vezes o agente aparece nas ações
         count = defaultdict(int)
@@ -64,6 +67,14 @@ def generate_bdi(agents, actions):
                 # else:
                     # bdies[agent1].append(f"+success_{action1_with_params}: true <- .")
         i += 1
+    # Por ultimo
+    current_action = actions[i]
+    action1, params1 = extract_agent_name(current_action)
+    agents1 = set(params1) & set(agents)
+    action1_with_params = f"{action1}({', '.join(agents_as_bdi_variabel(params1))})"
+
+    for agent1 in agents1:
+        bdies[agent1].append(f"+!{action1_with_params}: true <- {action1_with_params}.")
 
     return bdies
 
