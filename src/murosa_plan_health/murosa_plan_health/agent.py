@@ -28,12 +28,12 @@ class Agent(Node):
             self.get_logger().info('environment service not available, waiting again...')
 
         # Subscriber para falar com o Jason (Ação)
-        self.subscription = self.create_subscription(
+        self.subscription_jason = self.create_subscription(
             String, '/jason/agent/action', self.listener_callback, 10
         )
 
         # Subscriber para falar com o Coordenador (Ação)
-        self.subscription = self.create_subscription(
+        self.subscription_coordinator = self.create_subscription(
             String, '/coordinator/agent/plan', self.listener_plan_callback, 10
         )
 

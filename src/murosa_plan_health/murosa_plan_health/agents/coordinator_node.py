@@ -4,6 +4,7 @@ from rclpy.node import Node
 from interfaces.srv import Message, Action, SendPlan
 from std_msgs.msg import String
 from murosa_plan_health.helper import FIPAMessage, action_string_to_tuple, action_tuple_to_string
+from murosa_plan_health.BDIParser import generate_bdi
 from murosa_plan_health.FIPAPerformatives import FIPAPerformative
 
 class Coordinator(Node):
@@ -169,13 +170,22 @@ class Coordinator(Node):
         ))
         self.get_logger().info(plan_response.observation)
         self.current_plan = plan_response.observation.split('/')
-        self.split_plans(nurse, robot, arm)
-        self.send_plans_request(nurse, robot, arm)
+        formated_plan = []
+        for action in self.current_plan:
+            splitted_action = action.split(',')
+            formated_plan.append(splitted_action[0] + "(" + ','.join(splitted_action[1:len(splitted_action)])  + ")")
 
-        # for action in self.current_plan:
-        #     msg = String()
-        #     msg.data = FIPAMessage(FIPAPerformative.INFORM.value, 'Coordinator', 'Jason', 'Action|' + action).encode()
-        #     self.jason_publisher.publish(msg)
+        bdies = generate_bdi([robot, nurse, arm], formated_plan)
+        for agent, rules in bdies.items():
+            for rule in rules:
+                msg = String()
+                msg.data = FIPAMessage(FIPAPerformative.INFORM.value, 'Coordinator', agent, 'Plan|' + rule).encode()
+                self.agent_publisher.publish(msg)
+
+        start_msg = "+start(Arm_, ArmLoc_, Robot_, RobotLoc_, Nurse_, NurseLoc_): true <- +nurse_at(Nurse_, NurseLoc_); +arm_at(Arm_, ArmLoc_); +robot_at(Robot_, RobotLoc_); +" + formated_plan[0] + "."
+        msg = String()
+        msg.data = FIPAMessage(FIPAPerformative.INFORM.value, 'Coordinator', list(bdies.keys())[0], 'Plan|' + start_msg).encode()
+        self.agent_publisher.publish(msg)
 
     def split_plans(self, nurse, robot, arm):
         self.nursesActions = []
@@ -213,7 +223,6 @@ class Coordinator(Node):
         )))).encode()
         self.agent_publisher.publish(send_plan_request_arm)
         self.get_logger().info('Plans sent')
-
 
     def fix_missions(self):
         if len(self.missions_with_error) > 0:

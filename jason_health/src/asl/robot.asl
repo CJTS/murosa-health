@@ -12,7 +12,7 @@ opened_door(room3).
     +robot_at(Robot_, RobotLoc_);
     !exist_sample(Robot_, Nurse_).
 
-+!exist_sample(Robot_, Nurse_) <- !a_navto(Robot_, Nurse_).
++!exist_sample(Robot_, Nurse_) <- !a_navto(Robot_, Nurse_);.
 
 /*
 exist_sample & !collecting <- collect
@@ -39,6 +39,10 @@ collecting & has_sample <- close_drawer
     -robot_at(Robot_, Loc2_);
     +robot_at(Robot_, Loc_);
     !a_approach_nurse(Robot_, Nurse_).
+
++failure_a_navto(Robot_, Loc_): collecting(Robot_) & not robot_has_sample(Robot_) & nurse_at(Nurse_, Loc_) & robot_at(Robot_, Loc2_) <-
+    .print("Navigation failed");
+    -opened_door(Loc_).
 
 +!a_approach_nurse(Robot_, Nurse_): collecting(Robot_) & robot_at(Robot_, Room) & nurse_at(Nurse_, Room) <-
     .print("Approaching");

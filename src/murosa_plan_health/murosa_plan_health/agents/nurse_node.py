@@ -37,6 +37,7 @@ class Nurse(Agent):
 
     def choose_action(self, actionTuple):
         self.get_logger().info(actionTuple[0])
+        future = None
         if actionTuple[0] == 'a_authenticate_nurse':
             self.get_logger().info('Doing a_authenticate_nurse')
             self.a_authenticate_nurse(

@@ -1,9 +1,9 @@
 import com.google.gson.Gson;
 
 class FIPAMessage {
-    private String performative;
-    private String sender;
-    private String receiver;
+    private final String performative;
+    private final String sender;
+    private final String receiver;
     private String content;
 
     public String getPerformative() {

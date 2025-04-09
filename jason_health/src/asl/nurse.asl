@@ -2,6 +2,8 @@
 opened_door(room1).
 opened_door(room2).
 opened_door(room3).
+raining.
+
 
 /* Plans */
 
