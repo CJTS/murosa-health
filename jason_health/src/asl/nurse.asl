@@ -1,33 +1,6 @@
-/* Initial beliefs and rules */
-opened_door(room1).
-opened_door(room2).
-opened_door(room3).
-raining.
-
-
-/* Plans */
-
 +start(Arm_, ArmLoc_, Robot_, RobotLoc_, Nurse_, NurseLoc_): true <-
-    +nurse_at(Nurse_, NurseLoc_);
-    +nurse_has_sample(Nurse_);
-    +arm_at(Arm_, ArmLoc_);
-    +robot_at(Robot_, RobotLoc_).
-
-/*
-exist_sample & !collecting <- collect
-collecting & robot_at(Robot_, Loc_) & nurser_at(Nurse_, Loc_) <- approach_nurse
-collecting & approached_nurse <- authenticate_nurse
-collecting & authenticated_nurse <- open_drawer
-collecting & drawer_opened <- collect_sample
-collecting & has_sample <- close_drawer
-collecting & has_sample & not drawer_opened <- nav_to_arm
-collecting & robot_at(Robot_, Loc_) & arm_at(Arm_, Loc_) <- approach_arm
-collecting & approached_arm <- authenticate_arm
-collecting & authenticated_arm <- open_drawer
-collecting & drawer_opened <- deposit_sample
-collecting & has_sample <- close_drawer
-*/
-
+    +start(Arm_, ArmLoc_, Robot_, RobotLoc_, Nurse_, NurseLoc_).
+    
 +robot_arrived(Robot_, Room_): robot_at(Robot_, Room1_) & nurse_at(Nurse_, Room_) <-
     -robot_at(Robot_, Room1_);
     +robot_at(Robot_, Room_);

@@ -3,8 +3,10 @@ import java.util.logging.Logger;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import jason.JasonException;
+import jason.RevisionFailedException;
 import jason.architecture.AgArch;
 import jason.asSyntax.ASSyntax;
+import jason.asSyntax.Literal;
 import jason.asSyntax.Plan;
 import jason.asSyntax.parser.ParseException;
 import ros.RosBridge;
@@ -23,7 +25,7 @@ public class DynamicAgent extends AgArch {
     }
 
     private void startROSSubscriber() {
-    // Create a ROS subscriber that listens for new plan messages
+        // Create a ROS subscriber that listens for new plan messages
         bridge.connect("ws://localhost:9090", true);
 
         bridge.subscribe(
@@ -34,13 +36,26 @@ public class DynamicAgent extends AgArch {
                 FIPAMessage decodedMessage = FIPAMessage.decode(msg.data);
 
                 if(decodedMessage.getReceiver().equals(getAgName())) {
-                    logger.info(msg.data);
                     String regex = "[|]";
                     String[] decodedContent = decodedMessage.getContent().split(regex);
 
-                    if(decodedMessage.getPerformative().equals("inform")) {
+                    if(decodedMessage.getPerformative().equals("request")) {
+                        if(decodedContent[0].equals("Start")) {
+                            try {
+                                getTS().getAg().addBel(Literal.parseLiteral("start(" + decodedContent[1] + ")"));
+                            } catch (RevisionFailedException ex) {
+                                System.err.println("Error: " + ex.getMessage());
+                            }
+                        }
+                    } else if(decodedMessage.getPerformative().equals("inform")) {
                         if(decodedContent[0].equals("Plan")) {
                             addPlanDynamically(decodedContent[1]);
+                        } else if (decodedContent[0].equals("Belief")) {
+                            try {
+                                getTS().getAg().addBel(Literal.parseLiteral(decodedContent[1]));
+                            } catch (RevisionFailedException ex) { 
+                                System.err.println("Error: " + ex.getMessage());
+                            }
                         }
                     }
                 }
@@ -50,15 +65,16 @@ public class DynamicAgent extends AgArch {
 
     private void addPlanDynamically(String planStr) {
         try {
-            System.out.println(getAgName() + " " + planStr);
-            Plan newPlan = ASSyntax.parsePlan(planStr);
-            System.out.println(getAgName() + " " + newPlan.getTrigger());
-            System.out.println(getAgName() + " " + getTS().getAg().getPL().hasCandidatePlan(newPlan.getTrigger()));
-            if(!getTS().getAg().getPL().hasCandidatePlan(newPlan.getTrigger())) {
+            getTS().getAg().getPL().clear();
+            String regex = "[/]";
+            String[] plans = planStr.split(regex);
+
+            for (String plan : plans) {
+                Plan newPlan = ASSyntax.parsePlan(plan);
                 getTS().getAg().getPL().add(newPlan);
-                System.out.println("New plan added: " + newPlan);
             }
         } catch (JasonException | ParseException e) {
+            System.err.println("Error: " + e.getMessage());
         }
     }
 }

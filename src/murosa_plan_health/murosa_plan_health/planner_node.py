@@ -23,7 +23,7 @@ class Planner(Node):
 
         if actionTuple[0] == 'need_plan':
             self.get_logger().info('Creating plan for: %s %s %s' % (
-                actionTuple[1], actionTuple[1], actionTuple[2]
+                actionTuple[1], actionTuple[2], actionTuple[3]
             ))
 
             planner = IPyHOP(methods, actions)

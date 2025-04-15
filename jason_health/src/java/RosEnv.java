@@ -1,7 +1,6 @@
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -42,13 +41,7 @@ public class RosEnv extends Environment {
 				clearPercepts();
 
 				if(decodedMessage.getPerformative().equals("request")) {
-					if(decodedContent[0].equals("Start")) {
-						String agentRegex = "[,]";
-						String[] agents = decodedContent[1].split(agentRegex);
-						addPercept(agents[0], Literal.parseLiteral("start(" + decodedContent[1] + ")"));
-						addPercept(agents[2], Literal.parseLiteral("start(" + decodedContent[1] + ")"));
-						addPercept(agents[4], Literal.parseLiteral("start(" + decodedContent[1] + ")"));
-					} else if (decodedContent[0].equals("Create")) {
+					if (decodedContent[0].equals("Create")) {
 						Collection<String> collection = new ArrayList<>();
 						collection.add("DynamicAgent");
 						try {
@@ -95,7 +88,6 @@ public class RosEnv extends Environment {
 				String agentActionRegex = "[,]";
 				String[] agents = decodedContent[1].split(agentActionRegex);
 
-				logger.info(msg.data);
 				clearPercepts(decodedMessage.getSender());
 
 				if(decodedMessage.getPerformative().equals("inform")) {
@@ -109,7 +101,7 @@ public class RosEnv extends Environment {
 
 	@Override
 	public boolean executeAction(String agName, Structure action) {
-		logger.log(Level.INFO, "executing: {0}: {1}.", new Object[]{action, agName});
+		logger.info("executing: " + action + ": " + agName + ".");
 		Publisher navigation = new Publisher("/jason/agent/action", "std_msgs/String", bridge);
 		FIPAMessage message = new FIPAMessage("inform", "jason", agName);
 		List<Term> terms = action.getTerms();
@@ -121,8 +113,8 @@ public class RosEnv extends Environment {
 
 		message.setContent(termsStr);
 		navigation.publish(new PrimitiveMsg<>(message.encode()));
-		informAgsEnvironmentChanged();
-		return true; // the action was executed with success
+		// informAgsEnvironmentChanged();
+		return true;
 	}
 
 	public void end() {

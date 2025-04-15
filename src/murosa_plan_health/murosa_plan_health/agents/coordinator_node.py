@@ -1,5 +1,6 @@
 import rclpy
 import json
+import re
 from rclpy.node import Node
 from interfaces.srv import Message, Action, SendPlan
 from std_msgs.msg import String
@@ -76,7 +77,9 @@ class Coordinator(Node):
         elif decoded_msg.performative == FIPAPerformative.INFORM.value:
             if "ERROR" in decoded_msg.content:
                 self.get_logger().info('Error found')
+                self.get_logger().info(decoded_msg.sender)
                 mission = [mission for mission in self.missions if decoded_msg.sender in mission]
+                self.get_logger().info(",".join(mission[0]))
                 self.missions_with_error.append(mission[0])
 
         self.get_logger().info(f'Received: Performative={decoded_msg.performative}, Sender={decoded_msg.sender}, Receiver={decoded_msg.receiver}, Content={decoded_msg.content}')
@@ -88,11 +91,18 @@ class Coordinator(Node):
         if(team == None):
             print("No current team available")
             return
+        
+        arm = team[0]
+        robot = team[2]
+        nurse = team[4]
 
         self.get_logger().info(",".join(team))
-        msg = String()
-        msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', 'Jason', 'Start|' + ','.join(team)).encode()
-        self.jason_publisher.publish(msg)
+        
+        for agent in [robot, nurse, arm]:
+            msg = String()
+            msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent, 'Start|' + ','.join(team)).encode()
+            self.agent_publisher.publish(msg)
+
         return
 
     def get_agent_class(self, agent):
@@ -171,21 +181,38 @@ class Coordinator(Node):
         self.get_logger().info(plan_response.observation)
         self.current_plan = plan_response.observation.split('/')
         formated_plan = []
+        start = []
         for action in self.current_plan:
             splitted_action = action.split(',')
             formated_plan.append(splitted_action[0] + "(" + ','.join(splitted_action[1:len(splitted_action)])  + ")")
+            params = splitted_action[1:len(splitted_action)]
+            for param in params:
+                if param not in start:
+                    start.append(param)
 
-        bdies = generate_bdi([robot, nurse, arm], formated_plan)
+        context = "start(Nurse, LockedDoor, Robot, ArmRoom, Arm)"
+        variables = ["Nurse", "LockedDoor", "Robot", "ArmRoom", "Arm"]
+        bdies = generate_bdi([robot, nurse, arm], formated_plan, context, variables)
         for agent, rules in bdies.items():
+            plans = [f"+{context}: true <- +{context}."]
             for rule in rules:
-                msg = String()
-                msg.data = FIPAMessage(FIPAPerformative.INFORM.value, 'Coordinator', agent, 'Plan|' + rule).encode()
-                self.agent_publisher.publish(msg)
+                plans.append(rule)
+            msg = String()
+            msg.data = FIPAMessage(FIPAPerformative.INFORM.value, 'Coordinator', agent, 'Plan|' + '/'.join(plans)).encode()
+            self.agent_publisher.publish(msg)
 
-        start_msg = "+start(Arm_, ArmLoc_, Robot_, RobotLoc_, Nurse_, NurseLoc_): true <- +nurse_at(Nurse_, NurseLoc_); +arm_at(Arm_, ArmLoc_); +robot_at(Robot_, RobotLoc_); +" + formated_plan[0] + "."
-        msg = String()
-        msg.data = FIPAMessage(FIPAPerformative.INFORM.value, 'Coordinator', list(bdies.keys())[0], 'Plan|' + start_msg).encode()
-        self.agent_publisher.publish(msg)
+        start_msg = "initial_trigger_" + formated_plan[0] + "."
+
+        for agent in [robot, nurse, arm]:
+            msg = String()
+            msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent, 'Start|' + ','.join(start)).encode()
+            self.agent_publisher.publish(msg)
+
+        splitted_action = self.current_plan[0].split(',')
+        for initial_agents in splitted_action[1:len(splitted_action)]:
+            msg = String()
+            msg.data = FIPAMessage(FIPAPerformative.INFORM.value, 'Coordinator', initial_agents, 'Belief|' + start_msg).encode()
+            self.agent_publisher.publish(msg)
 
     def split_plans(self, nurse, robot, arm):
         self.nursesActions = []

@@ -1,16 +1,3 @@
-/* Initial beliefs and rules */
-opened_door(room1).
-opened_door(room2).
-opened_door(room3).
-
-/* Plans */
-
-+start(Arm_, ArmLoc_, Robot_, RobotLoc_, Nurse_, NurseLoc_): true <-
-    +nurse_at(Nurse_, NurseLoc_);
-    +nurse_has_sample(Nurse_);
-    +arm_at(Arm_, ArmLoc_);
-    +robot_at(Robot_, RobotLoc_).
-
 +robot_arrived(Robot_, Room_): robot_at(Robot_, Room1_) & arm_at(Arm_, Room_) <-
     -robot_at(Robot_, Room1_);
     +robot_at(Robot_, Room_);

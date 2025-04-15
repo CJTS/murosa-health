@@ -27,9 +27,9 @@ methods.declare_task_methods('m_approach_arm', [approach_arm])
 
 def approach_nurse(state, robot_, nurse_):
     if state.doors[state.loc[nurse_]] :
-        return [('a_navto', robot_, state.loc[nurse_]), ('a_approach_nurse', robot_), ('a_authenticate_nurse', robot_, nurse_)]
+        return [('a_navto', robot_, state.loc[nurse_]), ('a_approach_nurse', robot_, nurse_), ('a_authenticate_nurse', robot_, nurse_)]
     else:
-        return [('a_open_door', nurse_, state.loc[nurse_]), ('a_navto', robot_, state.loc[nurse_]), ('a_approach_nurse', robot_), ('a_authenticate_nurse', robot_, nurse_)]
+        return [('a_open_door', nurse_, state.loc[nurse_]), ('a_navto', robot_, state.loc[nurse_]), ('a_approach_nurse', robot_, nurse_), ('a_authenticate_nurse', robot_, nurse_)]
 
 methods.declare_task_methods('m_approach_nurse', [approach_nurse])
 

@@ -19,7 +19,7 @@ def a_open_door(state, nurse_, room_):
     return state
 
 # robot aproaches a nurse
-def a_approach_nurse(state, robot_):
+def a_approach_nurse(state, robot_, nurse_):
     return state
 
 # robot authenticate the nurse

@@ -18,7 +18,7 @@ class Robot(Agent):
             future = self.a_navto(actionTuple[1], actionTuple[2])
         elif actionTuple[0] == 'a_approach_nurse':
             self.get_logger().info('Doing a_approach_nurse')
-            future = self.a_approach_nurse(actionTuple[1])
+            future = self.a_approach_nurse(actionTuple[1], actionTuple[2])
         elif actionTuple[0] == 'a_authenticate_nurse':
             self.get_logger().info('Doing a_authenticate_nurse')
             self.a_authenticate_nurse(actionTuple[1], actionTuple[2])
@@ -72,9 +72,9 @@ class Robot(Agent):
         self.action_request.action = ','.join(('a_navto', robot, room))
         return self.environment_client.call_async(self.action_request)
 
-    def a_approach_nurse(self, robot):
+    def a_approach_nurse(self, robot, nurse):
         self.action_request = Action.Request()
-        self.action_request.action = ','.join(('a_approach_nurse', robot))
+        self.action_request.action = ','.join(('a_approach_nurse', robot, nurse))
         return self.environment_client.call_async(self.action_request)
 
     def a_authenticate_nurse(self, robot, nurse):
