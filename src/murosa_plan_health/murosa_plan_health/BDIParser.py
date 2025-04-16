@@ -97,7 +97,7 @@ def generate_bdi(agents, actions, context, variables):
                 # Verifica se o agente atual esta na lista de proximos agentes
                 if(agent1 in agents2):
                     # Se sim, adiciona a chamada para a proxima ação no plano de sucesso
-                    bdies[agent1].append(f"+success_{action1_with_params}: {context} <- -milestone{str(i - 1)}; +milestone{str(i)}; !{action2_with_params}.")
+                    bdies[agent1].append(f"+success_{action1_with_params}: {context} & milestone{str(i - 1)} <- -milestone{str(i - 1)}; +milestone{str(i)}; !{action2_with_params}.")
                 else:
                     bdies[agent1].append(f"+success_{action1_with_params}: milestone{str(i - 1)} <- -milestone{str(i - 1)}.")
 
@@ -107,10 +107,11 @@ def generate_bdi(agents, actions, context, variables):
     action1, params1 = extract_agent_name(current_action)
     agents1 = set(params1) & set(agents)
     mapped_params1 = map_params_to_variables(params1, variables_map)
-    action1_with_params = f"{action1}({', '.join(mapped_params1)})"
+    action1_with_params = f"{action1}({', '.join(mapped_params1)})"; 
 
     for agent1 in agents1:
-        bdies[agent1].append(f"+!{action1_with_params}: true <- {action1_with_params}.")
+        bdies[agent1].append(f"+!{action1_with_params}: milestone{str(i - 1)} <- {action1_with_params}.")
+        bdies[agent1].append(f"+success_{action1_with_params}: milestone{str(i - 1)} <- -milestone{str(i - 1)}; end.")
 
     return bdies
 

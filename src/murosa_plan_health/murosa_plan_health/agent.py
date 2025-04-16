@@ -45,7 +45,7 @@ class Agent(Node):
 
         # Subscriber para indicar fim da execução
         self.end_subscription = self.create_subscription(
-            Bool, '/jason/agent/shutdown_signal', self.shutdown_callback, 10
+            Bool, '/jason/shutdown_signal', self.shutdown_callback, 10
         )
 
         # Publisher para falar com outros agentes

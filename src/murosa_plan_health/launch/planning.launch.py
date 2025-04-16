@@ -50,19 +50,4 @@ def generate_launch_description():
             executable='arm',
             name='arm1'
         ),
-        Node(
-            package='murosa_plan_health',
-            executable='nurse',
-            name='nurse2'
-        ),
-        Node(
-            package='murosa_plan_health',
-            executable='robot',
-            name='robot2'
-        ),
-        Node(
-            package='murosa_plan_health',
-            executable='arm',
-            name='arm2'
-        ),
     ])

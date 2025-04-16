@@ -9,6 +9,7 @@ import jason.asSyntax.ASSyntax;
 import jason.asSyntax.Literal;
 import jason.asSyntax.Plan;
 import jason.asSyntax.parser.ParseException;
+import ros.Publisher;
 import ros.RosBridge;
 import ros.SubscriptionRequestMsg;
 import ros.msgs.std_msgs.PrimitiveMsg;
@@ -33,6 +34,7 @@ public class DynamicAgent extends AgArch {
             (JsonNode data, String stringRep) -> {
                 MessageUnpacker<PrimitiveMsg<String>> unpacker = new MessageUnpacker<>(PrimitiveMsg.class);
                 PrimitiveMsg<String> msg = unpacker.unpackRosMessage(data);
+                logger.info(msg.data);
                 FIPAMessage decodedMessage = FIPAMessage.decode(msg.data);
 
                 if(decodedMessage.getReceiver().equals(getAgName())) {
@@ -61,6 +63,11 @@ public class DynamicAgent extends AgArch {
                 }
             }
         );
+
+		FIPAMessage message = new FIPAMessage("inform", getAgName(), "coordinator");
+		message.setContent("Ready");
+        Publisher navigation = new Publisher("/agent/coordinator/action", "std_msgs/String", bridge);
+		navigation.publish(new PrimitiveMsg<>(message.encode()));
     };
 
     private void addPlanDynamically(String planStr) {

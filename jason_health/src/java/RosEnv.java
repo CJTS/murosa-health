@@ -87,6 +87,7 @@ public class RosEnv extends Environment {
 				String[] decodedContent = decodedMessage.getContent().split(regex);
 				String agentActionRegex = "[,]";
 				String[] agents = decodedContent[1].split(agentActionRegex);
+				logger.info(msg.data);
 
 				clearPercepts(decodedMessage.getSender());
 
@@ -101,7 +102,13 @@ public class RosEnv extends Environment {
 
 	@Override
 	public boolean executeAction(String agName, Structure action) {
-		logger.info("executing: " + action + ": " + agName + ".");
+		logger.info(agName + " executing -> " + action + ".");
+
+		if (action.getFunctor().equals("end")) {
+			end();
+			return true;
+		}
+		
 		Publisher navigation = new Publisher("/jason/agent/action", "std_msgs/String", bridge);
 		FIPAMessage message = new FIPAMessage("inform", "jason", agName);
 		List<Term> terms = action.getTerms();
@@ -118,7 +125,7 @@ public class RosEnv extends Environment {
 	}
 
 	public void end() {
-		Publisher navigation = new Publisher("/shutdown_signal", "std_msgs/Bool", bridge);
+		Publisher navigation = new Publisher("/jason/shutdown_signal", "std_msgs/Bool", bridge);
 		navigation.publish(new PrimitiveMsg<>(true));
 	}
 

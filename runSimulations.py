@@ -2,10 +2,10 @@ import yaml
 import subprocess
 import time
 
-def runMuRoSAPlanPatrol(index):
+def runMuRoSAPlanPatrol(index, percent, replaning):
     compose_name = 'experiment_trials_' + index + '.yaml'
     with open(f'./trials/{compose_name}', 'w') as file:
-        yaml.dump(get_compose_file(10, False), file)
+        yaml.dump(get_compose_file(percent, replaning), file)
 
     file = open(f'./logs/%s.log' % (index), 'w')
     print('Running simulation %s' % (index))
@@ -42,4 +42,4 @@ def get_compose_file(opened_door, replaning):
 
 print('Simulating')
 for i in range(30):
-    runMuRoSAPlanPatrol('plansys2_%s' % (i + 1))
+    runMuRoSAPlanPatrol('murosa_%s' % (i + 1), 10, False)

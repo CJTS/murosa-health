@@ -1,10 +1,11 @@
 from threading import Thread
 import sys
 import rclpy
-from rclpy.node import Node
-from interfaces.srv import Action
 import json
 import random
+from rclpy.node import Node
+from interfaces.srv import Action
+from std_msgs.msg import Bool
 
 class Environment(Node):
 
@@ -24,13 +25,25 @@ class Environment(Node):
             'doors': {'room1': closed_door[0], 'room2': True, 'room3': closed_door[0], 'room4': True},
             'sample': {'nurse1': False, 'nurse2': False, 'robot1': False, 'robot2': False, 'arm1': False, 'arm2': False}
         }
+        self.start_server()
 
     def start_server(self):
         self.get_logger().info('Starting Environment server')
         self.environment_server = self.create_service(
             Action, 'environment_server', self.receive_message
         )
+
+        # Subscriber para indicar fim da execução
+        self.end_subscription = self.create_subscription(
+            Bool, '/jason/shutdown_signal', self.shutdown_callback, 10
+        )
+
         self.get_logger().info('Environment server started')
+
+    def shutdown_callback(self, msg):
+        if msg.data:
+            self.get_logger().info("Recebido sinal de desligamento, finalizando...")
+            raise SystemExit
 
     def receive_message(self, request, response):
         actionTuple = tuple(request.action.split(','))
@@ -52,14 +65,13 @@ class Environment(Node):
         while rclpy.ok():
             i = 0
 
-
 def main():
     rclpy.init()
     environment = Environment()
-    environment.start_server()
-    spin_thread = Thread(target=rclpy.spin, args=(environment,))
-    spin_thread.start()
-    environment.run()
+    try:
+        rclpy.spin(environment)
+    except SystemExit:
+        rclpy.logging.get_logger("Quitting").info('Done')
     environment.destroy_node()
     rclpy.shutdown()
 

@@ -3,7 +3,7 @@ import json
 import re
 from rclpy.node import Node
 from interfaces.srv import Message, Action, SendPlan
-from std_msgs.msg import String
+from std_msgs.msg import String, Bool
 from murosa_plan_health.helper import FIPAMessage, action_string_to_tuple, action_tuple_to_string
 from murosa_plan_health.BDIParser import generate_bdi
 from murosa_plan_health.FIPAPerformatives import FIPAPerformative
@@ -17,6 +17,9 @@ class Coordinator(Node):
         self.occ_robots = []
         self.occ_arms = []
         self.occ_nurses = []
+        self.ready_robots = []
+        self.ready_arms = []
+        self.ready_nurses = []
         self.missions = []
         self.register_queue = []
         self.samples_queue = []
@@ -51,8 +54,28 @@ class Coordinator(Node):
         while not self.planner_communication_sync_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('planner sync service not available, waiting again...')
 
-    def listener_callback(self):
-        return
+        # Subscriber para indicar fim da execução
+        self.end_subscription = self.create_subscription(
+            Bool, '/jason/shutdown_signal', self.shutdown_callback, 10
+        )
+
+
+    def shutdown_callback(self, msg):
+        if msg.data:
+            self.get_logger().info("Recebido sinal de desligamento, finalizando...")
+            raise SystemExit
+
+    def listener_callback(self, msg):
+        decoded_msg = FIPAMessage.decode(msg.data)
+        self.get_logger().info('I heard: "%s"' % msg.data)
+
+        if decoded_msg.content == 'Ready':
+            if "robot" in decoded_msg.sender:
+                self.ready_robots.append(decoded_msg.sender)
+            elif "arm" in decoded_msg.sender:
+                self.ready_arms.append(decoded_msg.sender)
+            elif "nurse" in decoded_msg.sender:
+                self.ready_nurses.append(decoded_msg.sender)
 
     def execute_callback(self, request, response):
         decoded_msg = FIPAMessage.decode(request.content)
@@ -109,8 +132,8 @@ class Coordinator(Node):
         return agent[:-1]
 
     def get_team(self, nurse):
-        free_arms = list(set(self.arms) - set(self.occ_arms))
-        free_robots = list(set(self.robots) - set(self.occ_robots))
+        free_arms = list(set(self.ready_arms) - set(self.occ_arms))
+        free_robots = list(set(self.ready_robots) - set(self.occ_robots))
 
         if len(free_arms) > 0 and len(free_robots) > 0:
             team = (free_arms[0], self.state['loc'][free_arms[0]], free_robots[0], self.state['loc'][free_robots[0]], nurse, self.state['loc'][nurse])
@@ -259,10 +282,10 @@ class Coordinator(Node):
     def run(self):
         while rclpy.ok():
             rclpy.spin_once(self, timeout_sec=0.001)
-            self.check_env()
             self.register_agents()
             self.register_sample()
             self.fix_missions()
+            self.check_env()
 
     def send_need_plan_request(self, robotid, nurseid, armid):
         self.action_request = Action.Request()
@@ -275,7 +298,6 @@ def main():
     coordinator = Coordinator()
     coordinator.get_logger().info('spin')
     try:
-        # rclpy.spin(coordinator)
         coordinator.run()
     except SystemExit:
         rclpy.logging.get_logger("Quitting").info('Done')

@@ -1,3 +1,6 @@
++start(Arm_, ArmLoc_, Robot_, RobotLoc_, Nurse_, NurseLoc_): true <-
+    +start(Arm_, ArmLoc_, Robot_, RobotLoc_, Nurse_, NurseLoc_).
+    
 +robot_arrived(Robot_, Room_): robot_at(Robot_, Room1_) & nurse_at(Nurse_, Room_) <-
     -robot_at(Robot_, Room1_);
     +robot_at(Robot_, Room_);

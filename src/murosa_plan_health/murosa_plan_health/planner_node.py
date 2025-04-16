@@ -7,6 +7,7 @@ from murosa_plan_health.hospital.domain.hospital_mod_methods import methods
 from murosa_plan_health.hospital.domain.hospital_mod_actions import actions
 from murosa_plan_health.hospital.problem.hospital_mod_problem import init_state
 from murosa_plan_health.ipyhop import IPyHOP
+from std_msgs.msg import Bool
 
 class Planner(Node):
     def __init__(self):
@@ -16,7 +17,18 @@ class Planner(Node):
             Action, 'planner_communication_sync_server', self.receive_sync_message
         )
         self.state = init_state
+
+        # Subscriber para indicar fim da execução
+        self.end_subscription = self.create_subscription(
+            Bool, '/jason/shutdown_signal', self.shutdown_callback, 10
+        )
+
         self.get_logger().info('Planner server started')
+
+    def shutdown_callback(self, msg):
+        if msg.data:
+            self.get_logger().info("Recebido sinal de desligamento, finalizando...")
+            raise SystemExit
 
     def receive_sync_message(self, request, response):
         actionTuple = tuple(request.action.split('|'))
@@ -51,13 +63,15 @@ class Planner(Node):
         response.observation = 'success'
         return response
 
-
 def main():
     rclpy.init()
     planner = Planner()
-    rclpy.spin(planner)
+    try:
+        rclpy.spin(planner)
+    except SystemExit:
+        rclpy.logging.get_logger("Quitting").info('Done')
+    planner.destroy_node()
     rclpy.shutdown()
-
 
 if __name__ == '__main__':
     main()
