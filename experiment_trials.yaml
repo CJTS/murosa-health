@@ -18,8 +18,8 @@ services:
     image: health_ros
     # network_mode: host
     environment:
-      - REPLAN=True
-      - PROBLEM_RATE=100
+      - REPLAN=${REPLAN}
+      - PROBLEM_RATE=${PROBLEM_RATE}
   topic:
     command: bash -c "cd src/murosa_plan_health/launch && ros2 topic echo /coordinator/jason/plan"
     image: health_ros

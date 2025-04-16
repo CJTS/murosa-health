@@ -78,8 +78,8 @@ def generate_bdi(agents, actions, context, variables):
             # Se existem outros agentes
             if len(other_agents) > 0:
                 # Cria o sends para todos os outros agentes
-                success_plan = '; '.join([f".send({agent2}, tell, trigger_{action2_with_params})" for agent2 in other_agents])
-                send_milestone_plan = '; '.join([f".send({agent2}, tell, milestone{str(i)})" for agent2 in other_agents])
+                success_plan = '; '.join([f".send({variables_map[agent2]}, tell, trigger_{action2_with_params})" for agent2 in other_agents])
+                send_milestone_plan = '; '.join([f".send({variables_map[agent2]}, tell, milestone{str(i)})" for agent2 in other_agents])
                 # Verifica se o agente atual esta na lista de proximos agentes
                 if(agent1 in agents2):
                     # Se sim, adiciona a chamada para a proxima ação no plano de sucesso junto dos sends
@@ -116,27 +116,27 @@ def generate_bdi(agents, actions, context, variables):
     return bdies
 
 # # Example usage
-context = "start(Nurse, LockedDoor, Robot, ArmRoom, Arm)"
-# variables = ["Nurse", "LockedDoor", "Robot", "ArmRoom", "Arm"]
-variables = ["Robot", "NurseRoom", "Nurse", "ArmRoom", "Arm"]
-agents = ["nurse1", "arm2", "robot1"]
+# context = "start(Nurse, LockedDoor, Robot, ArmRoom, Arm)"
+# # variables = ["Nurse", "LockedDoor", "Robot", "ArmRoom", "Arm"]
+# variables = ["Robot", "NurseRoom", "Nurse", "ArmRoom", "Arm"]
+# agents = ["nurse1", "arm2", "robot1"]
 
-actions = [
-#    "a_open_door(nurse1,room1)",
-   "a_navto(robot1,room1)",
-   "a_approach_nurse(robot1)",
-   "a_authenticate_nurse(robot1,nurse1)",
-   "a_open_drawer(robot1)",
-   "a_deposit(nurse1,robot1)",
-   "a_close_drawer(robot1)",
-   "a_navto(robot1,room4)",
-   "a_approach_arm(robot1,arm2)",
-   "a_open_drawer(robot1)",
-   "a_pick_up_sample(arm2,robot1)"
-]
+# actions = [
+# #    "a_open_door(nurse1,room1)",
+#    "a_navto(robot1,room1)",
+#    "a_approach_nurse(robot1, nurse1)",
+#    "a_authenticate_nurse(robot1,nurse1)",
+#    "a_open_drawer(robot1)",
+#    "a_deposit(nurse1,robot1)",
+#    "a_close_drawer(robot1)",
+#    "a_navto(robot1,room4)",
+#    "a_approach_arm(robot1,arm2)",
+#    "a_open_drawer(robot1)",
+#    "a_pick_up_sample(arm2,robot1)"
+# ]
 
-bdis = generate_bdi(agents, actions, context, variables)
-for agente, regras in bdis.items():
-    print(f"\n/* {agente} */")
-    for regra in regras:
-        print(regra)
+# bdis = generate_bdi(agents, actions, context, variables)
+# for agente, regras in bdis.items():
+#     print(f"\n/* {agente} */")
+#     for regra in regras:
+#         print(regra)

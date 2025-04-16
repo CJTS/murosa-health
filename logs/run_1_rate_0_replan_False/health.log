@@ -1,0 +1,66 @@
+Error: failed to make pod: adding pod to state: name "pod_murosa-health" is in use: pod already exists
+04e3c90ca8ce594dab921afcfee332d1e9bf1c6c75218938d183de19db11b2ea
+[1;34m[health]    |[0m [INFO] [launch]: All log files can be found below /root/.ros/log/2025-04-16-10-17-58-971514-04e3c90ca8ce-1
+[1;34m[health]    |[0m [INFO] [launch]: Default logging verbosity is set to INFO
+[1;34m[health]    |[0m [INFO] [environment-1]: process started with pid [47]
+[1;34m[health]    |[0m [INFO] [coordinator-2]: process started with pid [49]
+[1;34m[health]    |[0m [INFO] [planner-3]: process started with pid [51]
+[1;34m[health]    |[0m [INFO] [nurse-4]: process started with pid [53]
+[1;34m[health]    |[0m [INFO] [robot-5]: process started with pid [55]
+[1;34m[health]    |[0m [INFO] [arm-6]: process started with pid [57]
+[1;34m[health]    |[0m [environment-1] [INFO] [1744798679.134887572] [environment]: Starting Environment server
+[1;34m[health]    |[0m [environment-1] [INFO] [1744798679.137554278] [environment]: Environment server started
+[1;34m[health]    |[0m [planner-3] [INFO] [1744798679.745220308] [planner]: Starting Planner server
+[1;34m[health]    |[0m [planner-3] [INFO] [1744798679.747355682] [planner]: Planner server started
+[1;34m[health]    |[0m [coordinator-2] [INFO] [1744798679.898662544] [coordinator]: spin
+[1;34m[health]    |[0m [coordinator-2] [INFO] [1744798679.899538168] [coordinator]: Received: Performative=request, Sender=arm, Receiver=Coordinator, Content=Register
+[1;34m[health]    |[0m [coordinator-2] [INFO] [1744798679.900395209] [coordinator]: Received: Performative=request, Sender=nurse, Receiver=Coordinator, Content=Register
+[1;34m[health]    |[0m [coordinator-2] [INFO] [1744798679.900920792] [coordinator]: Received: Performative=request, Sender=robot, Receiver=Coordinator, Content=Register
+[1;34m[health]    |[0m [arm-6] [INFO] [1744798679.910348245] [arm1]: My name is arm1
+[1;34m[health]    |[0m [robot-5] [INFO] [1744798679.910810703] [robot1]: My name is robot1
+[1;34m[health]    |[0m [nurse-4] [INFO] [1744798679.911072119] [nurse1]: My name is nurse1
+[1;34m[health]    |[0m [coordinator-2] [INFO] [1744798684.917543016] [coordinator]: Received: Performative=inform, Sender=nurse1, Receiver=Coordinator, Content=HasSample
+[1;34m[health]    |[0m [coordinator-2] [INFO] [1744798685.013395789] [coordinator]: I heard: "{"performative":"inform","sender":"arm1","receiver":"coordinator","content":"Ready"}"
+[1;34m[health]    |[0m [coordinator-2] [INFO] [1744798685.036452191] [coordinator]: I heard: "{"performative":"inform","sender":"robot1","receiver":"coordinator","content":"Ready"}"
+[1;34m[health]    |[0m [coordinator-2] [INFO] [1744798685.036840899] [coordinator]: arm1,room4,robot1,room2,nurse1,room1
+[1;34m[health]    |[0m [robot-5] [INFO] [1744798685.037624856] [robot1]: I heard: "{"performative": "request", "sender": "Coordinator", "receiver": "robot1", "content": "Start|robot1,room1,nurse1,room4,arm1"}"
+[1;34m[health]    |[0m [nurse-4] [INFO] [1744798685.037668898] [nurse1]: I heard: "{"performative": "request", "sender": "Coordinator", "receiver": "robot1", "content": "Start|robot1,room1,nurse1,room4,arm1"}"
+[1;34m[health]    |[0m [arm-6] [INFO] [1744798685.037788023] [arm1]: I heard: "{"performative": "request", "sender": "Coordinator", "receiver": "robot1", "content": "Start|robot1,room1,nurse1,room4,arm1"}"
+[1;34m[health]    |[0m [robot-5] [INFO] [1744798685.037870273] [robot1]: And it is for me
+[1;34m[health]    |[0m [nurse-4] [INFO] [1744798685.037927481] [nurse1]: And it is not for me
+[1;34m[health]    |[0m [arm-6] [INFO] [1744798685.038052023] [arm1]: And it is not for me
+[1;34m[health]    |[0m [robot-5] [INFO] [1744798685.038294689] [robot1]: I heard: "{"performative": "request", "sender": "Coordinator", "receiver": "nurse1", "content": "Start|robot1,room1,nurse1,room4,arm1"}"
+[1;34m[health]    |[0m [nurse-4] [INFO] [1744798685.038297189] [nurse1]: I heard: "{"performative": "request", "sender": "Coordinator", "receiver": "nurse1", "content": "Start|robot1,room1,nurse1,room4,arm1"}"
+[1;34m[health]    |[0m [nurse-4] [INFO] [1744798685.038520064] [nurse1]: And it is for me
+[1;34m[health]    |[0m [robot-5] [INFO] [1744798685.038542689] [robot1]: And it is not for me
+[1;34m[health]    |[0m [arm-6] [INFO] [1744798685.038619814] [arm1]: I heard: "{"performative": "request", "sender": "Coordinator", "receiver": "nurse1", "content": "Start|robot1,room1,nurse1,room4,arm1"}"
+[1;34m[health]    |[0m [nurse-4] [INFO] [1744798685.038831106] [nurse1]: robot1
+[1;34m[health]    |[0m [arm-6] [INFO] [1744798685.038858564] [arm1]: And it is not for me
+[1;34m[health]    |[0m [robot-5] [INFO] [1744798685.038988856] [robot1]: I heard: "{"performative": "request", "sender": "Coordinator", "receiver": "arm1", "content": "Start|robot1,room1,nurse1,room4,arm1"}"
+[1;34m[health]    |[0m [robot-5] [INFO] [1744798685.039176605] [robot1]: And it is not for me
+[1;34m[health]    |[0m [nurse-4] [INFO] [1744798685.039191855] [nurse1]: I heard: "{"performative": "request", "sender": "Coordinator", "receiver": "arm1", "content": "Start|robot1,room1,nurse1,room4,arm1"}"
+[1;34m[health]    |[0m [nurse-4] [INFO] [1744798685.039403814] [nurse1]: And it is not for me
+[1;34m[health]    |[0m [arm-6] [INFO] [1744798685.039415647] [arm1]: I heard: "{"performative": "request", "sender": "Coordinator", "receiver": "arm1", "content": "Start|robot1,room1,nurse1,room4,arm1"}"
+[1;34m[health]    |[0m [arm-6] [INFO] [1744798685.039615189] [arm1]: And it is for me
+[1;34m[health]    |[0m [coordinator-2] [INFO] [1744798685.057400011] [coordinator]: I heard: "{"performative":"inform","sender":"nurse1","receiver":"coordinator","content":"Ready"}"
+[1;34m[health]    |[0m [nurse-4] [INFO] [1744798685.092003322] [nurse1]: I heard: "{"performative":"inform","sender":"jason","receiver":"robot1","content":"a_navto,robot1,room1"}"
+[1;34m[health]    |[0m [robot-5] [INFO] [1744798685.092011489] [robot1]: I heard: "{"performative":"inform","sender":"jason","receiver":"robot1","content":"a_navto,robot1,room1"}"
+[1;34m[health]    |[0m [robot-5] [INFO] [1744798685.092235322] [robot1]: And it is for me
+[1;34m[health]    |[0m [arm-6] [INFO] [1744798685.092030613] [arm1]: I heard: "{"performative":"inform","sender":"jason","receiver":"robot1","content":"a_navto,robot1,room1"}"
+[1;34m[health]    |[0m [nurse-4] [INFO] [1744798685.092237030] [nurse1]: And it is not for me
+[1;34m[health]    |[0m [arm-6] [INFO] [1744798685.092245280] [arm1]: And it is not for me
+[1;34m[health]    |[0m [robot-5] [INFO] [1744798685.092422613] [robot1]: Acting
+[1;34m[health]    |[0m [robot-5] [INFO] [1744798685.092763613] [robot1]: Doing a_navto
+[1;34m[health]    |[0m [robot-5] [INFO] [1744798685.093019071] [robot1]: Wating for response
+[1;34m[health]    |[0m [robot-5] [INFO] [1744798685.093944529] [robot1]: success
+[1;34m[health]    |[0m [robot-5] [INFO] [1744798685.094245695] [robot1]: Publishing: "{"performative": "inform", "sender": "robot1", "receiver": "Jason", "content": "Success|a_navto,robot1,room1"}"
+[1;34m[health]    |[0m [robot-5] [INFO] [1744798685.242868892] [robot1]: I heard: "{"performative":"inform","sender":"jason","receiver":"robot1","content":"a_approach_nurse,robot1,nurse1"}"
+[1;34m[health]    |[0m [arm-6] [INFO] [1744798685.242923726] [arm1]: I heard: "{"performative":"inform","sender":"jason","receiver":"robot1","content":"a_approach_nurse,robot1,nurse1"}"
+[1;34m[health]    |[0m [nurse-4] [INFO] [1744798685.242966101] [nurse1]: I heard: "{"performative":"inform","sender":"jason","receiver":"robot1","content":"a_approach_nurse,robot1,nurse1"}"
+[1;34m[health]    |[0m [nurse-4] [INFO] [1744798685.243187476] [nurse1]: And it is not for me
+[1;34m[health]    |[0m [robot-5] [INFO] [1744798685.243124976] [robot1]: And it is for me
+[1;34m[health]    |[0m [arm-6] [INFO] [1744798685.243153017] [arm1]: And it is not for me
+[1;34m[health]    |[0m [robot-5] [INFO] [1744798685.243374267] [robot1]: Acting
+[1;34m[health]    |[0m [robot-5] [INFO] [1744798685.243554434] [robot1]: Doing a_approach_nurse
+[1;34m[health]    |[0m [robot-5] [INFO] [1744798685.243821017] [robot1]: Wating for response
+[1;34m[health]    |[0m [robot-5] [INFO] [1744798685.244389850] [robot1]: success

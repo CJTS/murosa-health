@@ -22,12 +22,20 @@ class Planner(Node):
         self.end_subscription = self.create_subscription(
             Bool, '/jason/shutdown_signal', self.shutdown_callback, 10
         )
+        self.end_simulation_subscription = self.create_subscription(
+            Bool, '/coordinator/shutdown_signal', self.end_simulation_callback, 10
+        )
 
         self.get_logger().info('Planner server started')
 
     def shutdown_callback(self, msg):
         if msg.data:
             self.get_logger().info("Recebido sinal de desligamento, finalizando...")
+            raise SystemExit
+        
+    def end_simulation_callback(self, msg):
+        if msg.data:
+            self.get_logger().info("Recebido sinal de falha, finalizando...")
             raise SystemExit
 
     def receive_sync_message(self, request, response):

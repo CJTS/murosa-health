@@ -1,0 +1,81 @@
+Error: failed to make pod: adding pod to state: name "pod_murosa-health" is in use: pod already exists
+8adc9d3566371ac00e61556e7a98bb9e9109b5b829748dcb205718f4100255b1
+[1;34m[health]    |[0m [INFO] [launch]: All log files can be found below /root/.ros/log/2025-04-16-10-21-43-290407-8adc9d356637-1
+[1;34m[health]    |[0m [INFO] [launch]: Default logging verbosity is set to INFO
+[1;34m[health]    |[0m [INFO] [environment-1]: process started with pid [47]
+[1;34m[health]    |[0m [INFO] [coordinator-2]: process started with pid [49]
+[1;34m[health]    |[0m [INFO] [planner-3]: process started with pid [51]
+[1;34m[health]    |[0m [INFO] [nurse-4]: process started with pid [53]
+[1;34m[health]    |[0m [INFO] [robot-5]: process started with pid [55]
+[1;34m[health]    |[0m [INFO] [arm-6]: process started with pid [57]
+[1;34m[health]    |[0m [environment-1] [INFO] [1744798903.462325297] [environment]: Starting Environment server
+[1;34m[health]    |[0m [environment-1] [INFO] [1744798903.464978837] [environment]: Environment server started
+[1;34m[health]    |[0m [planner-3] [INFO] [1744798903.943787699] [planner]: Starting Planner server
+[1;34m[health]    |[0m [planner-3] [INFO] [1744798903.945576531] [planner]: Planner server started
+[1;34m[health]    |[0m [coordinator-2] [INFO] [1744798903.968969850] [coordinator]: spin
+[1;34m[health]    |[0m [coordinator-2] [INFO] [1744798903.969589516] [coordinator]: Received: Performative=request, Sender=arm, Receiver=Coordinator, Content=Register
+[1;34m[health]    |[0m [coordinator-2] [INFO] [1744798903.970171557] [coordinator]: Received: Performative=request, Sender=robot, Receiver=Coordinator, Content=Register
+[1;34m[health]    |[0m [robot-5] [INFO] [1744798903.977321720] [robot1]: My name is robot1
+[1;34m[health]    |[0m [arm-6] [INFO] [1744798903.977321761] [arm1]: My name is arm1
+[1;34m[health]    |[0m [coordinator-2] [INFO] [1744798904.454102666] [coordinator]: Received: Performative=request, Sender=nurse, Receiver=Coordinator, Content=Register
+[1;34m[health]    |[0m [nurse-4] [INFO] [1744798904.461383620] [nurse1]: My name is nurse1
+[1;34m[health]    |[0m [WARNING] [launch]: user interrupted with ctrl-c (SIGINT)
+[1;34m[health]    |[0m [INFO] [arm-6]: sending signal 'SIGINT' to process[arm-6]
+[1;34m[health]    |[0m [INFO] [robot-5]: sending signal 'SIGINT' to process[robot-5]
+[1;34m[health]    |[0m [INFO] [nurse-4]: sending signal 'SIGINT' to process[nurse-4]
+[1;34m[health]    |[0m [INFO] [planner-3]: sending signal 'SIGINT' to process[planner-3]
+[1;34m[health]    |[0m [INFO] [coordinator-2]: sending signal 'SIGINT' to process[coordinator-2]
+[1;34m[health]    |[0m [INFO] [environment-1]: sending signal 'SIGINT' to process[environment-1]
+[1;34m[health]    |[0m [arm-6] Traceback (most recent call last):
+[1;34m[health]    |[0m [arm-6]   File "/opt/ros/overlay_ws/install/murosa_plan_health/lib/murosa_plan_health/arm", line 33, in <module>
+[1;34m[health]    |[0m [arm-6]     sys.exit(load_entry_point('murosa-plan-health', 'console_scripts', 'arm')())
+[1;34m[health]    |[0m [arm-6]   File "/opt/ros/overlay_ws/build/murosa_plan_health/murosa_plan_health/agents/arm_node.py", line 45, in main
+[1;34m[health]    |[0m [arm-6]     arm.run()
+[1;34m[health]    |[0m [arm-6]   File "/opt/ros/overlay_ws/build/murosa_plan_health/murosa_plan_health/agent.py", line 179, in run
+[1;34m[health]    |[0m [arm-6]     rclpy.spin_once(self, timeout_sec=0.001)
+[1;34m[health]    |[0m [arm-6]   File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 206, in spin_once
+[1;34m[health]    |[0m [arm-6]     executor.spin_once(timeout_sec=timeout_sec)
+[1;34m[health]    |[0m [arm-6]   File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 751, in spin_once
+[1;34m[health]    |[0m [robot-5] Traceback (most recent call last):
+[1;34m[health]    |[0m [robot-5]   File "/opt/ros/overlay_ws/install/murosa_plan_health/lib/murosa_plan_health/robot", line 33, in <module>
+[1;34m[health]    |[0m [robot-5]     sys.exit(load_entry_point('murosa-plan-health', 'console_scripts', 'robot')())
+[1;34m[health]    |[0m [robot-5]   File "/opt/ros/overlay_ws/build/murosa_plan_health/murosa_plan_health/agents/robot_node.py", line 127, in main
+[1;34m[health]    |[0m [robot-5]     robot.run()
+[1;34m[health]    |[0m [robot-5]   File "/opt/ros/overlay_ws/build/murosa_plan_health/murosa_plan_health/agent.py", line 179, in run
+[1;34m[health]    |[0m [robot-5]     rclpy.spin_once(self, timeout_sec=0.001)
+[1;34m[health]    |[0m [robot-5]   File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/__init__.py", line 206, in spin_once
+[1;34m[health]    |[0m [robot-5]     executor.spin_once(timeout_sec=timeout_sec)
+[1;34m[health]    |[0m [robot-5]   File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 751, in spin_once
+[1;34m[health]    |[0m [robot-5]     self._spin_once_impl(timeout_sec)
+[1;34m[health]    |[0m [robot-5]   File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 740, in _spin_once_impl
+[1;34m[health]    |[0m [robot-5]     handler, entity, node = self.wait_for_ready_callbacks(timeout_sec=timeout_sec)
+[1;34m[health]    |[0m [robot-5]   File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 723, in wait_for_ready_callbacks
+[1;34m[health]    |[0m [robot-5]     return next(self._cb_iter)
+[1;34m[health]    |[0m [robot-5]   File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 642, in _wait_for_ready_callbacks
+[1;34m[health]    |[0m [arm-6]     self._spin_once_impl(timeout_sec)
+[1;34m[health]    |[0m [arm-6]   File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 740, in _spin_once_impl
+[1;34m[health]    |[0m [arm-6]     handler, entity, node = self.wait_for_ready_callbacks(timeout_sec=timeout_sec)
+[1;34m[health]    |[0m [arm-6]   File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 723, in wait_for_ready_callbacks
+[1;34m[health]    |[0m [robot-5]     if wt in waitables and wt.is_ready(wait_set):
+[1;34m[health]    |[0m [robot-5]   File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/qos_event.py", line 86, in is_ready
+[1;34m[health]    |[0m [robot-5]     def is_ready(self, wait_set):
+[1;34m[health]    |[0m [robot-5] KeyboardInterrupt
+[1;34m[health]    |[0m [arm-6]     return next(self._cb_iter)
+[1;34m[health]    |[0m [arm-6]   File "/opt/ros/humble/local/lib/python3.10/dist-packages/rclpy/executors.py", line 620, in _wait_for_ready_callbacks
+[1;34m[health]    |[0m [arm-6]     wait_set.wait(timeout_nsec)
+[1;34m[health]    |[0m [arm-6] KeyboardInterrupt
+[1;34m[health]    |[0m [nurse-4] Traceback (most recent call last):
+[1;34m[health]    |[0m [nurse-4]   File "/opt/ros/overlay_ws/install/murosa_plan_health/lib/murosa_plan_health/nurse", line 33, in <module>
+[1;34m[health]    |[0m [nurse-4]     sys.exit(load_entry_point('murosa-plan-health', 'console_scripts', 'nurse')())
+[1;34m[health]    |[0m [nurse-4]   File "/opt/ros/overlay_ws/build/murosa_plan_health/murosa_plan_health/agents/nurse_node.py", line 100, in main
+[1;34m[health]    |[0m [nurse-4]     nurse = Nurse('Nurse')
+[1;34m[health]    |[0m [nurse-4]   File "/opt/ros/overlay_ws/build/murosa_plan_health/murosa_plan_health/agents/nurse_node.py", line 16, in __init__
+[1;34m[health]    |[0m [nurse-4]     self.run()
+[1;34m[health]    |[0m [nurse-4]   File "/opt/ros/overlay_ws/build/murosa_plan_health/murosa_plan_health/agents/nurse_node.py", line 24, in run
+[1;34m[health]    |[0m [nurse-4]     time.sleep(seconds)
+[1;34m[health]    |[0m [nurse-4] KeyboardInterrupt
+[1;34m[health]    |[0m [coordinator-2] Traceback (most recent call last):
+[1;34m[health]    |[0m [coordinator-2]   File "/opt/ros/overlay_ws/install/murosa_plan_health/lib/murosa_plan_health/coordinator", line 33, in <module>
+[1;34m[health]    |[0m [coordinator-2]     sys.exit(load_entry_point('murosa-plan-health', 'console_scripts', 'coordinator')())
+[1;34m[health]    |[0m [coordinator-2]   File "/opt/ros/overlay_ws/build/murosa_plan_health/murosa_plan_health/agents/coordinator_node.py", line 301, in main
+[1;34m[health]    |[0m [coordinator-2]     coordinator.run()

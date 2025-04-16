@@ -58,6 +58,7 @@ class Coordinator(Node):
         self.end_subscription = self.create_subscription(
             Bool, '/jason/shutdown_signal', self.shutdown_callback, 10
         )
+        self.end_publisher = self.create_publisher(String, '/coordinator/shutdown_signal', 10)
 
 
     def shutdown_callback(self, msg):
@@ -284,8 +285,15 @@ class Coordinator(Node):
             rclpy.spin_once(self, timeout_sec=0.001)
             self.register_agents()
             self.register_sample()
-            self.fix_missions()
+            if self.should_replan:
+                self.fix_missions()
+            else:
+                self.end_simulation();
             self.check_env()
+
+    def end_simulation(self):
+        self.get_logger().info('Ending simulation')
+        self.get_logger().info('Simulation ended')
 
     def send_need_plan_request(self, robotid, nurseid, armid):
         self.action_request = Action.Request()

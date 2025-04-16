@@ -47,6 +47,9 @@ class Agent(Node):
         self.end_subscription = self.create_subscription(
             Bool, '/jason/shutdown_signal', self.shutdown_callback, 10
         )
+        self.end_simulation_subscription = self.create_subscription(
+            Bool, '/coordinator/shutdown_signal', self.end_simulation_callback, 10
+        )
 
         # Publisher para falar com outros agentes
         self.agents_publisher = self.create_publisher(String, '/agent/agent/action', 10)
@@ -104,6 +107,12 @@ class Agent(Node):
     def shutdown_callback(self, msg):
         if msg.data:
             self.get_logger().info("Recebido sinal de desligamento, finalizando...")
+            self.get_logger().info("Success")
+            raise SystemExit
+        
+    def end_simulation_callback(self, msg):
+        if msg.data:
+            self.get_logger().info("Recebido sinal de falha, finalizando...")
             raise SystemExit
 
     def ask_for_agent(self, agent, action):

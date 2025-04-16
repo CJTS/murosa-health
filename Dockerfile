@@ -66,13 +66,8 @@ RUN pip3 install -r ./src/murosa_plan_health/requirements.txt
 
 COPY jason_health/ jason_health/
 COPY gradle-7.4/ /app/gradle-7.4
-COPY entrypoint.sh entrypoint.sh
 
 ENV GRADLE_HOME=/app/gradle-7.4
 ENV PATH=$PATH:$GRADLE_HOME/bin
 ENV PYTHONPATH "${PYTHONPATH}:./src/murosa_plan_health/murosa_plan_health"
 ENV JAVA_HOME /usr/lib/jvm/java-17-openjdk-arm64/
-
-RUN chmod +x entrypoint.sh
-
-# ENTRYPOINT ["./entrypoint.sh"]
