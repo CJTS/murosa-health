@@ -35,6 +35,7 @@ def start_services(run_number, problem_rate, replan):
         stdout=rosbridge_log,
         stderr=subprocess.STDOUT
     )
+    time.sleep(5)
 
     # Start gradle application
     print("Starting gradle application...")
@@ -45,8 +46,7 @@ def start_services(run_number, problem_rate, replan):
         stdout=gradle_log,
         stderr=subprocess.STDOUT
     )
-
-    time.sleep(10)
+    time.sleep(5)
     
     # Start health service
     print("Starting health service...")
