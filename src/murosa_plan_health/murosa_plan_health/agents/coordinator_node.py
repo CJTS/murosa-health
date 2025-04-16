@@ -123,7 +123,7 @@ class Coordinator(Node):
         
         for agent in [robot, nurse, arm]:
             msg = String()
-            msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent, 'Start|' + ','.join(team)).encode()
+            msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent, 'Start|' + ','.join([robot, team[5], nurse, team[1], arm])).encode()
             self.agent_publisher.publish(msg)
 
         return

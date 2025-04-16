@@ -11,7 +11,7 @@ wait_for_service() {
     local port=$2
     while ! nc -z "$host" "$port"; do
         echo "Esperando pelo serviço em $host:$port..."
-        sleep 2
+        sleep 10
     done
 }
 
@@ -32,7 +32,7 @@ gradle run &
 jason_pid=$!
 
 # Aguarda alguns segundos para garantir que o Jason esteja rodando
-sleep 10
+sleep 20
 
 # Inicia o murosa_plan_health em segundo plano
 echo "Iniciando o murosa_plan_health..."

@@ -115,28 +115,28 @@ def generate_bdi(agents, actions, context, variables):
 
     return bdies
 
-# Example usage
-# context = "start(Nurse, LockedDoor, Robot, ArmRoom, Arm)"
+# # Example usage
+context = "start(Nurse, LockedDoor, Robot, ArmRoom, Arm)"
 # variables = ["Nurse", "LockedDoor", "Robot", "ArmRoom", "Arm"]
-# # variables = ["Robot", "NurseRoom", "Nurse", "ArmRoom", "Arm"]
-# agents = ["nurse1", "arm2", "robot1"]
+variables = ["Robot", "NurseRoom", "Nurse", "ArmRoom", "Arm"]
+agents = ["nurse1", "arm2", "robot1"]
 
-# actions = [
+actions = [
 #    "a_open_door(nurse1,room1)",
-#    "a_navto(robot1,room1)",
-#    "a_approach_nurse(robot1)",
-#    "a_authenticate_nurse(robot1,nurse1)",
-#    "a_open_drawer(robot1)",
-#    "a_deposit(nurse1,robot1)",
-#    "a_close_drawer(robot1)",
-#    "a_navto(robot1,room4)",
-#    "a_approach_arm(robot1,arm2)",
-#    "a_open_drawer(robot1)",
-#    "a_pick_up_sample(arm2,robot1)"
-# ]
+   "a_navto(robot1,room1)",
+   "a_approach_nurse(robot1)",
+   "a_authenticate_nurse(robot1,nurse1)",
+   "a_open_drawer(robot1)",
+   "a_deposit(nurse1,robot1)",
+   "a_close_drawer(robot1)",
+   "a_navto(robot1,room4)",
+   "a_approach_arm(robot1,arm2)",
+   "a_open_drawer(robot1)",
+   "a_pick_up_sample(arm2,robot1)"
+]
 
-# bdis = generate_bdi(agents, actions, context, variables)
-# for agente, regras in bdis.items():
-#     print(f"\n/* {agente} */")
-#     for regra in regras:
-#         print(regra)
+bdis = generate_bdi(agents, actions, context, variables)
+for agente, regras in bdis.items():
+    print(f"\n/* {agente} */")
+    for regra in regras:
+        print(regra)

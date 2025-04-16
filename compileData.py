@@ -44,7 +44,7 @@ def check_simulation_replan_need(index):
 
 print('Compiling')
 for i in range(30):
-    readFiles('plansys2_%s' % (i + 1))
+    readFiles('murosa_%s' % (i + 1))
 
 with open(f'./result.json', 'w') as file:
     json.dump(trials, file)

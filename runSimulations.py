@@ -12,11 +12,12 @@ def runMuRoSAPlanPatrol(index, percent, replaning):
 
     subprocess.run('podman machine stop', shell=True)
     subprocess.run('podman machine start', shell=True)
+    subprocess.run('podman rm -f -a && podman pod rm -f -a', shell=True)
     up_docker_controller_str = f'podman-compose -f ./trials/{compose_name} up run'
     subprocess.Popen([up_docker_controller_str], stdout=file, stderr=file, shell=True)
     start = time.time()
     runtime = time.time()
-    simulation_timeout_s = 60
+    simulation_timeout_s = 100
     while (runtime - start) <= simulation_timeout_s:
         runtime = time.time()
     print('Stopping simulation %s' % (index))
@@ -31,7 +32,7 @@ def get_compose_file(opened_door, replaning):
         'version': "2.3",
         'services': {
             'run':  {
-                'image': 'planner_nodes',
+                'image': 'health_ros',
                 'environment': [
                     'REPLAN=' + str(replaning),
                     'PROBLEM_RATE=' + str(opened_door)
@@ -41,5 +42,5 @@ def get_compose_file(opened_door, replaning):
     }
 
 print('Simulating')
-for i in range(30):
+for i in range(1):
     runMuRoSAPlanPatrol('murosa_%s' % (i + 1), 10, False)
