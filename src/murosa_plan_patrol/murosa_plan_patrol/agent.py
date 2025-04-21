@@ -108,17 +108,11 @@ class Agent(Node):
         if msg.data:
             self.get_logger().info("Recebido sinal de desligamento, finalizando...")
             self.get_logger().info("Success")
-            msg = String()
-            msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, self.agentName, 'Jason', 'End|' + self.agentName).encode()
-            self.publisher.publish(msg)
             raise SystemExit
         
     def end_simulation_callback(self, msg):
         if msg.data:
             self.get_logger().info("Recebido sinal de falha, finalizando...")
-            msg = String()
-            msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, self.agentName, 'Jason', 'End|' + self.agentName).encode()
-            self.publisher.publish(msg)
             raise SystemExit
 
     def ask_for_agent(self, agent, action):

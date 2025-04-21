@@ -36,3 +36,30 @@ Publish and read topics
 
 ```ros2 topic pub /move_base/move std_msgs/String "data: Hello World"```
 ```ros2 topic echo /move_base/move```
+
+# WSL
+
+## Build
+
+```colcon build --symlink-install```
+
+## Run
+
+To run the program you need to run ROS Bridge and Jason before.
+
+### ROS Bridge
+```ros2 launch rosbridge_server rosbridge_websocket_launch.xml```
+
+### Jason
+```cd jason_health```
+```./gradlew run```
+
+Then source the build, set the ENV variables REPLAN and PROBLEM_RATE, run the coordinator, and run one of the cases
+```source install/local_setup.bash```
+```ros2 launch coordinator planning.launch.py```
+
+### Health
+```ros2 launch murosa_plan_health planning.launch.py```
+
+### Patrol
+```ros2 launch murosa_plan_patrol planning.launch.py```

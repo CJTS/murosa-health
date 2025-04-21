@@ -95,6 +95,10 @@ public class RosEnv extends Environment {
 					if(decodedContent[0].equals("Success")) {
 						addPercept(decodedMessage.getSender(), Literal.parseLiteral("success_" + formatFunction(agents) + ")"));
 					}
+				} else if (decodedMessage.getPerformative().equals("request")) {
+					if (decodedContent[0].equals("End")) {
+						getEnvironmentInfraTier().getRuntimeServices().killAgent(decodedContent[1], "", 0);
+					}
 				}
 			}
 		);

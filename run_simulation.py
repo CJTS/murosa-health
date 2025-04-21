@@ -13,11 +13,6 @@ def setup_log_directory(run_number, problem_rate, replan):
     log_dir.mkdir(parents=True, exist_ok=True)
     return log_dir
 
-def cleanup_containers():
-    """Remove all existing containers and pods"""
-    subprocess.run(["podman", "rm", "-f", "-a"], check=False)
-    subprocess.run(["podman", "pod", "rm", "-f", "-a"], check=False)
-
 def start_services(run_number, problem_rate, replan):
     """Start all required services and return their process objects"""
     processes = {}
@@ -28,35 +23,35 @@ def start_services(run_number, problem_rate, replan):
     os.environ['REPLAN'] = str(replan)
     
     # Start rosbridge
-    print("Starting rosbridge...")
-    rosbridge_log = open(log_dir / "rosbridge.log", "w")
-    processes["rosbridge"] = subprocess.Popen(
-        ["podman-compose", "-f", "experiment_trials.yaml", "up", "rosbridge"],
-        stdout=rosbridge_log,
-        stderr=subprocess.STDOUT
-    )
-    time.sleep(5)
+    # print("Starting rosbridge...")
+    # rosbridge_log = open(log_dir / "rosbridge.log", "w")
+    # processes["rosbridge"] = subprocess.Popen(
+    #     ["ros2", "launch", "rosbridge_server", "rosbridge_websocket_launch.xml"],
+    #     stdout=rosbridge_log,
+    #     stderr=subprocess.STDOUT
+    # )
+    # time.sleep(5)
 
     # Start gradle application
-    print("Starting gradle application...")
-    gradle_log = open(log_dir / "gradle.log", "w")
-    processes["gradle"] = subprocess.Popen(
-        ["./gradlew", "run"],
-        cwd="jason_health",
-        stdout=gradle_log,
-        stderr=subprocess.STDOUT
-    )
-    time.sleep(5)
+    # print("Starting gradle application...")
+    # gradle_log = open(log_dir / "gradle.log", "w")
+    # processes["gradle"] = subprocess.Popen(
+    #     ["./gradlew", "run"],
+    #     cwd="jason_health",
+    #     stdout=gradle_log,
+    #     stderr=subprocess.STDOUT
+    # )
+    # time.sleep(5)
     
     # Start health service
     print("Starting health service...")
     health_log = open(log_dir / "health.log", "w")
     processes["health"] = subprocess.Popen(
-        ["podman-compose", "-f", "experiment_trials.yaml", "up", "health"],
+        ["ros2", "launch", "murosa_plan_health", "planning.launch.py"],
         stdout=health_log,
         stderr=subprocess.STDOUT
     )
-    
+
     return processes
 
 def cleanup_processes(processes):
@@ -86,7 +81,7 @@ def analyze_health_log(run_number, runtime, problem_rate, replan):
         with open(log_path, 'r') as f:
             log_content = f.read()
             results["had_failure"] = "failure" in log_content.lower()
-            results["successful_termination"] = "Success" in log_content
+            results["successful_termination"] = "Recebido sinal de desligamento, finalizando..." in log_content
     except FileNotFoundError:
         print(f"Warning: Could not find health log for run {run_number}")
     
@@ -125,6 +120,7 @@ def run_simulation_with_timeout(run_number, processes, problem_rate, replan):
                 f.write("Simulation was terminated due to timeout\n")
 
 def main():
+    processes = {}
     try:
         # Create main logs directory
         Path("logs").mkdir(exist_ok=True)
@@ -137,9 +133,8 @@ def main():
         for problem_rate in problem_rates:
             for replan in replan_values:
                 for _ in range(30):  # 30 runs for each combination
-                    print(f"\nStarting simulation run {run_number}/150")
+                    print(f"\nStarting simulation run {run_number}/300")
                     print(f"Problem Rate: {problem_rate}, Replan: {replan}")
-                    cleanup_containers()
                     
                     print("All services started. Press Ctrl+C to stop all services.")
                     print(f"Logs are being written to the 'logs/run_{run_number}_rate_{problem_rate}_replan_{replan}' directory.")

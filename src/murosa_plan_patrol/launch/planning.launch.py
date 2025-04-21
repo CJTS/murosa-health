@@ -1,17 +1,18 @@
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
+from launch.actions import DeclareLaunchArgument, RegisterEventHandler, LogInfo
 from launch.substitutions import EnvironmentVariable, LaunchConfiguration
 from launch_ros.actions import Node
- 
+from launch.event_handlers import OnProcessExit
+
 def generate_launch_description():
     problem_rate_launch_arg = DeclareLaunchArgument(
         'problem_rate', default_value=EnvironmentVariable('PROBLEM_RATE')
     )
 
-    return LaunchDescription([
+    ld = LaunchDescription([
         problem_rate_launch_arg,
         Node(
-            package='murosa_plan_health',
+            package='murosa_plan_patrol',
             executable='environment',
             name=['environment'],
             parameters=[{
@@ -19,23 +20,15 @@ def generate_launch_description():
             }]
         ),
         Node(
-            package='murosa_plan_health',
+            package='murosa_plan_patrol',
             executable='planner',
             name='planner'
         ),
         Node(
-            package='murosa_plan_health',
-            executable='nurse',
-            name='nurse'
-        ),
-        Node(
-            package='murosa_plan_health',
+            package='murosa_plan_patrol',
             executable='robot',
             name='robot'
         ),
-        Node(
-            package='murosa_plan_health',
-            executable='arm',
-            name='arm'
-        ),
     ])
+
+    return ld

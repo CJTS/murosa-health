@@ -84,4 +84,9 @@ public class DynamicAgent extends AgArch {
             System.err.println("Error: " + e.getMessage());
         }
     }
+
+    @Override
+    public void stop() {
+        bridge.closeConnection();
+    }
 }

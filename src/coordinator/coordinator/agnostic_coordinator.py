@@ -1,28 +1,20 @@
 import rclpy
 import json
-import re
 from rclpy.node import Node
-from interfaces.srv import Message, Action, SendPlan
+from interfaces.srv import Message, Action
 from std_msgs.msg import String, Bool
-from murosa_plan_health.helper import FIPAMessage, action_string_to_tuple, action_tuple_to_string
-from murosa_plan_health.BDIParser import generate_bdi
-from murosa_plan_health.FIPAPerformatives import FIPAPerformative
+from coordinator.helper import FIPAMessage, action_string_to_tuple, action_tuple_to_string
+from coordinator.BDIParser import generate_bdi
+from coordinator.FIPAPerformatives import FIPAPerformative
 
-class Coordinator(Node):
-    def __init__(self):
-        super().__init__('Coordinator')
-        self.robots = []
-        self.arms = []
-        self.nurses = []
-        self.occ_robots = []
-        self.occ_arms = []
-        self.occ_nurses = []
-        self.ready_robots = []
-        self.ready_arms = []
-        self.ready_nurses = []
+class AgnosticCoordinator(Node):
+    def __init__(self, Name):
+        super().__init__('AgnosticCoordinator')
+        # List of missions
         self.missions = []
+        # List of messages to be sent to the agents
         self.register_queue = []
-        self.samples_queue = []
+        # List of missions that have errors
         self.missions_with_error = []
         self.declare_parameter('replan', rclpy.Parameter.Type.BOOL)
         replan_param = self.get_parameter('replan').get_parameter_value().bool_value
@@ -60,44 +52,28 @@ class Coordinator(Node):
         )
         self.end_publisher = self.create_publisher(Bool, '/coordinator/shutdown_signal', 10)
 
-
     def shutdown_callback(self, msg):
         if msg.data:
             self.get_logger().info("Recebido sinal de desligamento, finalizando...")
             raise SystemExit
-
+        
     def listener_callback(self, msg):
         decoded_msg = FIPAMessage.decode(msg.data)
         self.get_logger().info('I heard: "%s"' % msg.data)
 
         if decoded_msg.content == 'Ready':
-            if "robot" in decoded_msg.sender:
-                self.ready_robots.append(decoded_msg.sender)
-            elif "arm" in decoded_msg.sender:
-                self.ready_arms.append(decoded_msg.sender)
-            elif "nurse" in decoded_msg.sender:
-                self.ready_nurses.append(decoded_msg.sender)
+            self.set_agent_ready(decoded_msg)
+
+    def set_agent_ready(self, decoded_msg):
+        raise NotImplementedError("This method should be implemented by the subclass")
 
     def execute_callback(self, request, response):
         decoded_msg = FIPAMessage.decode(request.content)
 
         if decoded_msg.performative == FIPAPerformative.REQUEST.value:
             if decoded_msg.content == 'Register':
-                if 'arm' in decoded_msg.sender:
-                    id = str(len(self.arms) + 1)
-                    response.response = id
-                    self.arms.append(decoded_msg.sender + id)
-                elif 'robot' in decoded_msg.sender:
-                    id = str(len(self.robots) + 1)
-                    response.response = id
-                    self.robots.append(decoded_msg.sender + id)
-                elif 'nurse' in decoded_msg.sender:
-                    id = str(len(self.nurses) + 1)
-                    response.response = id
-                    self.nurses.append(decoded_msg.sender + id)
-                self.register_queue.append(decoded_msg.sender + id)
-            elif decoded_msg.content == 'HasSample':
-                self.samples_queue.append('Belief|nurse_has_sample(' + decoded_msg.sender + ')')
+                response.response = self.register_agent(decoded_msg)
+                self.register_queue.append(decoded_msg.sender + response.response)
         elif decoded_msg.performative == FIPAPerformative.INFORM.value:
             if "ERROR" in decoded_msg.content:
                 self.get_logger().info('Error found')
@@ -109,43 +85,38 @@ class Coordinator(Node):
         self.get_logger().info(f'Received: Performative={decoded_msg.performative}, Sender={decoded_msg.sender}, Receiver={decoded_msg.receiver}, Content={decoded_msg.content}')
         return response
 
-    def start_mission(self, nurse):
-        team = self.get_team(nurse)
+    def register_agent(self, decoded_msg):
+        raise NotImplementedError("This method should be implemented by the subclass")
+
+    def start_mission(self):
+        team = self.get_team()
 
         if(team == None):
-            print("No current team available")
+            self.get_logger().info("No team to start mission")
             return
-        
-        arm = team[0]
-        robot = team[2]
-        nurse = team[4]
 
         self.get_logger().info(",".join(team))
-        
-        for agent in [robot, nurse, arm]:
-            msg = String()
-            msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent, 'Start|' + ','.join([robot, team[5], nurse, team[1], arm])).encode()
-            self.agent_publisher.publish(msg)
+        start_context = self.get_start_context(team)
 
-        return
+        if(start_context == None):
+            self.get_logger().info("Not possible to start mission")
+            return
+        
+        for agent in team:
+            msg = String()
+            msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent, 'Start|' + ','.join(start_context)).encode()
+            self.agent_publisher.publish(msg)
+    
+    def get_team(self):
+        raise NotImplementedError("This method should be implemented by the subclass")
+
+    def get_start_context(self, team):
+        raise NotImplementedError("This method should be implemented by the subclass")
 
     def get_agent_class(self, agent):
+        # TODO only works for agents from 1 to 9
         return agent[:-1]
-
-    def get_team(self, nurse):
-        free_arms = list(set(self.ready_arms) - set(self.occ_arms))
-        free_robots = list(set(self.ready_robots) - set(self.occ_robots))
-
-        if len(free_arms) > 0 and len(free_robots) > 0:
-            team = (free_arms[0], self.state['loc'][free_arms[0]], free_robots[0], self.state['loc'][free_robots[0]], nurse, self.state['loc'][nurse])
-            self.occ_arms.append(free_arms[0])
-            self.occ_robots.append(free_robots[0])
-            self.occ_nurses.append(nurse)
-            self.missions.append(team)
-            return team
-
-        return None
-
+    
     def send_monitor_state_request(self, action):
         self.update_state_request = Action.Request()
         self.update_state_request.action = action
@@ -158,11 +129,11 @@ class Coordinator(Node):
         self.state = json.loads(response.observation)
 
         self.update_planner_state(response.observation)
+        self.verify_initial_trigger()
 
-        for key, value in self.state['sample'].items():
-            if value and all(key not in team for team in self.missions):
-                self.start_mission(key)
-
+    def verify_initial_trigger(self):
+        raise NotImplementedError("This method should be implemented by the subclass")
+    
     def send_update_state_request(self, state):
         self.update_state_request = Action.Request()
         self.update_state_request.action = state
@@ -180,27 +151,19 @@ class Coordinator(Node):
             msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', 'Jason', 'Create|' + agent).encode()
             self.jason_publisher.publish(msg)
 
-    def register_sample(self):
-        if(len(self.samples_queue) > 0):
-            sample = self.samples_queue.pop()
-            msg = String()
-            msg.data = FIPAMessage(FIPAPerformative.INFORM.value, 'Coordinator', 'Jason', sample).encode()
-            self.jason_publisher.publish(msg)
+    def fix_plan(self, context):
+        # NOT AGNOSTIC
+        self.get_logger().info(",".join(context))
+        team = self.get_team_from_context(context)
 
-    def fix_plan(self, mission):
-        self.get_logger().info(",".join(mission))
-
-        arm = mission[0]
-        robot = mission[2]
-        nurse = mission[4]
-        self.get_logger().info('Creating plan for: %s, %s, %s ' % (
-            robot, nurse, arm
+        self.get_logger().info('Creating plan for: %s ' % (
+            team.join(', ')
         ))
-        future = self.send_need_plan_request(robot, nurse, arm)
+        future = self.send_need_plan_request(team)
         rclpy.spin_until_future_complete(self, future)
         plan_response = future.result()
-        self.get_logger().info('Plan received for: %s, %s, %s ' % (
-            robot, nurse, arm
+        self.get_logger().info('Plan received for: %s ' % (
+            team.join(', ')
         ))
         self.get_logger().info(plan_response.observation)
         self.current_plan = plan_response.observation.split('/')
@@ -214,11 +177,9 @@ class Coordinator(Node):
                 if param not in start:
                     start.append(param)
 
-        context = "start(Nurse, LockedDoor, Robot, ArmRoom, Arm)"
-        variables = ["Nurse", "LockedDoor", "Robot", "ArmRoom", "Arm"]
-        bdies = generate_bdi([robot, nurse, arm], formated_plan, context, variables)
+        bdies = generate_bdi(team, formated_plan, self.mission_context, self.variables)
         for agent, rules in bdies.items():
-            plans = [f"+{context}: true <- +{context}."]
+            plans = [f"+{self.mission_context}: true <- +{self.mission_context}."]
             for rule in rules:
                 plans.append(rule)
             msg = String()
@@ -227,52 +188,41 @@ class Coordinator(Node):
 
         start_msg = "initial_trigger_" + formated_plan[0] + "."
 
-        for agent in [robot, nurse, arm]:
+        for agent in team:
             msg = String()
             msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent, 'Start|' + ','.join(start)).encode()
             self.agent_publisher.publish(msg)
 
         splitted_action = self.current_plan[0].split(',')
+    
         for initial_agents in splitted_action[1:len(splitted_action)]:
             msg = String()
             msg.data = FIPAMessage(FIPAPerformative.INFORM.value, 'Coordinator', initial_agents, 'Belief|' + start_msg).encode()
             self.agent_publisher.publish(msg)
 
-    def split_plans(self, nurse, robot, arm):
-        self.nursesActions = []
-        self.robotsActions = []
-        self.armsActions = []
+    def get_team_from_context(self, context):
+        raise NotImplementedError("This method should be implemented by the subclass")
+
+    def split_plans(self, team):
         tuples = map(action_string_to_tuple, self.current_plan)
 
-        for action in tuples:
-            if nurse in action:
-                self.nursesActions.append(action)
-            if robot in action:
-                self.robotsActions.append(action)
-            if arm in action:
-                self.armsActions.append(action)
+        for agent in team:
+            self.agents_actions[agent] = []
 
-        self.plans_actions = len(self.robotsActions)
+            for action in tuples:
+                if agent in action:
+                    self.agents_actions[agent].append(action)
 
-    def send_plans_request(self, nurse, robot, arm):
+    def send_plans_request(self, team):
+        # NOT AGNOSTIC
         self.get_logger().info('Sending plans')
-        send_plan_request_nurse = String()
-        send_plan_request_nurse.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', nurse, 'Plan|' + '/'.join(list(map(
-            action_tuple_to_string, self.nursesActions
-        )))).encode()
-        self.agent_publisher.publish(send_plan_request_nurse)
+        for agent in team:
+            send_plan_request_nurse = String()
+            send_plan_request_nurse.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent, 'Plan|' + '/'.join(list(map(
+                action_tuple_to_string, self.agents_actions[agent]
+            )))).encode()
+            self.agent_publisher.publish(send_plan_request_nurse)
 
-        send_plan_request_robot = String()
-        send_plan_request_robot.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', robot, 'Plan|' + '/'.join(list(map(
-            action_tuple_to_string, self.robotsActions
-        )))).encode()
-        self.agent_publisher.publish(send_plan_request_robot)
-
-        send_plan_request_arm = String()
-        send_plan_request_arm.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', arm, 'Plan|' + '/'.join(list(map(
-            action_tuple_to_string, self.armsActions
-        )))).encode()
-        self.agent_publisher.publish(send_plan_request_arm)
         self.get_logger().info('Plans sent')
 
     def fix_missions(self):
@@ -282,14 +232,6 @@ class Coordinator(Node):
                 self.fix_plan(mission)
             else:
                 self.end_simulation();
-
-    def run(self):
-        while rclpy.ok():
-            rclpy.spin_once(self, timeout_sec=0.001)
-            self.register_agents()
-            self.register_sample()
-            self.fix_missions()
-            self.check_env()
 
     def end_simulation(self):
         self.get_logger().info('Ending simulation')
@@ -304,17 +246,9 @@ class Coordinator(Node):
             ('need_plan', robotid, nurseid, armid))
         return self.planner_communication_sync_client.call_async(self.action_request)
 
-def main():
-    rclpy.init()
-    coordinator = Coordinator()
-    coordinator.get_logger().info('spin')
-    try:
-        coordinator.run()
-    except SystemExit:
-        rclpy.logging.get_logger("Quitting").info('Done')
-    coordinator.get_logger().info('stop spin')
-    coordinator.destroy_node()
-    rclpy.shutdown()
-
-if __name__ == '__main__':
-    main()
+    def run(self):
+        while rclpy.ok():
+            rclpy.spin_once(self, timeout_sec=0.001)
+            self.register_agents()
+            self.fix_missions()
+            self.check_env()

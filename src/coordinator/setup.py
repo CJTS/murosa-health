@@ -2,7 +2,7 @@ import os
 from glob import glob
 from setuptools import setup
 
-package_name = 'murosa_plan_health'
+package_name = 'coordinator'
 
 setup(
     name=package_name,
@@ -23,11 +23,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'environment = murosa_plan_health.environment_node:main',
-            'planner = murosa_plan_health.planner_node:main',
-            'arm = murosa_plan_health.agents.arm_node:main',
-            'nurse = murosa_plan_health.agents.nurse_node:main',
-            'robot = murosa_plan_health.agents.robot_node:main',
+            'coordinator = coordinator.coordinator_node:main',
         ],
     },
 )
