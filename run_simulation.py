@@ -7,16 +7,16 @@ import sys
 from pathlib import Path
 import time
 
-def setup_log_directory(run_number, problem_rate, replan):
+def setup_log_directory(mission, run_number, problem_rate, replan):
     """Create logs directory for specific run if it doesn't exist"""
-    log_dir = Path(f"logs/run_{run_number}_rate_{problem_rate}_replan_{replan}")
+    log_dir = Path(f"logs/run_{mission}_{run_number}_rate_{problem_rate}_replan_{replan}")
     log_dir.mkdir(parents=True, exist_ok=True)
     return log_dir
 
-def start_services(run_number, problem_rate, replan):
+def start_services(mission, run_number, problem_rate, replan):
     """Start all required services and return their process objects"""
     processes = {}
-    log_dir = setup_log_directory(run_number, problem_rate, replan)
+    log_dir = setup_log_directory(mission, run_number, problem_rate, replan)
     
     # Set environment variables
     os.environ['PROBLEM_RATE'] = str(problem_rate)
@@ -44,19 +44,19 @@ def start_services(run_number, problem_rate, replan):
     # time.sleep(5)
     
     # Start health service
-    print("Starting health coordinator...")
-    health_coordinator = open(log_dir / "health_coordinator.log", "w")
-    processes["health_coordinator"] = subprocess.Popen(
-        ["ros2", "launch", "coordinator", "planning.launch.py"],
-        stdout=health_coordinator,
+    print("Starting " + mission + " coordinator...")
+    coordinator_log = open(log_dir / "coordinator.log", "w")
+    processes["coordinator"] = subprocess.Popen(
+        ["ros2", "launch", "coordinator", mission + ".launch.py"],
+        stdout=coordinator_log,
         stderr=subprocess.STDOUT
     )
 
-    print("Starting health service...")
-    health_log = open(log_dir / "health.log", "w")
-    processes["health"] = subprocess.Popen(
-        ["ros2", "launch", "murosa_plan", "health.launch.py"],
-        stdout=health_log,
+    print("Starting " + mission + " service...")
+    mission_log = open(log_dir / (mission + ".log"), "w")
+    processes[mission] = subprocess.Popen(
+        ["ros2", "launch", "murosa_plan", mission + ".launch.py"],
+        stdout=mission_log,
         stderr=subprocess.STDOUT
     )
 
@@ -73,9 +73,9 @@ def cleanup_processes(processes):
             except subprocess.TimeoutExpired:
                 process.kill()
 
-def analyze_health_log(run_number, runtime, problem_rate, replan):
+def analyze_health_log(mission, run_number, runtime, problem_rate, replan):
     """Analyze the health log file for specific patterns and return results"""
-    log_path = f"logs/run_{run_number}_rate_{problem_rate}_replan_{replan}/health_coordinator.log"
+    log_path = f"logs/run_{mission}_{run_number}_rate_{problem_rate}_replan_{replan}/coordinator.log"
     results = {
         "run_number": run_number,
         "runtime": runtime,
@@ -106,14 +106,14 @@ def write_summary(results_list):
         for result in results_list:
             f.write(f"{result['run_number']},{result['problem_rate']},{result['replan']},{result['runtime']:.2f},{result['had_failure']},{result['successful_termination']}\n")
 
-def run_simulation_with_timeout(run_number, processes, problem_rate, replan):
+def run_simulation_with_timeout(mission, run_number, processes, problem_rate, replan):
     """Run the simulation with a 60-second timeout"""
     start_time = time.time()
     timeout = 60  # seconds
     
     try:
         # Wait for health service to complete with timeout
-        processes["health"].wait(timeout=timeout)
+        processes["coordinator"].wait(timeout=timeout)
         runtime = time.time() - start_time
         return True, runtime
     except subprocess.TimeoutExpired:
@@ -122,7 +122,7 @@ def run_simulation_with_timeout(run_number, processes, problem_rate, replan):
         return False, runtime
     finally:
         # Log the actual runtime
-        with open(f"logs/run_{run_number}_rate_{problem_rate}_replan_{replan}/runtime.log", "w") as f:
+        with open(f"logs/run_{mission}_{run_number}_rate_{problem_rate}_replan_{replan}/runtime.log", "w") as f:
             f.write(f"Runtime: {runtime:.2f} seconds\n")
             if runtime > timeout:
                 f.write("Simulation was terminated due to timeout\n")
@@ -134,44 +134,45 @@ def main():
         Path("logs").mkdir(exist_ok=True)
         
         all_results = []
-        missions = ["patrol", "health"]
+        missions = ["health", "patrol"]
         problem_rates = [0, 25, 50, 75, 100]
         replan_values = [False, True]
         run_number = 1
         
-        for problem_rate in problem_rates:
-            for replan in replan_values:
-                for _ in range(30):  # 30 runs for each combination
-                    print(f"\nStarting simulation run {run_number}/300")
-                    print(f"Problem Rate: {problem_rate}, Replan: {replan}")
-                    
-                    print("All services started. Press Ctrl+C to stop all services.")
-                    print(f"Logs are being written to the 'logs/run_{run_number}_rate_{problem_rate}_replan_{replan}' directory.")
-                    
-                    processes = start_services(run_number, problem_rate, replan)
-                    
-                    # Run simulation with timeout
-                    completed, runtime = run_simulation_with_timeout(run_number, processes, problem_rate, replan)
-                    
-                    print(f"Simulation run {run_number} {'completed' if completed else 'terminated due to timeout'}. Stopping other services...")
-                    cleanup_processes(processes)
-                    
-                    # Analyze health log and store results
-                    results = analyze_health_log(run_number, runtime, problem_rate, replan)
-                    all_results.append(results)
-                    
-                    # Print current run results
-                    print(f"Run {run_number} Results:")
-                    print(f"  Problem Rate: {problem_rate}")
-                    print(f"  Replan: {replan}")
-                    print(f"  Runtime: {runtime:.2f} seconds")
-                    print(f"  Had Failure: {results['had_failure']}")
-                    print(f"  Successful Termination: {results['successful_termination']}")
-                    
-                    run_number += 1
-                    
-                    # Add a small delay between runs to ensure proper cleanup
-                    time.sleep(2)
+        for mission in missions:
+            for problem_rate in problem_rates:
+                for replan in replan_values:
+                    for _ in range(30):  # 30 runs for each combination
+                        print(f"\nStarting simulation run {run_number}/300")
+                        print(f"Problem Rate: {problem_rate}, Replan: {replan}")
+                            
+                        print("All services started. Press Ctrl+C to stop all services.")
+                        print(f"Logs are being written to the 'logs/run_{mission}_{run_number}_rate_{problem_rate}_replan_{replan}' directory.")
+                        
+                        processes = start_services(mission, run_number, problem_rate, replan)
+                        
+                        # Run simulation with timeout
+                        completed, runtime = run_simulation_with_timeout(mission,run_number, processes, problem_rate, replan)
+                        
+                        print(f"Simulation run {run_number} {'completed' if completed else 'terminated due to timeout'}. Stopping other services...")
+                        cleanup_processes(processes)
+                        
+                        # Analyze health log and store results
+                        results = analyze_health_log(mission, run_number, runtime, problem_rate, replan)
+                        all_results.append(results)
+                        
+                        # Print current run results
+                        print(f"Run {run_number} Results:")
+                        print(f"  Problem Rate: {problem_rate}")
+                        print(f"  Replan: {replan}")
+                        print(f"  Runtime: {runtime:.2f} seconds")
+                        print(f"  Had Failure: {results['had_failure']}")
+                        print(f"  Successful Termination: {results['successful_termination']}")
+                        
+                        run_number += 1
+                        
+                        # Add a small delay between runs to ensure proper cleanup
+                        time.sleep(2)
         
         # Write final summary
         write_summary(all_results)
