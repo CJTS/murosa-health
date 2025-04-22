@@ -16,7 +16,6 @@ class Environment(Node):
         numberList = [True, False]
         self.declare_parameter('problem_rate', rclpy.Parameter.Type.INTEGER)
         closed_door_percentage = self.get_parameter('problem_rate').get_parameter_value().integer_value
-        print(closed_door_percentage)
         closed_door = random.choices(numberList, weights=(
             100 - closed_door_percentage, closed_door_percentage), k=1)
 

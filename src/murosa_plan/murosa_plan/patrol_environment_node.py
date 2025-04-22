@@ -37,8 +37,12 @@ class Environment(Node):
         self.environment_server = self.create_service(
             Action, 'environment_server', self.receive_message
         )
+        # Subscriber para indicar fim da execução
         self.end_subscription = self.create_subscription(
-            Bool, '/shutdown_signal', self.shutdown_callback, 10
+            Bool, '/jason/shutdown_signal', self.shutdown_callback, 10
+        )
+        self.end_simulation_subscription = self.create_subscription(
+            Bool, '/coordinator/shutdown_signal', self.end_simulation_callback, 10
         )
         self.get_logger().info('Environment server started')
 
@@ -46,27 +50,38 @@ class Environment(Node):
         if msg.data:
             self.get_logger().info("Recebido sinal de desligamento, finalizando...")
             raise SystemExit
-
+        
+    def end_simulation_callback(self, msg):
+        if msg.data:
+            self.get_logger().info("Recebido sinal de falha, finalizando...")
+            raise SystemExit
+        
     def receive_message(self, request, response):
         actionTuple = tuple(request.action.split(','))
         if actionTuple[0] == 'monitor':
             response.observation = json.dumps(self.state)
             return response
+        elif actionTuple[0] == 'move':
+            self.state['patroled'][actionTuple[1]] = True
+            return response
         self.get_logger().info('Responding')
         response.observation = 'success'
         return response
 
+    def run(self):
+        while rclpy.ok():
+            i = 0
+
 def main():
     rclpy.init()
     environment = Environment()
-    environment.get_logger().info('spin')
     try:
         rclpy.spin(environment)
     except SystemExit:
         rclpy.logging.get_logger("Quitting").info('Done')
-    environment.get_logger().info('stop spin')
     environment.destroy_node()
     rclpy.shutdown()
+
 
 if __name__ == '__main__':
     main()

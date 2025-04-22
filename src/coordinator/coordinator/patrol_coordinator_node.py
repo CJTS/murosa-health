@@ -40,7 +40,7 @@ class Coordinator(AgnosticCoordinator):
                 if not patrolled and wp not in self.visited_wps and wp not in self.visiting_wps]
         room = random.choice(rooms)
         self.visiting_wps.append(room)
-        return (team[0], self.state['base'], room)
+        return (team[0], "wp_control", room)
 
     def verify_initial_trigger(self):
         self.start_mission()
