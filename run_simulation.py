@@ -47,7 +47,7 @@ def start_services(run_number, problem_rate, replan):
     print("Starting health service...")
     health_log = open(log_dir / "health.log", "w")
     processes["health"] = subprocess.Popen(
-        ["ros2", "launch", "murosa_plan_health", "planning.launch.py"],
+        ["ros2", "launch", "murosa_plan", "health.launch.py"],
         stdout=health_log,
         stderr=subprocess.STDOUT
     )

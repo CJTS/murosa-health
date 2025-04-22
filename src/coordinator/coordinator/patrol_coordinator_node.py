@@ -1,3 +1,4 @@
+import random
 import rclpy
 from coordinator.agnostic_coordinator import AgnosticCoordinator
 
@@ -5,10 +6,12 @@ class Coordinator(AgnosticCoordinator):
     def __init__(self):
         super().__init__('Patrol Coordinator')
         self.patrols = []
+        self.visiting_wps = []
+        self.visited_wps = []
         self.occ_patrols = []
         self.ready_patrols = []
-        self.mission_context = "!patrol"
-        self.variables = []
+        self.mission_context = "start(Patrol, Base, Room1)"
+        self.variables = ["Patrol", "Room1", "Base"]
 
     def set_agent_ready(self, decoded_msg):
         if "patrol" in decoded_msg.sender:
@@ -33,7 +36,10 @@ class Coordinator(AgnosticCoordinator):
         return None
 
     def get_start_context(self, team):
-        return team
+        rooms = list(set(self.state['wps'].keys()) - (set(self.visited_wps)  + set(self.visiting_wps)))
+        room = random.choice(rooms)
+        self.visiting_wps.append(room)
+        return (team[0], self.state['base'], room)
 
     def verify_initial_trigger(self):
         self.start_mission()

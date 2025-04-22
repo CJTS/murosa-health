@@ -95,11 +95,16 @@ def generate_bdi(agents, actions, context, variables):
             # Se não existem outros agentes
             else:
                 # Verifica se o agente atual esta na lista de proximos agentes
-                if(agent1 in agents2):
-                    # Se sim, adiciona a chamada para a proxima ação no plano de sucesso
-                    bdies[agent1].append(f"+success_{action1_with_params}: {context} & milestone{str(i - 1)} <- -milestone{str(i - 1)}; +milestone{str(i)}; !{action2_with_params}.")
+                if i > 0:
+                    if(agent1 in agents2):
+                        # Se sim, adiciona a chamada para a proxima ação no plano de sucesso
+                        bdies[agent1].append(f"+success_{action1_with_params}: {context} & milestone{str(i - 1)} <- -milestone{str(i - 1)}; +milestone{str(i)}; !{action2_with_params}.")
+                    else:
+                        bdies[agent1].append(f"+success_{action1_with_params}: milestone{str(i - 1)} <- -milestone{str(i - 1)}.")
                 else:
-                    bdies[agent1].append(f"+success_{action1_with_params}: milestone{str(i - 1)} <- -milestone{str(i - 1)}.")
+                    if(agent1 in agents2):
+                        # Se sim, adiciona a chamada para a proxima ação no plano de sucesso
+                        bdies[agent1].append(f"+success_{action1_with_params}: {context} <- +milestone{str(i)}; !{action2_with_params}.")
 
         i += 1
     # Por ultimo
@@ -116,23 +121,33 @@ def generate_bdi(agents, actions, context, variables):
     return bdies
 
 # # Example usage
-# context = "start(Nurse, LockedDoor, Robot, ArmRoom, Arm)"
+# # context = "start(Nurse, LockedDoor, Robot, ArmRoom, Arm)"
+# context = "start(Patrol, Base, Room1, Room2, Room3, Room4)"
 # # variables = ["Nurse", "LockedDoor", "Robot", "ArmRoom", "Arm"]
-# variables = ["Robot", "NurseRoom", "Nurse", "ArmRoom", "Arm"]
-# agents = ["nurse1", "arm2", "robot1"]
+# # variables = ["Robot", "NurseRoom", "Nurse", "ArmRoom", "Arm"]
+# variables = ["Patrol", "Room1", "Base", "Room2", "Room3", "Room4"]
+# agents = ["patrol1"]
 
 # actions = [
 # #    "a_open_door(nurse1,room1)",
-#    "a_navto(robot1,room1)",
-#    "a_approach_nurse(robot1, nurse1)",
-#    "a_authenticate_nurse(robot1,nurse1)",
-#    "a_open_drawer(robot1)",
-#    "a_deposit(nurse1,robot1)",
-#    "a_close_drawer(robot1)",
-#    "a_navto(robot1,room4)",
-#    "a_approach_arm(robot1,arm2)",
-#    "a_open_drawer(robot1)",
-#    "a_pick_up_sample(arm2,robot1)"
+# #    "a_navto(robot1,room1)",
+# #    "a_approach_nurse(robot1, nurse1)",
+# #    "a_authenticate_nurse(robot1,nurse1)",
+# #    "a_open_drawer(robot1)",
+# #    "a_deposit(nurse1,robot1)",
+# #    "a_close_drawer(robot1)",
+# #    "a_navto(robot1,room4)",
+# #    "a_approach_arm(robot1,arm2)",
+# #    "a_open_drawer(robot1)",
+# #    "a_pick_up_sample(arm2,robot1)"
+#     "move(patrol1, wp1)",
+#     "move(patrol1, wp_control)",
+#     "move(patrol1, wp2)",
+#     "move(patrol1, wp_control)",
+#     "move(patrol1, wp3)",
+#     "move(patrol1, wp_control)",
+#     "move(patrol1, wp4)",
+#     "move(patrol1, wp_control)",
 # ]
 
 # bdis = generate_bdi(agents, actions, context, variables)

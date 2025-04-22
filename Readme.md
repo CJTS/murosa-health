@@ -59,7 +59,7 @@ Then source the build, set the ENV variables REPLAN and PROBLEM_RATE, run the co
 ```ros2 launch coordinator planning.launch.py```
 
 ### Health
-```ros2 launch murosa_plan_health planning.launch.py```
+```ros2 launch murosa_plan health.launch.py```
 
 ### Patrol
-```ros2 launch murosa_plan_patrol planning.launch.py```
+```ros2 launch murosa_plan patrol.launch.py```

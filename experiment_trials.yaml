@@ -2,7 +2,7 @@ version: '3'
 
 services:
   rosbridge:
-    command: bash -c "cd src/murosa_plan_health/launch && ros2 launch rosbridge_server rosbridge_websocket_launch.xml"
+    command: bash -c "cd src/murosa_plan/launch && ros2 launch rosbridge_server rosbridge_websocket_launch.xml"
     image: health_ros
     # network_mode: host
     ports:
@@ -14,20 +14,20 @@ services:
     image: health_ros
     network_mode: host
   health:
-    command: bash -c "cd src/murosa_plan_health/launch && ros2 launch murosa_plan_health planning.launch.py"
+    command: bash -c "cd src/murosa_plan/launch && ros2 launch murosa_plan planning.launch.py"
     image: health_ros
     # network_mode: host
     environment:
       - REPLAN=${REPLAN}
       - PROBLEM_RATE=${PROBLEM_RATE}
   topic:
-    command: bash -c "cd src/murosa_plan_health/launch && ros2 topic echo /coordinator/jason/plan"
+    command: bash -c "cd src/murosa_plan/launch && ros2 topic echo /coordinator/jason/plan"
     image: health_ros
   info:
-    command: bash -c "cd src/murosa_plan_health/launch && ros2 topic info /move_base/move"
+    command: bash -c "cd src/murosa_plan/launch && ros2 topic info /move_base/move"
     image: health_ros
   sub:
-    command: bash -c 'cd src/murosa_plan_health/launch && ros2 topic pub /move_base/move std_msgs/String'
+    command: bash -c 'cd src/murosa_plan/launch && ros2 topic pub /move_base/move std_msgs/String'
     image: health_ros
   run:
     image: health_ros
