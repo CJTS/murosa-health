@@ -12,8 +12,8 @@ def generate_launch_description():
         problem_rate_launch_arg,
         Node(
             package='murosa_plan',
-            executable='environment',
-            name=['environment'],
+            executable='patrol_environment',
+            name=['patrol_environment'],
             parameters=[{
                 'problem_rate': LaunchConfiguration('problem_rate'),
             }]

@@ -24,6 +24,7 @@ setup(
     entry_points={
         'console_scripts': [
             'environment = murosa_plan.environment_node:main',
+            'patrol_environment = murosa_plan.patrol_environment_node:main',
             'planner = murosa_plan.planner_node:main',
             'arm = murosa_plan.agents.arm_node:main',
             'nurse = murosa_plan.agents.nurse_node:main',
