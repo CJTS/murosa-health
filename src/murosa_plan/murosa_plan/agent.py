@@ -112,7 +112,6 @@ class Agent(Node):
     def shutdown_callback(self, msg):
         if msg.data:
             self.get_logger().info("Recebido sinal de desligamento, finalizando...")
-            self.get_logger().info("Mission Completed")
             msg = String()
             msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, self.agentName, 'Jason', 'End|' + self.agentName).encode()
             self.publisher.publish(msg)
@@ -120,7 +119,7 @@ class Agent(Node):
         
     def end_simulation_callback(self, msg):
         if msg.data:
-            self.get_logger().info("Recebido sinal de falha, finalizando...")
+            self.get_logger().info("Recebido sinal de desligamento do coordenador, finalizando...")
             msg = String()
             msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, self.agentName, 'Jason', 'End|' + self.agentName).encode()
             self.publisher.publish(msg)

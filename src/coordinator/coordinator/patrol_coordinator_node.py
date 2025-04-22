@@ -56,6 +56,7 @@ class Coordinator(AgnosticCoordinator):
             self.start_mission()
         else:
             self.get_logger().info('All waypoints have been patrolled')
+            self.get_logger().info("Mission Completed")
             self.end_simulation()
 
     def get_team_from_context(self, context):

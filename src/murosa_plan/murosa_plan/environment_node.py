@@ -49,7 +49,7 @@ class Environment(Node):
         
     def end_simulation_callback(self, msg):
         if msg.data:
-            self.get_logger().info("Recebido sinal de falha, finalizando...")
+            self.get_logger().info("Recebido sinal de desligamento do coordenador, finalizando...")
             raise SystemExit
 
     def receive_message(self, request, response):

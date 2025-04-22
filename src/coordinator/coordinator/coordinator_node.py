@@ -105,6 +105,7 @@ class Coordinator(AgnosticCoordinator):
                 # If all agents are free, remove the mission
                 if all_free:
                     self.missions.remove(mission)
+                    self.get_logger().info("Mission Completed")
                     self.end_simulation()
 
 def main():

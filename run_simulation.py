@@ -44,6 +44,14 @@ def start_services(run_number, problem_rate, replan):
     # time.sleep(5)
     
     # Start health service
+    print("Starting health coordinator...")
+    health_coordinator = open(log_dir / "health_coordinator.log", "w")
+    processes["health_coordinator"] = subprocess.Popen(
+        ["ros2", "launch", "coordinator", "planning.launch.py"],
+        stdout=health_coordinator,
+        stderr=subprocess.STDOUT
+    )
+
     print("Starting health service...")
     health_log = open(log_dir / "health.log", "w")
     processes["health"] = subprocess.Popen(
@@ -67,7 +75,7 @@ def cleanup_processes(processes):
 
 def analyze_health_log(run_number, runtime, problem_rate, replan):
     """Analyze the health log file for specific patterns and return results"""
-    log_path = f"logs/run_{run_number}_rate_{problem_rate}_replan_{replan}/health.log"
+    log_path = f"logs/run_{run_number}_rate_{problem_rate}_replan_{replan}/health_coordinator.log"
     results = {
         "run_number": run_number,
         "runtime": runtime,
