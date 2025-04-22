@@ -6,6 +6,7 @@ from std_msgs.msg import String, Bool
 from coordinator.helper import FIPAMessage, action_string_to_tuple, action_tuple_to_string
 from coordinator.BDIParser import generate_bdi
 from coordinator.FIPAPerformatives import FIPAPerformative
+import uuid
 
 class AgnosticCoordinator(Node):
     def __init__(self, Name):
@@ -82,7 +83,6 @@ class AgnosticCoordinator(Node):
         if decoded_msg.performative == FIPAPerformative.REQUEST.value:
             if decoded_msg.content == 'Register':
                 response.response = self.register_agent(decoded_msg)
-                self.register_queue.append(decoded_msg.sender + response.response)
         elif decoded_msg.performative == FIPAPerformative.INFORM.value:
             if "ERROR" in decoded_msg.content:
                 self.get_logger().info('Error found')
@@ -156,7 +156,7 @@ class AgnosticCoordinator(Node):
         if(len(self.register_queue) > 0):
             agent = self.register_queue.pop()
             msg = String()
-            msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', 'Jason', 'Create|' + agent).encode()
+            msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', 'Jason', 'Create|' + ','.join(agent)).encode()
             self.jason_publisher.publish(msg)
 
     def fix_plan(self, context):
@@ -253,6 +253,10 @@ class AgnosticCoordinator(Node):
         self.action_request.action = '|'.join(
             ('need_plan', robotid, nurseid, armid))
         return self.planner_communication_sync_client.call_async(self.action_request)
+
+    def make_agent_id(self, agent_name):
+        random_id = str(uuid.uuid4()).replace('-', '_')
+        return f"{agent_name}_{random_id}"
 
     def run(self):
         while rclpy.ok():

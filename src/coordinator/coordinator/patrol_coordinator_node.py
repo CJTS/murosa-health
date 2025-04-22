@@ -17,12 +17,17 @@ class Coordinator(AgnosticCoordinator):
         if "patrol" in decoded_msg.sender:
             self.ready_patrols.append(decoded_msg.sender)
 
+
     def register_agent(self, decoded_msg):
         response = None
+        agent_type = decoded_msg.sender
+        name = self.make_agent_id(agent_type)
+        response = name
+
         if 'patrol' in decoded_msg.sender:
-            id = str(len(self.patrols) + 1)
-            response = id
-            self.patrols.append(decoded_msg.sender + id)
+            self.patrols.append(name)
+
+        self.register_queue.append((name, agent_type))
         return response
 
     def get_team(self):

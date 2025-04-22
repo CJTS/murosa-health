@@ -44,10 +44,12 @@ public class RosEnv extends Environment {
 					if (decodedContent[0].equals("Create")) {
 						Collection<String> collection = new ArrayList<>();
 						collection.add("DynamicAgent");
+						String createRegex = "[,]";
+						String[] decodedCreateContent = decodedContent[1].split(createRegex);
 						try {
 							getEnvironmentInfraTier().getRuntimeServices().createAgent(
-									decodedContent[1],     // agent name
-									removeChars(decodedContent[1], 1) + ".asl",       // AgentSpeak source
+									decodedCreateContent[0],     // agent name
+									decodedCreateContent[1] + ".asl",       // AgentSpeak source
 									null,            // default agent class
 									collection,            // default architecture class
 									null,            // bbpars

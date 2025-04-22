@@ -33,18 +33,18 @@ class Coordinator(AgnosticCoordinator):
 
     def register_agent(self, decoded_msg):
         response = None
+        agent_type = decoded_msg.sender
+        name = self.make_agent_id(agent_type)
+        response = name
+
         if 'arm' in decoded_msg.sender:
-            id = str(len(self.arms) + 1)
-            response = id
-            self.arms.append(decoded_msg.sender + id)
+            self.arms.append(name)
         elif 'robot' in decoded_msg.sender:
-            id = str(len(self.robots) + 1)
-            response = id
-            self.robots.append(decoded_msg.sender + id)
+            self.robots.append(name)
         elif 'nurse' in decoded_msg.sender:
-            id = str(len(self.nurses) + 1)
-            response = id
-            self.nurses.append(decoded_msg.sender + id)
+            self.nurses.append(name)
+
+        self.register_queue.append((name, agent_type))
         return response
 
     def get_team(self):

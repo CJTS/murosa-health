@@ -56,10 +56,11 @@ To run the program you need to run ROS Bridge and Jason before.
 
 Then source the build, set the ENV variables REPLAN and PROBLEM_RATE, run the coordinator, and run one of the cases
 ```source install/local_setup.bash```
-```ros2 launch coordinator planning.launch.py```
 
 ### Health
+```ros2 launch coordinator health.launch.py```
 ```ros2 launch murosa_plan health.launch.py```
 
 ### Patrol
+```ros2 launch coordinator patrol.launch.py```
 ```ros2 launch murosa_plan patrol.launch.py```
