@@ -20,7 +20,7 @@ def generate_launch_description():
         ),
         Node(
             package='murosa_plan',
-            executable='planner',
+            executable='patrol_planner',
             name='planner'
         ),
         Node(

@@ -36,7 +36,8 @@ class Coordinator(AgnosticCoordinator):
         return None
 
     def get_start_context(self, team):
-        rooms = list(set(self.state['wps'].keys()) - (set(self.visited_wps)  + set(self.visiting_wps)))
+        rooms = [wp for wp, patrolled in self.state['patroled'].items() 
+                if not patrolled and wp not in self.visited_wps and wp not in self.visiting_wps]
         room = random.choice(rooms)
         self.visiting_wps.append(room)
         return (team[0], self.state['base'], room)
