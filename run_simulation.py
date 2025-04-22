@@ -134,6 +134,7 @@ def main():
         Path("logs").mkdir(exist_ok=True)
         
         all_results = []
+        missions = ["patrol", "health"]
         problem_rates = [0, 25, 50, 75, 100]
         replan_values = [False, True]
         run_number = 1
