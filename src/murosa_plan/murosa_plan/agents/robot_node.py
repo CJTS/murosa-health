@@ -39,7 +39,7 @@ class Robot(Agent):
             future = self.a_approach_arm(actionTuple[1], actionTuple[2])
         elif actionTuple[0] == 'a_pick_up_sample':
             self.get_logger().info('Doing a_pick_up_sample')
-            future = self.a_pick_up_sample(actionTuple[1], actionTuple[2])
+            self.a_pick_up_sample(actionTuple[1], actionTuple[2])
             return ActionResult.WAITING
 
         if future != None:

@@ -11,9 +11,9 @@ class Patrol(Agent):
     def choose_action(self, actionTuple):
         future = None
 
-        if actionTuple[0] == 'a_move':
-            self.get_logger().info('Doing a_move')
-            future = self.a_move(actionTuple[1], actionTuple[2])
+        if actionTuple[0] == 'move':
+            self.get_logger().info('Doing move')
+            future = self.move(actionTuple[1], actionTuple[2])
 
         if future != None:
             self.get_logger().info("Wating for response")
@@ -27,10 +27,10 @@ class Patrol(Agent):
 
         return ActionResult.SUCCESS
 
-    def a_move(self, robot, room):
+    def move(self, robot, room):
         self.action_request = Action.Request()
         self.action_request.action = ','.join(
-            ('a_move', robot, room)
+            ('move', robot, room)
         )
         return self.environment_client.call_async(self.action_request)
 

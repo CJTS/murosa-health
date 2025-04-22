@@ -5,4 +5,4 @@
 +success_a_authenticate_nurse(Robot, Nurse): milestone1 <- -milestone1.
 +trigger_a_deposit(Nurse, Robot): start(Robot, NurseRoom, Nurse, ArmRoom, Arm) <- !a_deposit(Nurse, Robot).
 +!a_deposit(Nurse, Robot): milestone3 <- a_deposit(Nurse, Robot).
-+success_a_deposit(Nurse, Robot): milestone3 <- -milestone3.
++success_a_deposit(Nurse, Robot): milestone3 <- -milestone3; end.

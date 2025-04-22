@@ -36,18 +36,48 @@ class Coordinator(AgnosticCoordinator):
         return None
 
     def get_start_context(self, team):
-        rooms = [wp for wp, patrolled in self.state['patroled'].items() 
+        rooms = [wp for wp, patrolled in self.state['patrolled'].items() 
                 if not patrolled and wp not in self.visited_wps and wp not in self.visiting_wps]
-        room = random.choice(rooms)
-        self.visiting_wps.append(room)
-        return (team[0], "wp_control", room)
+        if len(rooms) > 0:
+            room = random.choice(rooms)
+            self.visiting_wps.append(room)
+            return (team[0], "wp_control", room)
+
+        return None
 
     def verify_initial_trigger(self):
-        self.start_mission()
+        for wp, patrolled in self.state['patrolled'].items():
+            if patrolled and wp in self.visiting_wps:
+                self.visiting_wps.remove(wp)
+                self.visited_wps.append(wp)
+
+        # Check if at least one waypoint has not been patrolled
+        if any(not patrolled for patrolled in self.state['patrolled'].values()):
+            self.start_mission()
+        else:
+            self.get_logger().info('All waypoints have been patrolled')
+            self.end_simulation()
 
     def get_team_from_context(self, context):
         return context
 
+    def free_agent(self, agent):
+        self.occ_patrols.remove(agent)
+
+    def verify_mission_complete(self, agent):
+        # Find any mission containing this agent
+        for mission in self.missions:
+            if agent in mission:
+                # Check if all agents in this mission are now free
+                all_free = True
+                for mission_agent in mission:
+                    if mission_agent in self.occ_patrols:
+                        all_free = False
+                        break
+                
+                # If all agents are free, remove the mission
+                if all_free:
+                    self.missions.remove(mission)
 def main():
     rclpy.init()
     coordinator = Coordinator()

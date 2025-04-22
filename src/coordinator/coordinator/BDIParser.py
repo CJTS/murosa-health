@@ -118,6 +118,12 @@ def generate_bdi(agents, actions, context, variables):
         bdies[agent1].append(f"+!{action1_with_params}: milestone{str(i - 1)} <- {action1_with_params}.")
         bdies[agent1].append(f"+success_{action1_with_params}: milestone{str(i - 1)} <- -milestone{str(i - 1)}; end.")
 
+    # Verify all agents have an end in last rule
+    for agent in bdies:
+        last_rule = bdies[agent][-1] if bdies[agent] else ""
+        if last_rule and last_rule.endswith(".") and not last_rule.endswith("; end."):
+            bdies[agent][-1] = last_rule[:-1] + "; end."
+
     return bdies
 
 # # Example usage

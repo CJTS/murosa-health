@@ -107,30 +107,24 @@ public class RosEnv extends Environment {
 	@Override
 	public boolean executeAction(String agName, Structure action) {
 		logger.info(agName + " executing -> " + action + ".");
-
-		if (action.getFunctor().equals("end")) {
-			end();
-			return true;
-		}
-		
 		Publisher navigation = new Publisher("/jason/agent/action", "std_msgs/String", bridge);
 		FIPAMessage message = new FIPAMessage("inform", "jason", agName);
-		List<Term> terms = action.getTerms();
-		String termsStr = action.getFunctor();
 
-		for (Term term : terms) {
-			termsStr +=  "," + term.toString();
+		if (action.getFunctor().equals("end")) {
+			message.setContent("Mission Completed");
+		} else {
+			List<Term> terms = action.getTerms();
+			String termsStr = action.getFunctor();
+
+			for (Term term : terms) {
+				termsStr +=  "," + term.toString();
+			}
+
+			message.setContent(termsStr);
 		}
 
-		message.setContent(termsStr);
 		navigation.publish(new PrimitiveMsg<>(message.encode()));
-		// informAgsEnvironmentChanged();
 		return true;
-	}
-
-	public void end() {
-		Publisher navigation = new Publisher("/jason/shutdown_signal", "std_msgs/Bool", bridge);
-		navigation.publish(new PrimitiveMsg<>(true));
 	}
 
 	/** Called before the end of MAS execution */

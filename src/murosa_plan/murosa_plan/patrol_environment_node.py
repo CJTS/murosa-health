@@ -29,7 +29,7 @@ class Environment(Node):
                 'wp11': ['wp_control'],
                 'wp12': ['wp_control']
             },
-            'patroled': { 'wp1': False, 'wp2': False, 'wp3': False, 'wp4': False, 'wp5': False, 'wp6': False, 'wp7': False, 'wp8': False, 'wp9': False, 'wp10': False, 'wp11': False, 'wp12': False }
+            'patrolled': { 'wp1': False, 'wp2': False, 'wp3': False, 'wp4': False, 'wp5': False, 'wp6': False, 'wp7': False, 'wp8': False, 'wp9': False, 'wp10': False, 'wp11': False, 'wp12': False }
         }
 
     def start_server(self):
@@ -62,7 +62,8 @@ class Environment(Node):
             response.observation = json.dumps(self.state)
             return response
         elif actionTuple[0] == 'move':
-            self.state['patroled'][actionTuple[1]] = True
+            self.state['patrolled'][actionTuple[2]] = True
+            response.observation = 'success'
             return response
         self.get_logger().info('Responding')
         response.observation = 'success'

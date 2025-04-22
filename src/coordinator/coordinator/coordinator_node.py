@@ -75,12 +75,37 @@ class Coordinator(AgnosticCoordinator):
 
     def verify_initial_trigger(self):
         for key, value in self.state['sample'].items():
-            if value and all(key not in team for team in self.missions):
+            if value and all(key not in team for team in self.missions) and 'nurse' in key:
                 self.nurse_queue.append(key)
                 self.start_mission()
 
     def get_team_from_context(self, context):
         return [context[0], context[2], context[4]]
+
+    def free_agent(self, agent):
+        if agent in self.occ_nurses:
+            self.occ_nurses.remove(agent)
+        elif agent in self.occ_robots:
+            self.occ_robots.remove(agent)
+        elif agent in self.occ_arms:
+            self.occ_arms.remove(agent)
+
+    def verify_mission_complete(self, agent):
+        # Find any mission containing this agent
+        for mission in self.missions:
+            if agent in mission:
+                # Check if all agents in this mission are now free
+                all_free = True
+                for mission_agent in mission:
+                    if (mission_agent in self.occ_nurses or 
+                        mission_agent in self.occ_robots or
+                        mission_agent in self.occ_arms):
+                        all_free = False
+                        break
+                # If all agents are free, remove the mission
+                if all_free:
+                    self.missions.remove(mission)
+                    self.end_simulation()
 
 def main():
     rclpy.init()

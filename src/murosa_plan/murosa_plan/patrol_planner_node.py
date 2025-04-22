@@ -65,7 +65,7 @@ class Planner(Node):
             state = json.loads(actionTuple[1])
             self.state.loc = state['loc']
             self.state.connected = state['connected']
-            self.state.patroled = state['patroled']
+            self.state.patrolled = state['patrolled']
             return response
 
         response.observation = 'success'

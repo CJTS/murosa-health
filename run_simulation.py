@@ -81,7 +81,7 @@ def analyze_health_log(run_number, runtime, problem_rate, replan):
         with open(log_path, 'r') as f:
             log_content = f.read()
             results["had_failure"] = "failure" in log_content.lower()
-            results["successful_termination"] = "Recebido sinal de desligamento, finalizando..." in log_content
+            results["successful_termination"] = "Mission Completed" in log_content
     except FileNotFoundError:
         print(f"Warning: Could not find health log for run {run_number}")
     

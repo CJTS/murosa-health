@@ -65,6 +65,8 @@ class Environment(Node):
             response.observation = json.dumps(self.state)
         elif actionTuple[0] == 'a_create_sample':
             self.state['sample'][actionTuple[1]] = True
+        elif actionTuple[0] == 'a_deposit':
+            self.state['sample'][actionTuple[1]] = False
 
         return response
 

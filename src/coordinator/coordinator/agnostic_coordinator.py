@@ -33,6 +33,9 @@ class AgnosticCoordinator(Node):
         self.subscription = self.create_subscription(
             String, '/agent/coordinator/action', self.listener_callback, 10
         )
+        self.result_subscription = self.create_subscription(
+            String, '/agent/coordinator/result', self.listener_callback, 10
+        )
 
         self.environment_client = self.create_client(
             Action, 'environment_server'
@@ -63,6 +66,12 @@ class AgnosticCoordinator(Node):
 
         if decoded_msg.content == 'Ready':
             self.set_agent_ready(decoded_msg)
+        elif decoded_msg.content == 'Finished':
+            self.free_agent(decoded_msg.sender)
+            self.verify_mission_complete(decoded_msg.sender)
+
+    def free_agent(self, agent):
+        raise NotImplementedError("This method should be implemented by the subclass")
 
     def set_agent_ready(self, decoded_msg):
         raise NotImplementedError("This method should be implemented by the subclass")

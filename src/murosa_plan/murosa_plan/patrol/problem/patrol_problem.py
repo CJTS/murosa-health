@@ -22,7 +22,7 @@ init_state.connected = {
     'wp11': ['wp_control'],
     'wp12': ['wp_control']
 }
-init_state.patroled = { 'wp1': False, 'wp2': False, 'wp3': False, 'wp4': False, 'wp5': False, 'wp6': False, 'wp7': False, 'wp8': False, 'wp9': False, 'wp10': False, 'wp11': False, 'wp12': False }
+init_state.patrolled = { 'wp1': False, 'wp2': False, 'wp3': False, 'wp4': False, 'wp5': False, 'wp6': False, 'wp7': False, 'wp8': False, 'wp9': False, 'wp10': False, 'wp11': False, 'wp12': False }
 
 # ******************************************    Demo / Test Routine         ****************************************** #
 if __name__ == '__main__':

@@ -86,7 +86,12 @@ class Agent(Node):
 
         self.get_logger().info('And it is for me')
         ## Perform action
-        self.add_action(decoded_msg)
+        if decoded_msg.content == 'Mission Completed':
+            msg = String()
+            msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, self.agentName, 'Coordinator', 'Finished').encode()
+            self.publisher_coordinator.publish(msg)
+        else:
+            self.add_action(decoded_msg)
 
     def listener_plan_callback(self, msg):
         # Receive messagem from jason
@@ -107,7 +112,7 @@ class Agent(Node):
     def shutdown_callback(self, msg):
         if msg.data:
             self.get_logger().info("Recebido sinal de desligamento, finalizando...")
-            self.get_logger().info("Success")
+            self.get_logger().info("Mission Completed")
             msg = String()
             msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, self.agentName, 'Jason', 'End|' + self.agentName).encode()
             self.publisher.publish(msg)
