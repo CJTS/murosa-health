@@ -24,7 +24,7 @@ setup(
     entry_points={
         'console_scripts': [
             'planner = murosa_plan_patrol.planner_node:main',
-            'robot = murosa_plan_patrol.robot_node:main',
+            'patrol = murosa_plan_patrol.patrol_node:main',
             'environment = murosa_plan_patrol.environment_node:main',
         ],
     },

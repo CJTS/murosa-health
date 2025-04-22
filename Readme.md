@@ -51,7 +51,7 @@ To run the program you need to run ROS Bridge and Jason before.
 ```ros2 launch rosbridge_server rosbridge_websocket_launch.xml```
 
 ### Jason
-```cd jason_health```
+```cd jason```
 ```./gradlew run```
 
 Then source the build, set the ENV variables REPLAN and PROBLEM_RATE, run the coordinator, and run one of the cases

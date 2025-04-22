@@ -4,7 +4,7 @@ from murosa_plan_health.ActionResults import ActionResult
 
 from interfaces.srv import Action
 
-class Robot(Agent):
+class Patrol(Agent):
     def __init__(self, className):
         super().__init__(className)
 
@@ -36,12 +36,12 @@ class Robot(Agent):
 
 def main():
     rclpy.init()
-    robot = Robot('Robot')
+    patrol = Patrol('Patrol')
     try:
-        robot.run()
+        patrol.run()
     except SystemExit:
         rclpy.logging.get_logger("Quitting").info('Done')
-    robot.destroy_node()
+    patrol.destroy_node()
     rclpy.shutdown()
 
 if __name__ == '__main__':

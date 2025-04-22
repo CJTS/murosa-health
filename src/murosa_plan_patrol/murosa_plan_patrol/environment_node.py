@@ -32,9 +32,7 @@ class Environment(Node):
             raise SystemExit
 
     def receive_message(self, request, response):
-        self.get_logger().info('Receiving message: %s' % request.action)
         actionTuple = tuple(request.action.split(','))
-        self.get_logger().info('Action: %s' % actionTuple[0])
         if actionTuple[0] == 'monitor':
             response.observation = json.dumps(self.state)
             return response

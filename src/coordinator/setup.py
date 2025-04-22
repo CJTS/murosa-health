@@ -24,6 +24,7 @@ setup(
     entry_points={
         'console_scripts': [
             'coordinator = coordinator.coordinator_node:main',
+            'patrol_coordinator = coordinator.patrol_coordinator_node:main',
         ],
     },
 )

@@ -26,8 +26,8 @@ def generate_launch_description():
         ),
         Node(
             package='murosa_plan_patrol',
-            executable='robot',
-            name='robot'
+            executable='patrol',
+            name='patrol'
         ),
     ])
 

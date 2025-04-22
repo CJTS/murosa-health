@@ -92,14 +92,13 @@ class AgnosticCoordinator(Node):
         team = self.get_team()
 
         if(team == None):
-            self.get_logger().info("No team to start mission")
+            # self.get_logger().info("No team to start mission")
             return
 
-        self.get_logger().info(",".join(team))
         start_context = self.get_start_context(team)
 
         if(start_context == None):
-            self.get_logger().info("Not possible to start mission")
+            # self.get_logger().info("Not possible to start mission")
             return
         
         for agent in team:

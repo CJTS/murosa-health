@@ -64,7 +64,7 @@ RUN sed --in-place --expression \
 
 RUN pip3 install -r ./src/murosa_plan_health/requirements.txt
 
-COPY jason_health/ jason_health/
+COPY jason/ jason/
 COPY gradle-7.4/ /app/gradle-7.4
 
 ENV GRADLE_HOME=/app/gradle-7.4

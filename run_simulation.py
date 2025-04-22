@@ -37,7 +37,7 @@ def start_services(run_number, problem_rate, replan):
     # gradle_log = open(log_dir / "gradle.log", "w")
     # processes["gradle"] = subprocess.Popen(
     #     ["./gradlew", "run"],
-    #     cwd="jason_health",
+    #     cwd="jason",
     #     stdout=gradle_log,
     #     stderr=subprocess.STDOUT
     # )
