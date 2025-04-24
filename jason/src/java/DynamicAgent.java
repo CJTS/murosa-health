@@ -34,7 +34,6 @@ public class DynamicAgent extends AgArch {
             (JsonNode data, String stringRep) -> {
                 MessageUnpacker<PrimitiveMsg<String>> unpacker = new MessageUnpacker<>(PrimitiveMsg.class);
                 PrimitiveMsg<String> msg = unpacker.unpackRosMessage(data);
-                logger.info(msg.data);
                 FIPAMessage decodedMessage = FIPAMessage.decode(msg.data);
 
                 if(decodedMessage.getReceiver().equals(getAgName())) {

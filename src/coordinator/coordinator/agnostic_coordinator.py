@@ -6,7 +6,6 @@ from std_msgs.msg import String, Bool
 from coordinator.helper import FIPAMessage, action_string_to_tuple, action_tuple_to_string
 from coordinator.BDIParser import generate_bdi
 from coordinator.FIPAPerformatives import FIPAPerformative
-import uuid
 
 class AgnosticCoordinator(Node):
     def __init__(self, Name):
@@ -187,7 +186,7 @@ class AgnosticCoordinator(Node):
 
         bdies = generate_bdi(team, formated_plan, self.mission_context, self.variables)
         for agent, rules in bdies.items():
-            plans = [f"+{self.mission_context}: true <- +{self.mission_context}."]
+            plans = [f"+!{self.mission_context}: true <- +{self.mission_context}."]
             for rule in rules:
                 plans.append(rule)
             msg = String()
@@ -253,10 +252,6 @@ class AgnosticCoordinator(Node):
         self.action_request.action = '|'.join(
             ('need_plan', robotid, nurseid, armid))
         return self.planner_communication_sync_client.call_async(self.action_request)
-
-    def make_agent_id(self, agent_name):
-        random_id = str(uuid.uuid4()).replace('-', '_')
-        return f"{agent_name}_{random_id}"
 
     def run(self):
         while rclpy.ok():

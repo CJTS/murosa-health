@@ -5,23 +5,20 @@ class Coordinator(AgnosticCoordinator):
     def __init__(self):
         super().__init__('Coordinator')
         # List of agents
-        # NOT AGNOSTIC
         self.robots = []
         self.arms = []
         self.nurses = []
         # List of agents that are currently occupied
-        # NOT AGNOSTIC
         self.occ_robots = []
         self.occ_arms = []
         self.occ_nurses = []
         # List of agents that are ready to be used
-        # NOT AGNOSTIC
         self.ready_robots = []
         self.ready_arms = []
         self.ready_nurses = []
         self.nurse_queue = []
-        self.mission_context = "start(Nurse, LockedDoor, Robot, ArmRoom, Arm)"
-        self.variables = ["Nurse", "LockedDoor", "Robot", "ArmRoom", "Arm"]
+        self.mission_context = "start(Nurse, NurseRoom, Robot, ArmRoom, Arm)"
+        self.variables = ["Nurse", "NurseRoom", "Robot", "ArmRoom", "Arm"]
 
     def set_agent_ready(self, decoded_msg):
         if "robot" in decoded_msg.sender:
@@ -34,24 +31,37 @@ class Coordinator(AgnosticCoordinator):
     def register_agent(self, decoded_msg):
         response = None
         agent_type = decoded_msg.sender
-        name = self.make_agent_id(agent_type)
-        response = name
 
         if 'arm' in decoded_msg.sender:
-            self.arms.append(name)
+            id = str(len(self.arms) + 1)
+            self.arms.append(decoded_msg.sender + id)
         elif 'robot' in decoded_msg.sender:
-            self.robots.append(name)
+            id = str(len(self.robots) + 1)
+            self.robots.append(decoded_msg.sender + id)
         elif 'nurse' in decoded_msg.sender:
-            self.nurses.append(name)
+            id = str(len(self.nurses) + 1)
+            self.nurses.append(decoded_msg.sender + id)
 
-        self.register_queue.append((name, agent_type))
+        response = decoded_msg.sender + id
+        self.register_queue.append((response, agent_type))
         return response
 
     def get_team(self):
-        # NOT AGNOSTIC
         free_arms = list(set(self.ready_arms) - set(self.occ_arms))
         free_robots = list(set(self.ready_robots) - set(self.occ_robots))
-        nurse = self.nurse_queue.pop()
+        # TODO: Implement nurse queue
+        if len(self.nurse_queue) == 0:
+            return None
+
+        nurse = None
+        
+        for potential_nurse in self.nurse_queue:
+            if potential_nurse in self.ready_nurses:
+                nurse = potential_nurse
+                break
+
+        if nurse is None:
+            return None
 
         if len(free_arms) > 0 and len(free_robots) > 0:
             team = (free_arms[0], free_robots[0], nurse)

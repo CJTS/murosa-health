@@ -66,7 +66,7 @@ class Agent(Node):
         future = self.registration()
         rclpy.spin_until_future_complete(self, future)
         response = future.result()
-        self.agentName = str(self.className) + response.response
+        self.agentName = response.response
         self.get_logger().info('My name is %s' % (self.agentName))
 
     def registration(self):

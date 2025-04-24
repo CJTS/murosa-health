@@ -46,6 +46,7 @@ public class RosEnv extends Environment {
 						collection.add("DynamicAgent");
 						String createRegex = "[,]";
 						String[] decodedCreateContent = decodedContent[1].split(createRegex);
+
 						try {
 							getEnvironmentInfraTier().getRuntimeServices().createAgent(
 									decodedCreateContent[0],     // agent name
@@ -55,7 +56,7 @@ public class RosEnv extends Environment {
 									null,            // bbpars
 									null,            // settings
 									null);           // father
-							getEnvironmentInfraTier().getRuntimeServices().startAgent(decodedContent[1]);
+							getEnvironmentInfraTier().getRuntimeServices().startAgent(decodedCreateContent[0]);
 						} catch (Exception ex) {
 						}
 					}

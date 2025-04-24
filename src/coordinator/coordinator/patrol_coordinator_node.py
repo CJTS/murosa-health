@@ -21,13 +21,13 @@ class Coordinator(AgnosticCoordinator):
     def register_agent(self, decoded_msg):
         response = None
         agent_type = decoded_msg.sender
-        name = self.make_agent_id(agent_type)
-        response = name
 
         if 'patrol' in decoded_msg.sender:
-            self.patrols.append(name)
+            id = str(len(self.patrols) + 1)
+            self.patrols.append(decoded_msg.sender + id)
 
-        self.register_queue.append((name, agent_type))
+        response = decoded_msg.sender + id
+        self.register_queue.append((response, agent_type))
         return response
 
     def get_team(self):
