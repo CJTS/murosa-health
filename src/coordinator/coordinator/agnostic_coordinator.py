@@ -164,13 +164,13 @@ class AgnosticCoordinator(Node):
         team = self.get_team_from_context(context)
 
         self.get_logger().info('Creating plan for: %s ' % (
-            team.join(', ')
+            ','.join(team)
         ))
-        future = self.send_need_plan_request(team)
+        future = self.send_need_plan_request(','.join(team))
         rclpy.spin_until_future_complete(self, future)
         plan_response = future.result()
         self.get_logger().info('Plan received for: %s ' % (
-            team.join(', ')
+            ','.join(team)
         ))
         self.get_logger().info(plan_response.observation)
         self.current_plan = plan_response.observation.split('/')
@@ -247,10 +247,9 @@ class AgnosticCoordinator(Node):
         self.end_publisher.publish(msg)
         raise SystemExit
 
-    def send_need_plan_request(self, robotid, nurseid, armid):
+    def send_need_plan_request(self, team):
         self.action_request = Action.Request()
-        self.action_request.action = '|'.join(
-            ('need_plan', robotid, nurseid, armid))
+        self.action_request.action = 'need_plan|' + team
         return self.planner_communication_sync_client.call_async(self.action_request)
 
     def run(self):

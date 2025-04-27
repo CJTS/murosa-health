@@ -1,5 +1,8 @@
 import rclpy
 from coordinator.agnostic_coordinator import AgnosticCoordinator
+from coordinator.helper import FIPAMessage
+from std_msgs.msg import String
+from coordinator.FIPAPerformatives import FIPAPerformative
 
 class Coordinator(AgnosticCoordinator):
     def __init__(self):
@@ -75,7 +78,7 @@ class Coordinator(AgnosticCoordinator):
     def get_start_context(self, team):
         mission =  (
             team[2], # Nurse
-            self.state['loc'][team[1]], # Locked Location
+            self.state['loc'][team[2]], # Locked Location
             team[1], # Robot
             self.state['loc'][team[0]], # Arm Location
             team[0] # Arm
@@ -115,8 +118,13 @@ class Coordinator(AgnosticCoordinator):
                 # If all agents are free, remove the mission
                 if all_free:
                     self.missions.remove(mission)
+                    for agent in mission:
+                        msg = String()
+                        msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, agent, 'Jason', 'End|' + agent).encode()
+                        self.jason_publisher.publish(msg)
                     self.get_logger().info("Mission Completed")
                     self.end_simulation()
+                    
 
 def main():
     rclpy.init()

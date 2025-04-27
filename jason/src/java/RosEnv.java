@@ -59,6 +59,8 @@ public class RosEnv extends Environment {
 							getEnvironmentInfraTier().getRuntimeServices().startAgent(decodedCreateContent[0]);
 						} catch (Exception ex) {
 						}
+					} else if (decodedContent[0].equals("End")) {
+						getEnvironmentInfraTier().getRuntimeServices().killAgent(decodedContent[1], "", 0);
 					}
 				} else if(decodedMessage.getPerformative().equals("inform")) {
 					if (decodedContent[0].equals("Belief")) {

@@ -20,7 +20,7 @@ class Nurse(Agent):
             rclpy.spin_once(self, timeout_sec=0.001)
             if not self.has_sample:
                 self.has_sample = True
-                seconds = randrange(10)
+                seconds = 1
                 time.sleep(seconds)
                 future = self.a_create_sample()
                 rclpy.spin_until_future_complete(self, future)

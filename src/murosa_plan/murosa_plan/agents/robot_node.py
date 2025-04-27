@@ -29,7 +29,8 @@ class Robot(Agent):
             return ActionResult.SUCCESS
         elif actionTuple[0] == 'a_deposit':
             self.get_logger().info('Doing a_deposit')
-            future = self.a_deposit(actionTuple[1], actionTuple[2])
+            self.a_deposit(actionTuple[1], actionTuple[2])
+            return ActionResult.WAITING
         elif actionTuple[0] == 'a_close_drawer':
             self.get_logger().info('Doing a_close_drawer')
             self.a_close_drawer(actionTuple[1])

@@ -39,16 +39,17 @@ class Planner(Node):
             raise SystemExit
 
     def receive_sync_message(self, request, response):
-        actionTuple = tuple(request.action.split('|'))
+        messageTuple = tuple(request.action.split('|'))
 
-        if actionTuple[0] == 'need_plan':
+        if messageTuple[0] == 'need_plan':
+            actionTuple = tuple(messageTuple[1].split(','))
             self.get_logger().info('Creating plan for: %s %s %s' % (
-                actionTuple[1], actionTuple[2], actionTuple[3]
+                actionTuple[1], actionTuple[0], actionTuple[2]
             ))
 
             planner = IPyHOP(methods, actions)
             plan = planner.plan(self.state, [(
-                'm_pickup_and_deliver_sample', actionTuple[1], actionTuple[2], actionTuple[3]
+                'm_pickup_and_deliver_sample', actionTuple[1], actionTuple[0], actionTuple[2]
             )], verbose=1)
 
             responsePlan = []
@@ -61,8 +62,8 @@ class Planner(Node):
 
             self.get_logger().info('Sending response')
             return response
-        elif actionTuple[0] == 'update_state':
-            state = json.loads(actionTuple[1])
+        elif messageTuple[0] == 'update_state':
+            state = json.loads(messageTuple[1])
             self.state.loc = state['loc']
             self.state.doors = state['doors']
             self.state.sample = state['sample']
