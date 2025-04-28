@@ -35,6 +35,7 @@ public class DynamicAgent extends AgArch {
                 MessageUnpacker<PrimitiveMsg<String>> unpacker = new MessageUnpacker<>(PrimitiveMsg.class);
                 PrimitiveMsg<String> msg = unpacker.unpackRosMessage(data);
                 FIPAMessage decodedMessage = FIPAMessage.decode(msg.data);
+				logger.info(msg.data);
 
                 if(decodedMessage.getReceiver().equals(getAgName())) {
                     String regex = "[|]";
@@ -43,6 +44,7 @@ public class DynamicAgent extends AgArch {
                     if(decodedMessage.getPerformative().equals("request")) {
                         if(decodedContent[0].equals("Start")) {
                             try {
+                                logger.info("Starting: " + "start(" + decodedContent[1] + ")");
                                 getTS().getAg().addBel(Literal.parseLiteral("start(" + decodedContent[1] + ")"));
                             } catch (RevisionFailedException ex) {
                                 System.err.println("Error: " + ex.getMessage());

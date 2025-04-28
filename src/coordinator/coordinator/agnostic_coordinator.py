@@ -1,5 +1,6 @@
 import rclpy
 import json
+import time
 from rclpy.node import Node
 from interfaces.srv import Message, Action
 from std_msgs.msg import String, Bool
@@ -16,6 +17,7 @@ class AgnosticCoordinator(Node):
         self.register_queue = []
         # List of missions that have errors
         self.missions_with_error = []
+        self.known_errors = []
         self.declare_parameter('replan', rclpy.Parameter.Type.BOOL)
         replan_param = self.get_parameter('replan').get_parameter_value().bool_value
         self.should_replan = replan_param
@@ -78,22 +80,25 @@ class AgnosticCoordinator(Node):
 
     def execute_callback(self, request, response):
         decoded_msg = FIPAMessage.decode(request.content)
+        self.get_logger().info(f'Received: Performative={decoded_msg.performative}, Sender={decoded_msg.sender}, Receiver={decoded_msg.receiver}, Content={decoded_msg.content}')
 
         if decoded_msg.performative == FIPAPerformative.REQUEST.value:
             if decoded_msg.content == 'Register':
                 response.response = self.register_agent(decoded_msg)
         elif decoded_msg.performative == FIPAPerformative.INFORM.value:
             if "ERROR" in decoded_msg.content:
-                self.get_logger().info('Error found')
-                self.get_logger().info(decoded_msg.sender)
                 mission = [mission for mission in self.missions if decoded_msg.sender in mission]
-                self.get_logger().info(",".join(mission[0]))
-                self.missions_with_error.append(mission[0])
-
-        self.get_logger().info(f'Received: Performative={decoded_msg.performative}, Sender={decoded_msg.sender}, Receiver={decoded_msg.receiver}, Content={decoded_msg.content}')
+                self.missions_with_error.append((mission[0], decoded_msg.content))
+                self.idk(mission, decoded_msg.content)
         return response
+    
+    def idk(self, mission, error):
+        raise NotImplementedError("This method should be implemented by the subclass")
 
     def register_agent(self, decoded_msg):
+        raise NotImplementedError("This method should be implemented by the subclass")
+
+    def restart_mission(self, mission):
         raise NotImplementedError("This method should be implemented by the subclass")
 
     def start_mission(self):
@@ -134,7 +139,6 @@ class AgnosticCoordinator(Node):
         rclpy.spin_until_future_complete(self, future)
         response = future.result()
         self.state = json.loads(response.observation)
-
         self.update_planner_state(response.observation)
         self.verify_initial_trigger()
 
@@ -159,7 +163,6 @@ class AgnosticCoordinator(Node):
             self.jason_publisher.publish(msg)
 
     def fix_plan(self, context):
-        # NOT AGNOSTIC
         self.get_logger().info(",".join(context))
         team = self.get_team_from_context(context)
 
@@ -234,11 +237,21 @@ class AgnosticCoordinator(Node):
 
     def fix_missions(self):
         if len(self.missions_with_error) > 0:
-            if self.should_replan:
-                mission = self.missions_with_error.pop()
-                self.fix_plan(mission)
-            else:
-                self.end_simulation();
+                mission_error = self.missions_with_error.pop()
+                mission = mission_error[0]
+                error = mission_error[1]
+                error_msg = error.split("|")
+                error_desc = error_msg[1].split(",")
+                if error_desc[0] in self.known_errors:
+                    self.get_logger().info('Restarting')
+                    time.sleep(1)
+                    self.restart_mission(mission)
+                else:
+                    if self.should_replan:
+                            self.get_logger().info('Error found')
+                            self.fix_plan(mission)
+                    else:
+                        self.end_simulation()
 
     def end_simulation(self):
         self.get_logger().info('Ending simulation')

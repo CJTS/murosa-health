@@ -8,11 +8,13 @@ from murosa_plan.ipyhop import Actions
 # ******************************************        Action Definitions      ****************************************** #
 actions = Actions()
 
-
 def patrol(state, robot_):
     return state
 
-actions.declare_actions([patrol])
+def charge(state, robot_):
+    return state
+
+actions.declare_actions([patrol, charge])
 
 # ******************************************    Demo / Test Routine         ****************************************** #
 if __name__ == '__main__':

@@ -6,7 +6,8 @@ File Description: Hospital mod problem file. Initial state and task list for the
 from murosa_plan.ipyhop import State
 # ******************************************        Problem Definition      ****************************************** #
 init_state = State('init_state')
-init_state.loc = { 'r2d2': 'wp_control' }
+init_state.loc = { 'patrol1': 'wp_control', 'patrol2': 'wp_control', 'patrol3': 'wp_control' }
+init_state.battery = { 'patrol1': 'high', 'patrol2': 'high', 'patrol3': 'high' }
 init_state.connected = {
     'wp_control': ['wp1', 'wp2', 'wp3', 'wp4', 'wp5', 'wp6', 'wp7', 'wp8', 'wp9', 'wp10', 'wp11', 'wp12'],
     'wp1': ['wp_control'],

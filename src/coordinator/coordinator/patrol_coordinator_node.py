@@ -1,6 +1,9 @@
 import random
 import rclpy
 from coordinator.agnostic_coordinator import AgnosticCoordinator
+from std_msgs.msg import String
+from coordinator.helper import FIPAMessage
+from coordinator.FIPAPerformatives import FIPAPerformative
 
 class Coordinator(AgnosticCoordinator):
     def __init__(self):
@@ -12,11 +15,11 @@ class Coordinator(AgnosticCoordinator):
         self.ready_patrols = []
         self.mission_context = "start(Patrol, Base, Room1)"
         self.variables = ["Patrol", "Room1", "Base"]
+        self.known_errors.append("low_battery")
 
     def set_agent_ready(self, decoded_msg):
         if "patrol" in decoded_msg.sender:
             self.ready_patrols.append(decoded_msg.sender)
-
 
     def register_agent(self, decoded_msg):
         response = None
@@ -34,6 +37,7 @@ class Coordinator(AgnosticCoordinator):
         free_patrols = list(set(self.ready_patrols) - set(self.occ_patrols))
 
         if len(free_patrols) > 0:
+            self.get_logger().info("Adding robot: " + free_patrols[0])
             team = [free_patrols[0]]
             self.occ_patrols.append(free_patrols[0])
             return team
@@ -46,7 +50,9 @@ class Coordinator(AgnosticCoordinator):
         if len(rooms) > 0:
             room = random.choice(rooms)
             self.visiting_wps.append(room)
-            return (team[0], "wp_control", room)
+            mission = (team[0], "wp_control", room)
+            self.missions.append(mission)
+            return mission
 
         return None
 
@@ -65,9 +71,11 @@ class Coordinator(AgnosticCoordinator):
             self.end_simulation()
 
     def get_team_from_context(self, context):
-        return context
+        return [context[0]]
 
     def free_agent(self, agent):
+        self.get_logger().info(agent)
+        self.get_logger().info("Agent: " + agent + " removed from: " +",".join(self.occ_patrols))
         self.occ_patrols.remove(agent)
 
     def verify_mission_complete(self, agent):
@@ -84,6 +92,24 @@ class Coordinator(AgnosticCoordinator):
                 # If all agents are free, remove the mission
                 if all_free:
                     self.missions.remove(mission)
+
+    def restart_mission(self, context):
+        team = self.get_team_from_context(context)
+        for agent in team:
+            self.get_logger().info('Sending restart to:' + agent)
+            self.occ_patrols.append(agent)
+            msg = String()
+            msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent, 'Start|' + ','.join(context)).encode()
+            self.agent_publisher.publish(msg)
+
+    def idk(self, mission, error):
+        error_msg = error.split("|")
+        error_desc = error_msg[1].split(",")
+        wp = error_desc[2]
+        if wp in self.visiting_wps:
+            self.visiting_wps.remove(wp)
+        return
+
 def main():
     rclpy.init()
     coordinator = Coordinator()

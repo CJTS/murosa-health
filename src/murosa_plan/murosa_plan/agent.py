@@ -32,10 +32,10 @@ class Agent(Node):
             String, '/jason/agent/action', self.listener_callback, 10
         )
 
-        # Subscriber para falar com o Coordenador (Ação)
-        self.subscription_coordinator = self.create_subscription(
-            String, '/coordinator/agent/plan', self.listener_plan_callback, 10
-        )
+        # # Subscriber para falar com o Coordenador (Ação)
+        # self.subscription_coordinator = self.create_subscription(
+        #     String, '/coordinator/agent/plan', self.listener_plan_callback, 10
+        # )
 
         # Publisher para falar o resultado da ação para o Jason
         self.publisher = self.create_publisher(String, '/agent/jason/result', 10)
@@ -67,6 +67,7 @@ class Agent(Node):
         rclpy.spin_until_future_complete(self, future)
         response = future.result()
         self.agentName = response.response
+        self.get_logger().info('response.response %s' % (response.response))
         self.get_logger().info('My name is %s' % (self.agentName))
 
     def registration(self):
@@ -166,6 +167,7 @@ class Agent(Node):
                 self.get_logger().info('Already finished action')
 
     def add_action(self, msg):
+        self.get_logger().info('Adding action: ' + msg.content)
         self.actions.append(msg.content.split(","))
 
     def act(self):
@@ -180,18 +182,30 @@ class Agent(Node):
             action = self.actions.pop()
             result = self.choose_action(action)
             if result == ActionResult.SUCCESS:
+                self.get_logger().info("ActionResult.SUCCESS")
                 msg = String()
                 msg.data = FIPAMessage(FIPAPerformative.INFORM.value, self.agentName, 'Jason', 'Success|' + ",".join(action)).encode()
                 self.publisher.publish(msg)
                 self.get_logger().info('Publishing: "%s"' % msg.data)
             elif result == ActionResult.FAILURE:
+                self.get_logger().info("ActionResult.FAILURE")
                 msg = String()
                 msg.data = FIPAMessage(FIPAPerformative.INFORM.value, self.agentName, 'Jason', 'Failure|' + ",".join(action)).encode()
                 self.publisher.publish(msg)
                 self.get_logger().info('Publishing: "%s"' % msg.data)
             elif result == ActionResult.WAITING:
+                self.get_logger().info("ActionResult.WAITING")
                 self.wating = True
                 self.actions.append(action)
+
+    def notifyError(self, error):
+        message = FIPAMessage(FIPAPerformative.INFORM.value, self.agentName, 'Coordinator', 'ERROR|' + error).encode()
+        ros_msg = Message.Request()
+        ros_msg.content = message
+        future = self.cli.call_async(ros_msg)
+        rclpy.spin_until_future_complete(self, future)
+        response = future.result()
+        self.get_logger().info('%s' % (response.response))
 
     def run(self):
         while rclpy.ok():

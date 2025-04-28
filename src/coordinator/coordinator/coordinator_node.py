@@ -38,14 +38,18 @@ class Coordinator(AgnosticCoordinator):
         if 'arm' in decoded_msg.sender:
             id = str(len(self.arms) + 1)
             self.arms.append(decoded_msg.sender + id)
+            self.get_logger().info("Current arms: " + ",".join(self.arms) + " - " + id)
         elif 'robot' in decoded_msg.sender:
             id = str(len(self.robots) + 1)
             self.robots.append(decoded_msg.sender + id)
+            self.get_logger().info("Current robots: " + ",".join(self.robots) + " - " + id)
         elif 'nurse' in decoded_msg.sender:
             id = str(len(self.nurses) + 1)
             self.nurses.append(decoded_msg.sender + id)
+            self.get_logger().info("Current nurses: " + ",".join(self.nurses) + " - " + id)
 
         response = decoded_msg.sender + id
+        self.get_logger().info("Response: " + response)
         self.register_queue.append((response, agent_type))
         return response
 
@@ -124,7 +128,9 @@ class Coordinator(AgnosticCoordinator):
                         self.jason_publisher.publish(msg)
                     self.get_logger().info("Mission Completed")
                     self.end_simulation()
-                    
+
+    def idk(self, mission, error):
+        return
 
 def main():
     rclpy.init()

@@ -28,4 +28,14 @@ def generate_launch_description():
             executable='patrol',
             name='patrol'
         ),
+        Node(
+            package='murosa_plan',
+            executable='patrol',
+            name='patrol'
+        ),
+        Node(
+            package='murosa_plan',
+            executable='patrol',
+            name='patrol'
+        ),
     ])

@@ -7,13 +7,25 @@ from interfaces.srv import Action
 class Patrol(Agent):
     def __init__(self, className):
         super().__init__(className)
+        self.battery = 3
 
     def choose_action(self, actionTuple):
         future = None
 
         if actionTuple[0] == 'move':
-            self.get_logger().info('Doing move')
-            future = self.move(actionTuple[1], actionTuple[2])
+            if(self.battery > 2):
+                self.get_logger().info('Doing move')
+                future = self.move(actionTuple[1], actionTuple[2])
+                self.battery -= 1
+            else:
+                self.get_logger().info('low_battery')
+                self.notifyError(
+                    ','.join(('low_battery', actionTuple[1], actionTuple[2]))
+                )
+                return ActionResult.FAILURE
+        elif actionTuple[0] == 'charge':
+            self.get_logger().info('Doing charge')
+            self.charge(actionTuple[1])
 
         if future != None:
             self.get_logger().info("Wating for response")
@@ -33,6 +45,9 @@ class Patrol(Agent):
             ('move', robot, room)
         )
         return self.environment_client.call_async(self.action_request)
+
+    def charge(self, robot):
+        self.battery += 5
 
 def main():
     rclpy.init()

@@ -59,15 +59,6 @@ class Robot(Agent):
 
         return ActionResult.SUCCESS
 
-    def notifyError(self, error):
-        message = FIPAMessage(FIPAPerformative.INFORM.value, self.agentName, 'Coordinator', 'ERROR|' + error).encode()
-        ros_msg = Message.Request()
-        ros_msg.content = message
-        future = self.cli.call_async(ros_msg)
-        rclpy.spin_until_future_complete(self, future)
-        response = future.result()
-        self.get_logger().info('%s' % (response.response))
-
     def a_navto(self, robot, room):
         self.action_request = Action.Request()
         self.action_request.action = ','.join(('a_navto', robot, room))

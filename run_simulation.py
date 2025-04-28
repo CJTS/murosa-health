@@ -88,16 +88,16 @@ def analyze_health_log(mission, run_number, runtime, problem_rate, replan):
     try:
         with open(log_path, 'r') as f:
             log_content = f.read()
-            results["had_failure"] = "failure" in log_content.lower()
+            results["had_failure"] = "error found" in log_content.lower()
             results["successful_termination"] = "Mission Completed" in log_content
     except FileNotFoundError:
         print(f"Warning: Could not find health log for run {run_number}")
     
     return results
 
-def write_summary(results_list):
+def write_summary(results_list, mission, problem_rate, replan):
     """Write a summary of all simulation runs to a CSV file"""
-    summary_path = "logs/simulation_summary.csv"
+    summary_path = f"logs/simulation_summary_{mission}_{problem_rate}_{replan}.csv"
     with open(summary_path, 'w') as f:
         # Write header
         f.write("Run Number,Problem Rate,Replan,Runtime (s),Had Failure,Successful Termination\n")
@@ -134,16 +134,21 @@ def main():
         Path("logs").mkdir(exist_ok=True)
         
         all_results = []
-        missions = ["health", "patrol"]
-        problem_rates = [0, 25, 50, 75, 100]
-        replan_values = [False, True]
-        run_number = 1
+        # missions = ["health", "patrol"]
+        # problem_rates = [0, 25, 50, 75, 100]
+        # replan_values = [False, True]
+        
+        missions = ["patrol"]
+        problem_rates = [0]
+        replan_values = [False]
+
+        run_number = 301
         
         for mission in missions:
             for problem_rate in problem_rates:
                 for replan in replan_values:
                     for _ in range(30):  # 30 runs for each combination
-                        print(f"\nStarting simulation run {run_number}/300")
+                        print(f"\nStarting simulation run {run_number}/30")
                         print(f"Problem Rate: {problem_rate}, Replan: {replan}")
                             
                         print("All services started. Press Ctrl+C to stop all services.")
@@ -174,14 +179,13 @@ def main():
                         # Add a small delay between runs to ensure proper cleanup
                         time.sleep(2)
         
-        # Write final summary
-        write_summary(all_results)
+                write_summary(all_results, mission, problem_rate, replan)
         print("\nAll simulation runs completed successfully!")
         print(f"Summary written to logs/simulation_summary.csv")
         
         # Run analysis script
         print("\nRunning analysis script...")
-        subprocess.run(["python3", "analyze_results.py"], check=True)
+        # subprocess.run(["python3", "analyze_results.py"], check=True)
         
     except KeyboardInterrupt:
         print("\nReceived interrupt signal. Stopping all services...")

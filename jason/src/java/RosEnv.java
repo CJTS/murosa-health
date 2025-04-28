@@ -36,8 +36,8 @@ public class RosEnv extends Environment {
 				FIPAMessage decodedMessage = FIPAMessage.decode(msg.data);
 				String regex = "[|]";
 				String[] decodedContent = decodedMessage.getContent().split(regex);
-
 				logger.info(msg.data);
+
 				clearPercepts();
 
 				if(decodedMessage.getPerformative().equals("request")) {
@@ -99,6 +99,8 @@ public class RosEnv extends Environment {
 				if(decodedMessage.getPerformative().equals("inform")) {
 					if(decodedContent[0].equals("Success")) {
 						addPercept(decodedMessage.getSender(), Literal.parseLiteral("success_" + formatFunction(agents) + ")"));
+					} else if(decodedContent[0].equals("Failure")) {
+						addPercept(decodedMessage.getSender(), Literal.parseLiteral("failure_" + formatFunction(agents) + ")"));
 					}
 				} else if (decodedMessage.getPerformative().equals("request")) {
 					if (decodedContent[0].equals("End")) {
