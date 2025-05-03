@@ -26,8 +26,7 @@
     .print("Failed to move");
     -start(Patrol, Base, Room1);
     -milestone0;
-    +low_battery;
-    end.
+    +low_battery.
 
 +start(Patrol, Base, Room1): low_battery <-
     .print("Starting without battery");

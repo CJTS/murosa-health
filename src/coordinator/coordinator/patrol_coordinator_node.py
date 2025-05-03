@@ -88,7 +88,7 @@ class Coordinator(AgnosticCoordinator):
                     if mission_agent in self.occ_patrols:
                         all_free = False
                         break
-                
+
                 # If all agents are free, remove the mission
                 if all_free:
                     self.missions.remove(mission)
@@ -97,7 +97,6 @@ class Coordinator(AgnosticCoordinator):
         team = self.get_team_from_context(context)
         for agent in team:
             self.get_logger().info('Sending restart to:' + agent)
-            self.occ_patrols.append(agent)
             msg = String()
             msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent, 'Start|' + ','.join(context)).encode()
             self.agent_publisher.publish(msg)

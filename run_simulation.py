@@ -33,15 +33,15 @@ def start_services(mission, run_number, problem_rate, replan):
     # time.sleep(5)
 
     # Start gradle application
-    print("Starting gradle application...")
-    gradle_log = open(log_dir / "gradle.log", "w")
-    processes["gradle"] = subprocess.Popen(
-        ["./gradlew", "run"],
-        cwd="jason",
-        stdout=gradle_log,
-        stderr=subprocess.STDOUT
-    )
-    time.sleep(5)
+    # print("Starting gradle application...")
+    # gradle_log = open(log_dir / "gradle.log", "w")
+    # processes["gradle"] = subprocess.Popen(
+    #     ["./gradlew", "run"],
+    #     cwd="jason",
+    #     stdout=gradle_log,
+    #     stderr=subprocess.STDOUT
+    # )
+    # time.sleep(5)
     
     # Start health service
     print("Starting " + mission + " coordinator...")
@@ -138,11 +138,11 @@ def main():
         # problem_rates = [0, 25, 50, 75, 100]
         # replan_values = [False, True]
         
-        missions = ["patrol"]
-        problem_rates = [0]
-        replan_values = [False]
+        missions = ["health"]
+        problem_rates = [25]
+        replan_values = [True]
 
-        run_number = 301
+        run_number = 181
         
         for mission in missions:
             for problem_rate in problem_rates:
