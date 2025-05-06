@@ -12,7 +12,7 @@ def load_and_analyze_data(file):
     df = pd.read_csv(f"logs/{file}.csv")
     
     # Convert boolean columns to proper boolean type
-    df['Replan'] = df['Replan'].astype(bool)
+    # df['Replan'] = df['Replan'].astype(bool)
     
     # Create output directory for plots
     plot_dir = Path('logs/analysis_plots')
@@ -22,36 +22,32 @@ def load_and_analyze_data(file):
 
 def plot_runtime_by_problem_rate(df, plot_dir):
     """Plot runtime distribution by problem rate"""
-    
-    # rate = df.groupby(['Problem Rate', 'Replan'])['Runtime (s)'].mean().reset_index()
     plt.figure(figsize=(10, 6))
-    sns.boxplot(x='Problem Rate', y='Runtime (s)', data=df, hue='Replan', palette=['#1f77b4', '#ff7f0e'])
-    # plt.title('Runtime Distribution by Problem Rate')
+    sns.boxplot(x='Successful Termination', y='Runtime (s)', data=df)
+    plt.title('Runtime Distribution by Problem Rate')
     plt.savefig(plot_dir / 'runtime_by_problem_rate.png')
     plt.close()
 
 def plot_success_rate_by_parameters(df, plot_dir):
     """Plot success rate by problem rate and replan status"""
     # Calculate success rate
-    rate = df.groupby(['Problem Rate', 'Replan']).mean().reset_index()
-    rate['Problem Rate'] = rate['Problem Rate'].astype(str)
+    # rate = df.groupby(['Problem Rate', 'Replan']).mean().reset_index()
+    # rate['Problem Rate'] = rate['Problem Rate'].astype(str)
 
     fig, ax1 = plt.subplots()
     # plt.figure(figsize=(10, 6))
-    sns.barplot(x='Problem Rate', y='Successful Termination', hue='Replan', ax=ax1, data=rate, palette=['#1f77b4', '#8c564b'])
-    ax1.set_ylabel('Successful Termination')
-    ax2 = ax1.twinx()
-    sns.lineplot(x='Problem Rate', y='Had Failure', hue='Replan', ax=ax2, data=rate, palette=['#ff7f0e', '#e377c2'], marker='o', linewidth=3)
-    ax2.set_ylabel('Had Failure')
-    ax1.set_ylim(0, 1)
-    ax2.set_ylim(0, 1)
-    ax1.legend_.remove()  # Removes the barplot's legend
-    ax2.legend_.remove()  # Removes the lineplot's legend
-    handles_bar, labels_bar = ax1.get_legend_handles_labels()
-    handles_line, labels_line = ax2.get_legend_handles_labels()
-    ax1.legend(handles_bar + handles_line, labels_bar + labels_line, title="Replan Status", loc="best")
+    sns.lineplot(data=df)
+    # ax1.set_ylabel('Runtime (s)')
+    # ax2 = ax1.twinx()
+    # sns.lineplot(x='Run Number', y='Had Failure', ax=ax2, data=df, linewidth=3)
+    # ax2.set_ylabel('Had Failure')
+    # ax1.legend_.remove()  # Removes the barplot's legend
+    # ax2.legend_.remove()  # Removes the lineplot's legend
+    # handles_bar, labels_bar = ax1.get_legend_handles_labels()
+    # handles_line, labels_line = ax2.get_legend_handles_labels()
+    # ax1.legend(handles_bar + handles_line, labels_bar + labels_line, title="Replan Status", loc="best")
     # plt.title('Success Rate by Problem Rate and Replan Status')
-    plt.ylim(0, 1)
+    # plt.ylim(0, 1)
     plt.savefig(plot_dir / 'success_rate_by_parameters.png')
     plt.close()
 
@@ -62,7 +58,7 @@ def plot_failure_rate_by_parameters(df, plot_dir):
     
     plt.figure(figsize=(10, 6))
     sns.barplot(x='Problem Rate', y='Had Failure', hue='Replan', data=failure_rate)
-    # plt.title('Failure Rate by Problem Rate and Replan Status')
+    plt.title('Failure Rate by Problem Rate and Replan Status')
     plt.ylim(0, 1)
     plt.savefig(plot_dir / 'failure_rate_by_parameters.png')
     plt.close()
@@ -78,8 +74,8 @@ def plot_runtime_heatmap(df, plot_dir):
     )
     
     plt.figure(figsize=(10, 6))
-    sns.heatmap(avg_runtime, annot=True, fmt='.2f', cmap='YlOrRd', annot_kws={"size": 12})
-    # plt.title('Average Runtime by Problem Rate and Replan Status')
+    sns.heatmap(avg_runtime, annot=True, fmt='.2f', cmap='YlOrRd')
+    plt.title('Average Runtime by Problem Rate and Replan Status')
     plt.savefig(plot_dir / 'runtime_heatmap.png')
     plt.close()
 
@@ -88,9 +84,9 @@ def main():
     sns.set_style("whitegrid")
     plt.rcParams['figure.figsize'] = [10, 6]
 
-    missions = ["health"]
-    problem_rates = [0, 25, 50, 75, 100]
-    replan_values = [False, True]
+    missions = ["patrol"]
+    problem_rates = [0]
+    replan_values = [False]
 
     df = pd.DataFrame()
 
@@ -104,8 +100,8 @@ def main():
     print("Generating analysis plots...")
     plot_runtime_by_problem_rate(df, plot_dir)
     plot_success_rate_by_parameters(df, plot_dir)
-    plot_failure_rate_by_parameters(df, plot_dir)
-    plot_runtime_heatmap(df, plot_dir)
+    # plot_failure_rate_by_parameters(df, plot_dir)
+    # plot_runtime_heatmap(df, plot_dir)
     
     # Print summary statistics
     print(f"\nPlots have been saved to {plot_dir}")
