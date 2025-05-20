@@ -1,5 +1,6 @@
-ARG FROM_IMAGE=ros:humble
+ARG FROM_IMAGE=docker.io/library/ros:humble
 ARG OVERLAY_WS=/opt/ros/overlay_ws
+
 
 # multi-stage for caching
 FROM $FROM_IMAGE AS cacher

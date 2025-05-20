@@ -142,7 +142,7 @@ def main():
         problem_rates = [25]
         replan_values = [True]
 
-        run_number = 181
+        run_number = 1
         
         for mission in missions:
             for problem_rate in problem_rates:
