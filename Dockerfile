@@ -1,4 +1,4 @@
-ARG FROM_IMAGE=docker.io/library/ros:humble
+ARG FROM_IMAGE=ros:humble
 ARG OVERLAY_WS=/opt/ros/overlay_ws
 
 
