@@ -51,6 +51,8 @@ class Coordinator(AgnosticCoordinator):
         response = decoded_msg.sender + id
         self.get_logger().info("Response: " + response)
         self.register_queue.append((response, agent_type))
+        self.get_logger().info(f"colocando: {agent_type} {len(self.register_queue)}")
+        self.get_logger().info(f"lista ready robots:{len(self.ready_robots)}")
         return response
 
     def get_team(self):
@@ -135,7 +137,7 @@ class Coordinator(AgnosticCoordinator):
 def main():
     rclpy.init()
     coordinator = Coordinator()
-    coordinator.get_logger().info('spin')
+    coordinator.get_logger().info('spin, health')
     try:
         coordinator.run()
     except SystemExit:

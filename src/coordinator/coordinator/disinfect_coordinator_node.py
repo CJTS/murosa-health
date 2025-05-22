@@ -22,29 +22,32 @@ class Coordinator(AgnosticCoordinator):
         self.ready_nurses = []
         #list of dirty rooms
         self.room_queue = []
-        self.mission_context = "start(Nurse, NurseRoom, uvdrobot, spotrobot)"
-        self.variables = ["Nurse", "NurseRoom", "uvdrobot", "spotrobot"]
+        self.mission_context = "start(NurseDesinfect, NurseRoom, uvdrobot, spotrobot)"
+        self.variables = ["NurseDesinfect", "NurseRoom", "uvdrobot", "spotrobot"]
 
     def set_agent_ready(self, decoded_msg):
         if "uvdrobot" in decoded_msg.sender:
             self.ready_uvdrobots.append(decoded_msg.sender)
+            self.get_logger().info(f"ready uvd: {len(self.ready_uvdrobots)}")
         elif "spotrobot" in decoded_msg.sender:
             self.ready_spotrobots.append(decoded_msg.sender)
+            self.get_logger().info(f"ready spot: {len(self.ready_spotrobots)}")
         elif "nurse" in decoded_msg.sender:
             self.ready_nurses.append(decoded_msg.sender)
+            self.get_logger().info(f"ready 123: {len(self.ready_nurses)}")
 
     def register_agent(self, decoded_msg):
         response = None
         agent_type = decoded_msg.sender
-
         if 'uvdrobot' in decoded_msg.sender:
             id = str(len(self.uvdrobot) + 1)
             self.uvdrobot.append(decoded_msg.sender + id)
             self.get_logger().info("Current uvdrobots: " + ",".join(self.uvdrobot) + " - " + id)
+            
         elif 'spotrobot' in decoded_msg.sender:
             id = str(len(self.spotrobot) + 1)
             self.spotrobot.append(decoded_msg.sender + id)
-            self.get_logger().info("Current robots: " + ",".join(self.spotrobot) + " - " + id)
+            self.get_logger().info("Current Spotrobots: " + ",".join(self.spotrobot) + " - " + id)
         elif 'nurse' in decoded_msg.sender:
             id = str(len(self.nurses) + 1)
             self.nurses.append(decoded_msg.sender + id)
@@ -53,15 +56,23 @@ class Coordinator(AgnosticCoordinator):
         response = decoded_msg.sender + id
         self.get_logger().info("Response: " + response)
         self.register_queue.append((response, agent_type))
+
+        if "uvdrobot" in decoded_msg.sender:
+            self.ready_uvdrobots.append(decoded_msg.sender + id)
+        elif "spotrobot" in decoded_msg.sender:
+            self.ready_spotrobots.append(decoded_msg.sender + id) 
+        elif "nurse" in decoded_msg.sender:
+            self.ready_nurses.append(decoded_msg.sender + id)
+            
         return response
     
     def get_team(self):
         free_uvdrobot = list(set(self.ready_uvdrobots) - set(self.occ_uvdrobots))
         free_spotrobot = list(set(self.ready_spotrobots) - set(self.occ_spotrobots))
+        #self.get_logger().info(f"Tamanho da room_queue: {len(self.room_queue)}")
         # TODO: Implement nurse queue
         if len(self.room_queue) == 0:
             return None
-
         nurse = None
         
         for potential_nurse in self.room_queue:
@@ -71,12 +82,14 @@ class Coordinator(AgnosticCoordinator):
 
         if nurse is None:
             return None
+        
 
         if len(free_uvdrobot) > 0 and len(free_spotrobot) > 0:
             team = (free_uvdrobot[0], free_spotrobot[0], nurse)
             self.occ_uvdrobots.append(free_uvdrobot[0])
             self.occ_spotrobots.append(free_spotrobot[0])
             self.occ_nurses.append(nurse)
+            self.get_logger().info(f"teste3 {free_uvdrobot[0]} {free_spotrobot[0]} {nurse}")
             return team
 
         return None
@@ -88,17 +101,18 @@ class Coordinator(AgnosticCoordinator):
             team[1], # spotrobot
             team[0] # uvdrobot
         )
+        self.get_logger().info(f"context: {team[2]} {self.state['loc'][team[2]]} { team[1]} {team[0]}")
         self.missions.append(mission)
         return mission
     
     def verify_initial_trigger(self):
-        for nurse, location in self.state['loc'].items():
-            if 'nurse' in nurse:
+        for agent, location in self.state['loc'].items():
+            if 'nurse' in agent:
                 # Verifica se a sala da enfermeira ainda não foi desinfetada
-                if not self.state.disinfected[location]:
+                if not self.state['disinfected'][location]:
                     # Verifica se essa sala já não está em missão
-                    if all(nurse not in team for team in self.missions):
-                        self.room_queue.append(nurse)
+                    if all(agent not in team for team in self.missions):
+                        self.room_queue.append(agent)
                         self.start_mission()
 
     def get_team_from_context(self, context):

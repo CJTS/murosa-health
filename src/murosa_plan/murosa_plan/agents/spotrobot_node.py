@@ -98,7 +98,7 @@ class Spotrobot(Agent):
     
 def main():
     rclpy.init()
-    robot = Spotrobot('Robot')
+    robot = Spotrobot('Spotrobot')
     try:
         # rclpy.spin(robot)
         robot.run()

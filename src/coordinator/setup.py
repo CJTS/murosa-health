@@ -25,6 +25,7 @@ setup(
         'console_scripts': [
             'coordinator = coordinator.coordinator_node:main',
             'patrol_coordinator = coordinator.patrol_coordinator_node:main',
+            'disinfect_coordinator = coordinator.disinfect_coordinator_node:main',
         ],
     },
 )

@@ -20,7 +20,7 @@ class Environment(Node):
             # 100 - closed_door_percentage, closed_door_percentage), k=1)
         
         self.state = {
-            'loc': { 'nurse1': 'room1','nurse2': 'room2', 'nurse3': 'room3','uvdrobot': 'room4', 'spotrobot': 'room4'},
+            'loc': { 'nurse_disinfected1': 'room1','nurse_disinfected2': 'room2', 'nurse_disinfected3': 'room3','uvdrobot': 'room4', 'spotrobot': 'room4'},
             'doors': { 'room1': True, 'room2': True, 'room3': True, 'room4': True },
             'cleaned': { 'room1' : True,'room2' : True, 'room3' : True },
             'disinfected': {'room1': False,'room2': False, 'room3': False}
@@ -66,6 +66,7 @@ class Environment(Node):
         elif actionTuple[0] == 'monitor':
             response.observation = json.dumps(self.state)
         elif actionTuple[0] == 'a_infected_room':
+            
             self.state['disinfected'][actionTuple[1]] = False
         elif actionTuple[0] == 'a_patrol_room' and not self.state['cleaned'][actionTuple[2]]:
             response.observation = 'dirty room'

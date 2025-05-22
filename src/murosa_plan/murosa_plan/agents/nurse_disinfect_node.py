@@ -101,7 +101,7 @@ class Nurse(Agent):
 
 def main():
     rclpy.init()
-    nurse = Nurse('Nurse')
+    nurse = Nurse('Nurse_Disinfected')
     try:
         nurse.run()
         # rclpy.spin(nurse)
