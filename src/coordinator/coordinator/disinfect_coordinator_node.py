@@ -1,9 +1,9 @@
 import rclpy
 from coordinator.agnostic_coordinator import AgnosticCoordinator
-from coordinator.helper import FIPAMessage
+from coordinator.helper import FIPAMessage,  action_string_to_tuple, action_tuple_to_string
 from std_msgs.msg import String
 from coordinator.FIPAPerformatives import FIPAPerformative
-
+from interfaces.srv import SendPlan, Action
 
 class Coordinator(AgnosticCoordinator):
     def __init__(self):
@@ -17,14 +17,19 @@ class Coordinator(AgnosticCoordinator):
         self.occ_spotrobots = []
         self.occ_uvdrobots = []
         #list of agents that are ready
+        '''
         self.ready_spotrobots = []
         self.ready_uvdrobots = []
         self.ready_nurses = []
+        '''
         #list of dirty rooms
         self.room_queue = []
         self.mission_context = "start(NurseDesinfect, NurseRoom, uvdrobot, spotrobot)"
         self.variables = ["NurseDesinfect", "NurseRoom", "uvdrobot", "spotrobot"]
-
+        self.current_plan = []
+        self.plans_actions = 0
+        self.plans_actions_current = 0
+    '''
     def set_agent_ready(self, decoded_msg):
         if "uvdrobot" in decoded_msg.sender:
             self.ready_uvdrobots.append(decoded_msg.sender)
@@ -35,6 +40,9 @@ class Coordinator(AgnosticCoordinator):
         elif "nurse" in decoded_msg.sender:
             self.ready_nurses.append(decoded_msg.sender)
             self.get_logger().info(f"ready 123: {len(self.ready_nurses)}")
+    '''
+
+
 
     def register_agent(self, decoded_msg):
         response = None
@@ -56,19 +64,19 @@ class Coordinator(AgnosticCoordinator):
         response = decoded_msg.sender + id
         self.get_logger().info("Response: " + response)
         self.register_queue.append((response, agent_type))
-
+        '''
         if "uvdrobot" in decoded_msg.sender:
             self.ready_uvdrobots.append(decoded_msg.sender + id)
         elif "spotrobot" in decoded_msg.sender:
             self.ready_spotrobots.append(decoded_msg.sender + id) 
         elif "nurse" in decoded_msg.sender:
             self.ready_nurses.append(decoded_msg.sender + id)
-            
+        '''
         return response
     
     def get_team(self):
-        free_uvdrobot = list(set(self.ready_uvdrobots) - set(self.occ_uvdrobots))
-        free_spotrobot = list(set(self.ready_spotrobots) - set(self.occ_spotrobots))
+        free_uvdrobot = list(set(self.uvdrobot) - set(self.occ_uvdrobots))
+        free_spotrobot = list(set(self.spotrobot) - set(self.occ_spotrobots))
         #self.get_logger().info(f"Tamanho da room_queue: {len(self.room_queue)}")
         # TODO: Implement nurse queue
         if len(self.room_queue) == 0:
@@ -76,7 +84,7 @@ class Coordinator(AgnosticCoordinator):
         nurse = None
         
         for potential_nurse in self.room_queue:
-            if potential_nurse in self.ready_nurses:
+            if potential_nurse in self.nurses:
                 nurse = potential_nurse
                 break
 
@@ -114,6 +122,7 @@ class Coordinator(AgnosticCoordinator):
                     if all(agent not in team for team in self.missions):
                         self.room_queue.append(agent)
                         self.start_mission()
+                        
 
     def get_team_from_context(self, context):
         return [context[0], context[2], context[3]]
@@ -148,8 +157,10 @@ class Coordinator(AgnosticCoordinator):
                     self.get_logger().info("Mission Completed")
                     self.end_simulation()
 
+
     def idk(self, mission, error):
         return
+    
     
 
 def main():
