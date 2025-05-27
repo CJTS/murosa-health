@@ -161,7 +161,39 @@ class Coordinator(AgnosticCoordinator):
     def idk(self, mission, error):
         return
     
-    
+    def start_mission(self):
+        self.get_logger().info("Starting mission")
+        if len(self.room_queue) == 0:
+            self.get_logger().info("No more rooms to disinfect")
+            return
+        
+        team = self.get_team()
+        if team is None:
+            self.get_logger().info("No available team to start mission")
+            return
+        
+        context = self.get_start_context(team)
+        self.get_logger().info(f"Starting mission with context: {context}")
+
+        self.get_logger().info('Creating plan for: %s ' % (
+            ','.join(context)
+        ))
+        future = self.send_need_plan_request(','.join(context))
+        rclpy.spin_until_future_complete(self, future)
+        plan_response = future.result()
+        self.get_logger().info('Plan received for: %s ' % (
+            ','.join(context)
+        ))
+
+        self.get_logger().info(plan_response.observation)
+        self.current_plan = plan_response.observation.split('/')
+        #for action in self.current_plan:
+            # split plan between agents
+
+        # send plan to agents
+        
+        # Remove the room from the queue
+        self.room_queue.remove(team[2])
 
 def main():
     rclpy.init()
