@@ -112,7 +112,7 @@ class Coordinator(AgnosticCoordinator):
 def main():
     rclpy.init()
     coordinator = Coordinator()
-    coordinator.get_logger().info('spin')
+    coordinator.get_logger().info('spin, Patrol')
     try:
         coordinator.run()
     except SystemExit:
