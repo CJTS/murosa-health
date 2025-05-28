@@ -39,15 +39,14 @@ class Uvdrobot(Agent):
                     ','.join(('door_closed', actionTuple[2]))
                 )
                 return ActionResult.FAILURE
-            elif response.observation == 'dirty_room':
+            elif response.observation == 'dirty room':
                 self.notifyError(
                     ','.join(('dirty_room', actionTuple[2]))
                 )
                 return ActionResult.FAILURE
-        
 
         return ActionResult.SUCCESS
-    
+
     def a_navto(self, uvdrobot, room):
         self.action_request = Action.Request()
         self.action_request.action = ','.join(('a_navto', uvdrobot, room))
@@ -64,7 +63,7 @@ class Uvdrobot(Agent):
             self.get_logger().info("Here first, waiting for spotrobot")
             self.ask_for_agent(spotrobot_, 'a_authorize_disinfect')
         else:
-            self.get_logger().info("Nurse is waiting, send action message")
+            self.get_logger().info("spotrobot is waiting, send action message")
             self.acting_for_agent(spotrobot_, 'a_authorize_disinfect')
 
 

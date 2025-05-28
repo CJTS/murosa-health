@@ -65,9 +65,10 @@ class Planner(Node):
             state = json.loads(messageTuple[1])
             self.state.loc = state['loc']
             self.state.doors = state['doors']
-            self.state.cleaned = state['cleaned']
             self.state.disinfected = state['disinfected']
             return response
+        elif messageTuple[0] == 'update_room_uncleaned': 
+            self.state.cleaned[messageTuple[1]] = False
 
         response.observation = 'success'
         return response

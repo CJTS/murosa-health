@@ -14,7 +14,7 @@ class Nurse(Agent):
     def __init__(self, className):
         super().__init__(className)
         self.infected_room = False
-        self.run()
+        #self.run()
 
     def run(self):
         while rclpy.ok():
@@ -54,7 +54,10 @@ class Nurse(Agent):
         elif actionTuple[0] == 'a_open_door':
             self.get_logger().info('Doing a_open_door')
             future = self.a_open_door(actionTuple[1], actionTuple[2])
-        
+        elif actionTuple[0] == 'a_clean_room':
+            self.get_logger().info('Doing a_clean_room')
+            future = self.a_clean_room(actionTuple[1], actionTuple[2])
+
         if future != None:
             self.get_logger().info("Waiting for response")
             rclpy.spin_until_future_complete(self, future)
@@ -83,19 +86,26 @@ class Nurse(Agent):
             self.get_logger().info("Robot is waiting, send action message")
             self.acting_for_agent(spotrobot, 'a_authorize_patrol')
 
-    def a_authenticate_nurse(self, robot, nurse):
+    def a_authenticate_nurse(self, spotrobot, nurse):
         self.get_logger().info("a_authenticate_nurse")
         if all('a_authenticate_nurse' not in action for action in self.wating_response):
             self.get_logger().info("Here first, waiting for robot")
-            self.ask_for_agent(robot, 'a_authenticate_nurse')
+            self.ask_for_agent(spotrobot, 'a_authenticate_nurse')
         else:
             self.get_logger().info("Robot is waiting, send action message")
-            self.acting_for_agent(robot, 'a_authenticate_nurse')
+            self.acting_for_agent(spotrobot, 'a_authenticate_nurse')
 
     def a_open_door(self, nurse, room):
         self.action_request = Action.Request()
         self.action_request.action = ','.join(
             ('a_open_door', nurse, room)
+        )
+        return self.environment_client.call_async(self.action_request)
+    
+    def a_clean_room(self, nurse, room):
+        self.action_request = Action.Request()
+        self.action_request.action = ','.join(
+            ('a_clean_room', nurse, room)
         )
         return self.environment_client.call_async(self.action_request)
     

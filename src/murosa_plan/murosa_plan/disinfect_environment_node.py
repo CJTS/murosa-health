@@ -12,17 +12,17 @@ class Environment(Node):
     def __init__(self):
         super().__init__('Environment')
         self.client_futures = []
-        #self.door = False
-        #numberList = [True, False]
+        self.door = False
+        numberList = [True, False]
         self.declare_parameter('problem_rate', rclpy.Parameter.Type.INTEGER)
-        #closed_door_percentage = self.get_parameter('problem_rate').get_parameter_value().integer_value
-        #closed_door = random.choices(numberList, weights=(
-            # 100 - closed_door_percentage, closed_door_percentage), k=1)
-        
+        Uncleaned_percentage = self.get_parameter('problem_rate').get_parameter_value().integer_value
+        Uncleaned = random.choices(numberList, weights=(
+            100 - Uncleaned_percentage, Uncleaned_percentage), k=1)
+
         self.state = {
             'loc': { 'nurse_disinfected1': 'room1','nurse_disinfected2': 'room2', 'nurse_disinfected3': 'room3','uvdrobot1': 'room4', 'spotrobot1': 'room4'},
-            'doors': { 'room1': True, 'room2': True, 'room3': True, 'room4': True },
-            'cleaned': { 'room1' : True,'room2' : True, 'room3' : True },
+            'doors': { 'room1': False, 'room2': True, 'room3': True, 'room4': True },
+            'cleaned': { 'room1': Uncleaned[0], 'room2': True, 'room3': True },
             'disinfected': {'room1': False,'room2': True, 'room3': True}
             }
         self.start_server()
@@ -58,9 +58,7 @@ class Environment(Node):
         actionTuple = tuple(request.action.split(','))
         response.observation = 'success'
 
-        if actionTuple[0] == 'a_navto' and not self.state['doors'][actionTuple[2]]:
-            response.observation = 'door closed'
-        elif actionTuple[0] == 'a_open_door':
+        if actionTuple[0] == 'a_open_door':
             self.state['doors'][actionTuple[2]] = True
             response.observation = 'success'
         elif actionTuple[0] == 'monitor':
@@ -71,6 +69,15 @@ class Environment(Node):
             response.observation = 'dirty room'
         elif actionTuple[0] == 'a_disinfect_room' and not self.state['cleaned'][actionTuple[2]]:
             response.observation = 'dirty room'
+        elif actionTuple[0] == 'a_clean_room':
+            self.state['cleaned'][actionTuple[2]] = True
+            response.observation = 'success'
+        elif actionTuple[0] == 'a_disinfect_room':
+            if self.state['cleaned'][actionTuple[2]]:
+                self.state['disinfected'][actionTuple[2]] = True
+                response.observation = 'success'
+            else:
+                response.observation = 'dirty room'
 
         return response
 
