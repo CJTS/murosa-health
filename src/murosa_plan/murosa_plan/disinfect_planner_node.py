@@ -43,12 +43,12 @@ class Planner(Node):
         if messageTuple[0] == 'need_plan':
             actionTuple = tuple(messageTuple[1].split(','))
             self.get_logger().info('Creating plan for: %s %s %s' % (
-                actionTuple[1], actionTuple[0], actionTuple[2]
+                actionTuple[0], actionTuple[1], actionTuple[2]
             ))
 
             planner = IPyHOP(methods, actions)
             plan = planner.plan(self.state, [(
-                'm_patrol_and_disinfect', actionTuple[1], actionTuple[0], actionTuple[2]
+                'm_patrol_and_disinfect', actionTuple[0], actionTuple[1], actionTuple[2]
             )], verbose=1)
 
             responsePlan = []

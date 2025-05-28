@@ -112,7 +112,7 @@ class AgnosticCoordinator(Node):
         if(start_context == None):
             # self.get_logger().info("Not possible to start mission")
             return
-        
+    
         for agent in team:
         
             msg = String()

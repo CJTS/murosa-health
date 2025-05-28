@@ -30,7 +30,10 @@ def a_authorize_patrol(state, spotrobot_, nurse_):
     return state
 
 def a_patrol_room(state, spotrobot_, room_):
-    return state 
+    return state
+
+def a_authorize_disinfect(state, uvdrobot_, spotrobot_):
+    return state
 
 def a_clean_room(state, nurse_, room_):
     state.cleaned[room_] = True
@@ -41,7 +44,7 @@ def a_disinfect_room(state, uvdrobot_, room_):
     return state
 
 actions.declare_actions([a_navto, a_open_door, a_approach_nurse, a_authenticate_nurse, a_authorize_patrol, a_patrol_room,
-                         a_clean_room, a_disinfect_room])
+                         a_clean_room, a_disinfect_room, a_authorize_disinfect])
 
 # ******************************************    Demo / Test Routine         ****************************************** #
 if __name__ == '__main__':

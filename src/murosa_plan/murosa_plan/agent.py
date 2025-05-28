@@ -33,9 +33,9 @@ class Agent(Node):
         )
 
         # # Subscriber para falar com o Coordenador (Ação)
-        # self.subscription_coordinator = self.create_subscription(
-        #     String, '/coordinator/agent/plan', self.listener_plan_callback, 10
-        # )
+        self.subscription_coordinator = self.create_subscription(
+             String, '/coordinator/agent/plan', self.listener_plan_callback, 10
+         )
 
         # Publisher para falar o resultado da ação para o Jason
         self.publisher = self.create_publisher(String, '/agent/jason/result', 10)
@@ -154,7 +154,8 @@ class Agent(Node):
                 self.get_logger().info('Ready to act')
                 self.acting_for_agent(decoded_msg.sender, decoded_msg.content.split("|")[1])
         elif "Done" == decoded_msg.content.split("|")[0]:
-            if len(self.actions) > 0:
+            # Check if the action is in the actions or plans
+            if len(self.actions) > 0 or len(self.plan) > 0:
                 self.get_logger().info('Finished action')
                 msg = String()
                 action = self.actions.pop()

@@ -13,7 +13,7 @@ def patrol_and_disinfect(state, spotrobot_,uvdrobot_, nurse_):
         return [
             ('m_approach_nurse', spotrobot_, nurse_),
             ('m_patrol_room', spotrobot_, nurse_),
-            ('m_disinfect_room', uvdrobot_, nurse_)
+            ('m_disinfect_room', uvdrobot_, spotrobot_,nurse_)
         ]
 methods.declare_task_methods('m_patrol_and_disinfect',[patrol_and_disinfect])
 
@@ -25,18 +25,18 @@ def approach_nurse(state, spotrobot_,nurse_):
 
 methods.declare_task_methods('m_approach_nurse', [approach_nurse])
 
-def patrol_room(state, spotrobot_, nurse_):
+def patrol_room(state, spotrobot_, nurse_): 
     if state.cleaned[state.loc[spotrobot_]]:
-        return [('a_authorize_patrol',spotrobot_,nurse_), ('a_patrol_room', spotrobot_, state.loc[spotrobot_])]
+        return [('a_authorize_patrol',spotrobot_,nurse_), ('a_patrol_room', spotrobot_, state.loc[spotrobot_]),]
     else:
         return[('a_clean_room', nurse_, state.loc[nurse_]), ('a_authorize_patrol',spotrobot_,nurse_), ('a_patrol_room', spotrobot_, state.loc[spotrobot_])]
     
 methods.declare_task_methods('m_patrol_room', [patrol_room])
 
 
-def disinfect_room(state, uvdrobot_, nurse_):
+def disinfect_room(state, uvdrobot_, spotrobot_, nurse_):
     if state.cleaned[state.loc[nurse_]]:
-        return [('a_navto', uvdrobot_, state.loc[nurse_]), ('a_disinfect_room', uvdrobot_, state.loc[uvdrobot_])]
+        return [('a_authorize_disinfect',uvdrobot_,spotrobot_), ('a_navto', uvdrobot_, state.loc[nurse_]), ('a_disinfect_room', uvdrobot_, state.loc[nurse_])]
 methods.declare_task_methods('m_disinfect_room', [disinfect_room])
 
 # ******************************************    Demo / Test Routine         ****************************************** #

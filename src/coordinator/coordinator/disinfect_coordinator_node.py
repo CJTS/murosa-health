@@ -29,6 +29,7 @@ class Coordinator(AgnosticCoordinator):
         self.current_plan = []
         self.plans_actions = 0
         self.plans_actions_current = 0
+        self.agents_actions = {}
     '''
     def set_agent_ready(self, decoded_msg):
         if "uvdrobot" in decoded_msg.sender:
@@ -97,7 +98,6 @@ class Coordinator(AgnosticCoordinator):
             self.occ_uvdrobots.append(free_uvdrobot[0])
             self.occ_spotrobots.append(free_spotrobot[0])
             self.occ_nurses.append(nurse)
-            self.get_logger().info(f"teste3 {free_uvdrobot[0]} {free_spotrobot[0]} {nurse}")
             return team
 
         return None
@@ -109,7 +109,7 @@ class Coordinator(AgnosticCoordinator):
             team[1], # spotrobot
             team[0] # uvdrobot
         )
-        self.get_logger().info(f"context: {team[2]} {self.state['loc'][team[2]]} { team[1]} {team[0]}")
+        self.get_logger().info(f"context: {team[2]} {self.state['loc'][team[2]]} {team[1]} {team[0]}")
         self.missions.append(mission)
         return mission
     
@@ -125,7 +125,7 @@ class Coordinator(AgnosticCoordinator):
                         
 
     def get_team_from_context(self, context):
-        return [context[0], context[2], context[3]]
+        return [context[2], context[3],context[0]]
     
     def free_agent(self, agent):
         if agent in self.occ_nurses:
@@ -134,6 +134,8 @@ class Coordinator(AgnosticCoordinator):
             self.occ_uvdrobots.remove(agent)
         elif agent in self.occ_spotrobots:
             self.occ_spotrobots.remove(agent)
+
+    
 
     def verify_mission_complete(self, agent):
         # Find any mission containing this agent
@@ -160,6 +162,53 @@ class Coordinator(AgnosticCoordinator):
 
     def idk(self, mission, error):
         return
+    
+    def start_mission(self):
+        self.get_logger().info("Starting mission")
+        if len(self.room_queue) == 0:
+            self.get_logger().info("No more rooms to disinfect")
+            return
+
+        team = self.get_team()
+        if team is None:
+            self.get_logger().info("No available team to start mission")
+            return
+
+        context = self.get_start_context(team)
+        self.get_logger().info(f"Starting mission with context: {context}")
+
+        new_team = self.get_team_from_context(context)
+        self.get_logger().info('Creating plan for: %s ' % (
+            ','.join(new_team)
+        ))
+        future = self.send_need_plan_request(','.join(new_team))
+        rclpy.spin_until_future_complete(self, future)
+        plan_response = future.result()
+        self.get_logger().info('Plan received for: %s ' % (
+            ','.join(new_team)
+        ))
+
+        self.get_logger().info(plan_response.observation)
+        self.current_plan = plan_response.observation.split('/')
+
+        tuples = list(map(action_string_to_tuple, self.current_plan))
+
+        for agent in team:
+            self.get_logger().info(f'Splitting plans for agent: {agent}')
+            self.agents_actions[agent] = []
+            for action in tuples:
+                if agent in action:
+                    self.get_logger().info(f'Adding action {action} to agent {agent}')
+                    self.agents_actions[agent].append(action)
+        
+        self.send_plans_request(team)
+        #for action in self.current_plan:
+            # split plan between agents
+
+        # send plan to agents
+
+        # Remove the room from the queue
+        self.room_queue.remove(team[2])
     
     
 
