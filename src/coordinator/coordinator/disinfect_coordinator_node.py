@@ -168,7 +168,6 @@ class Coordinator(AgnosticCoordinator):
         if len(self.room_queue) == 0:
             self.get_logger().info("No more rooms to disinfect")
             return
-
         team = self.get_team()
         if team is None:
             self.get_logger().info("No available team to start mission")
