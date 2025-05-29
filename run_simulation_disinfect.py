@@ -137,8 +137,8 @@ def main():
         # replan_values = [False, True]
         
         missions = ["disinfect"]
-        problem_rates = [25]
-        replan_values = [True]
+        problem_rates = [100]
+        replan_values = [False]
 
         run_number = 1
         

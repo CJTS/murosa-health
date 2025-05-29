@@ -29,7 +29,6 @@ class Coordinator(AgnosticCoordinator):
         self.current_plan = []
         self.current_team = []	
         self.agents_actions = {}
-        self.known_errors.append("dirty_room")
 
     '''
     def set_agent_ready(self, decoded_msg):
@@ -170,6 +169,11 @@ class Coordinator(AgnosticCoordinator):
 
 
     def idk(self, mission, error):
+        for agent in mission[0]:
+            self.get_logger().info('Sending restart to:' + agent)
+            msg = String()
+            msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent, 'Start|' + ','.join(mission[0])).encode()
+            self.agent_publisher.publish(msg)
         return
 
     def start_mission(self):
@@ -264,6 +268,40 @@ class Coordinator(AgnosticCoordinator):
         rclpy.spin_until_future_complete(self, future)
         response = future.result()
         self.get_logger().info(response.observation)
+
+    def fix_plan(self, context):
+        self.send_update_uncleaned_room_request(context[1])
+        team = self.get_team_from_context(context)
+        for agent in team:
+            self.get_logger().info('Sending restart to:' + agent)
+            msg = String()
+            msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent, 'Start|' + ','.join(context)).encode()
+            self.agent_publisher.publish(msg)
+        self.agents_actions = {}
+        self.get_logger().info(",".join(context))
+        team = self.get_team_from_context(context)
+
+        self.get_logger().info('Creating new plan for: %s ' % (
+            ','.join(team)
+        ))
+        future = self.send_need_plan_request(','.join(team))
+        rclpy.spin_until_future_complete(self, future)
+        plan_response = future.result()
+        self.get_logger().info('Plan received for: %s ' % (
+            ','.join(team)
+        ))
+
+        self.get_logger().info(plan_response.observation)
+        self.current_plan = plan_response.observation.split('/')
+        self.current_team = team
+        tuples = list(map(action_string_to_tuple, self.current_plan))
+
+        for agent in team:
+            self.agents_actions[agent] = []
+            for action in tuples:
+                if agent in action:
+                    self.agents_actions[agent].append(action)
+        self.send_plans_request(team)
 
 def main():
     rclpy.init()

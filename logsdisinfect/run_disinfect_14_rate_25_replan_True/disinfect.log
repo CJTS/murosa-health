@@ -1,0 +1,204 @@
+[INFO] [launch]: All log files can be found below /home/rafael/.ros/log/2025-05-29-09-10-45-437647-NotebookRafael-10758
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [disinfect_environment-1]: process started with pid [10761]
+[INFO] [disinfect_planner-2]: process started with pid [10763]
+[INFO] [nurse_disinfect-3]: process started with pid [10765]
+[INFO] [uvdrobot-4]: process started with pid [10767]
+[INFO] [spotrobot-5]: process started with pid [10769]
+[disinfect_environment-1] [INFO] [1748520645.664758245] [disinfect_environment]: Starting Environment server
+[disinfect_environment-1] [INFO] [1748520645.668908002] [disinfect_environment]: Environment server started
+[disinfect_planner-2] [INFO] [1748520646.197317748] [disinfect_planner]: Starting Planner server
+[disinfect_planner-2] [INFO] [1748520646.201592733] [disinfect_planner]: Planner server started
+[disinfect_planner-2] [INFO] [1748520646.430259398] [disinfect_planner]: Creating plan for: spotrobot1 uvdrobot1 nurse_disinfected1
+[disinfect_planner-2] [INFO] [1748520646.431717433] [disinfect_planner]: a_navto,spotrobot1,room1
+[disinfect_planner-2] [INFO] [1748520646.432015115] [disinfect_planner]: a_open_door,spotrobot1,room1
+[disinfect_planner-2] [INFO] [1748520646.432331572] [disinfect_planner]: a_approach_nurse,spotrobot1,nurse_disinfected1
+[disinfect_planner-2] [INFO] [1748520646.432615954] [disinfect_planner]: a_authenticate_nurse,spotrobot1,nurse_disinfected1
+[disinfect_planner-2] [INFO] [1748520646.432852095] [disinfect_planner]: a_authorize_patrol,spotrobot1,nurse_disinfected1
+[disinfect_planner-2] [INFO] [1748520646.433123988] [disinfect_planner]: a_patrol_room,spotrobot1,room1
+[disinfect_planner-2] [INFO] [1748520646.433429913] [disinfect_planner]: a_authorize_disinfect,uvdrobot1,spotrobot1
+[disinfect_planner-2] [INFO] [1748520646.433714304] [disinfect_planner]: a_navto,uvdrobot1,room1
+[disinfect_planner-2] [INFO] [1748520646.433994304] [disinfect_planner]: a_disinfect_room,uvdrobot1,room1
+[disinfect_planner-2] [INFO] [1748520646.434274232] [disinfect_planner]: Sending response
+[uvdrobot-4] [INFO] [1748520646.435182781] [uvdrobot]: response.response uvdrobot1
+[uvdrobot-4] [INFO] [1748520646.435549516] [uvdrobot]: My name is uvdrobot1
+[nurse_disinfect-3] [INFO] [1748520646.436278877] [nurse_disinfect]: response.response nurse_disinfected1
+[uvdrobot-4] [INFO] [1748520646.436560662] [uvdrobot]: I heard: "{"performative": "request", "sender": "Coordinator", "receiver": "uvdrobot1", "content": "Plan|a_authorize_disinfect,uvdrobot1,spotrobot1/a_navto,uvdrobot1,room1/a_disinfect_room,uvdrobot1,room1"}"
+[nurse_disinfect-3] [INFO] [1748520646.436647398] [nurse_disinfect]: My name is nurse_disinfected1
+[uvdrobot-4] [INFO] [1748520646.436816415] [uvdrobot]: And it is for me
+[uvdrobot-4] [INFO] [1748520646.437183836] [uvdrobot]: Doing a_authorize_disinfect
+[uvdrobot-4] [INFO] [1748520646.437473800] [uvdrobot]: a_authorize_disinfect
+[uvdrobot-4] [INFO] [1748520646.437758588] [uvdrobot]: Here first, waiting for spotrobot
+[uvdrobot-4] [INFO] [1748520646.438345585] [uvdrobot]: I heard: "{"performative": "request", "sender": "Coordinator", "receiver": "spotrobot1", "content": "Plan|a_navto,spotrobot1,room1/a_open_door,spotrobot1,room1/a_approach_nurse,spotrobot1,nurse_disinfected1/a_authenticate_nurse,spotrobot1,nurse_disinfected1/a_authorize_patrol,spotrobot1,nurse_disinfected1/a_patrol_room,spotrobot1,room1/a_authorize_disinfect,uvdrobot1,spotrobot1"}"
+[uvdrobot-4] [INFO] [1748520646.438641654] [uvdrobot]: And it is not for me
+[spotrobot-5] [INFO] [1748520646.438691013] [spotrobot]: response.response spotrobot1
+[spotrobot-5] [INFO] [1748520646.439014737] [spotrobot]: My name is spotrobot1
+[uvdrobot-4] [INFO] [1748520646.439016388] [uvdrobot]: I heard: "{"performative": "query", "sender": "uvdrobot1", "receiver": "spotrobot1", "content": "Ready|a_authorize_disinfect"}"
+[uvdrobot-4] [INFO] [1748520646.439285748] [uvdrobot]: And it is not for me
+[spotrobot-5] [INFO] [1748520646.439624926] [spotrobot]: I heard: "{"performative": "request", "sender": "Coordinator", "receiver": "uvdrobot1", "content": "Plan|a_authorize_disinfect,uvdrobot1,spotrobot1/a_navto,uvdrobot1,room1/a_disinfect_room,uvdrobot1,room1"}"
+[uvdrobot-4] [INFO] [1748520646.439747281] [uvdrobot]: I heard: "{"performative": "request", "sender": "Coordinator", "receiver": "nurse_disinfected1", "content": "Plan|a_approach_nurse,spotrobot1,nurse_disinfected1/a_authenticate_nurse,spotrobot1,nurse_disinfected1/a_authorize_patrol,spotrobot1,nurse_disinfected1"}"
+[spotrobot-5] [INFO] [1748520646.439929462] [spotrobot]: And it is not for me
+[uvdrobot-4] [INFO] [1748520646.439988453] [uvdrobot]: And it is not for me
+[spotrobot-5] [INFO] [1748520646.440381725] [spotrobot]: I heard: "{"performative": "query", "sender": "uvdrobot1", "receiver": "spotrobot1", "content": "Ready|a_authorize_disinfect"}"
+[spotrobot-5] [INFO] [1748520646.440673358] [spotrobot]: And it is for me
+[spotrobot-5] [INFO] [1748520646.441123341] [spotrobot]: No there yet
+[spotrobot-5] [INFO] [1748520646.441725000] [spotrobot]: I heard: "{"performative": "request", "sender": "Coordinator", "receiver": "spotrobot1", "content": "Plan|a_navto,spotrobot1,room1/a_open_door,spotrobot1,room1/a_approach_nurse,spotrobot1,nurse_disinfected1/a_authenticate_nurse,spotrobot1,nurse_disinfected1/a_authorize_patrol,spotrobot1,nurse_disinfected1/a_patrol_room,spotrobot1,room1/a_authorize_disinfect,uvdrobot1,spotrobot1"}"
+[spotrobot-5] [INFO] [1748520646.442053458] [spotrobot]: And it is for me
+[spotrobot-5] [INFO] [1748520646.442468408] [spotrobot]: Doing a_navto
+[spotrobot-5] [INFO] [1748520646.443055604] [spotrobot]: Wating for response
+[spotrobot-5] [INFO] [1748520646.443572205] [spotrobot]: I heard: "{"performative": "request", "sender": "Coordinator", "receiver": "nurse_disinfected1", "content": "Plan|a_approach_nurse,spotrobot1,nurse_disinfected1/a_authenticate_nurse,spotrobot1,nurse_disinfected1/a_authorize_patrol,spotrobot1,nurse_disinfected1"}"
+[spotrobot-5] [INFO] [1748520646.443900636] [spotrobot]: And it is not for me
+[spotrobot-5] [INFO] [1748520646.444970789] [spotrobot]: success
+[spotrobot-5] [INFO] [1748520646.445321276] [spotrobot]: Doing a_open_door
+[spotrobot-5] [INFO] [1748520646.445770429] [spotrobot]: Wating for response
+[spotrobot-5] [INFO] [1748520646.446826146] [spotrobot]: success
+[spotrobot-5] [INFO] [1748520646.447153396] [spotrobot]: Doing a_approach_nurse
+[spotrobot-5] [INFO] [1748520646.447722981] [spotrobot]: Wating for response
+[spotrobot-5] [INFO] [1748520646.448750249] [spotrobot]: success
+[spotrobot-5] [INFO] [1748520646.449088283] [spotrobot]: Doing a_authenticate_nurse
+[spotrobot-5] [INFO] [1748520646.449447111] [spotrobot]: a_authenticate_nurse
+[spotrobot-5] [INFO] [1748520646.449836543] [spotrobot]: Here first, waiting for nurse
+[spotrobot-5] [INFO] [1748520646.450596643] [spotrobot]: I heard: "{"performative": "query", "sender": "spotrobot1", "receiver": "nurse_disinfected1", "content": "Ready|a_authenticate_nurse"}"
+[uvdrobot-4] [INFO] [1748520646.450611415] [uvdrobot]: I heard: "{"performative": "query", "sender": "spotrobot1", "receiver": "nurse_disinfected1", "content": "Ready|a_authenticate_nurse"}"
+[uvdrobot-4] [INFO] [1748520646.450897259] [uvdrobot]: And it is not for me
+[spotrobot-5] [INFO] [1748520646.451038347] [spotrobot]: And it is not for me
+[nurse_disinfect-3] [INFO] [1748520647.438815862] [nurse_disinfect]: I heard: "{"performative": "request", "sender": "Coordinator", "receiver": "uvdrobot1", "content": "Plan|a_authorize_disinfect,uvdrobot1,spotrobot1/a_navto,uvdrobot1,room1/a_disinfect_room,uvdrobot1,room1"}"
+[nurse_disinfect-3] [INFO] [1748520647.439245609] [nurse_disinfect]: And it is not for me
+[nurse_disinfect-3] [INFO] [1748520647.439948297] [nurse_disinfect]: I heard: "{"performative": "query", "sender": "uvdrobot1", "receiver": "spotrobot1", "content": "Ready|a_authorize_disinfect"}"
+[nurse_disinfect-3] [INFO] [1748520647.440272102] [nurse_disinfect]: And it is not for me
+[nurse_disinfect-3] [INFO] [1748520647.441047494] [nurse_disinfect]: I heard: "{"performative": "request", "sender": "Coordinator", "receiver": "spotrobot1", "content": "Plan|a_navto,spotrobot1,room1/a_open_door,spotrobot1,room1/a_approach_nurse,spotrobot1,nurse_disinfected1/a_authenticate_nurse,spotrobot1,nurse_disinfected1/a_authorize_patrol,spotrobot1,nurse_disinfected1/a_patrol_room,spotrobot1,room1/a_authorize_disinfect,uvdrobot1,spotrobot1"}"
+[nurse_disinfect-3] [INFO] [1748520647.441471056] [nurse_disinfect]: And it is not for me
+[nurse_disinfect-3] [INFO] [1748520647.441917422] [nurse_disinfect]: I heard: "{"performative": "query", "sender": "spotrobot1", "receiver": "nurse_disinfected1", "content": "Ready|a_authenticate_nurse"}"
+[nurse_disinfect-3] [INFO] [1748520647.442226611] [nurse_disinfect]: And it is for me
+[nurse_disinfect-3] [INFO] [1748520647.442551282] [nurse_disinfect]: No there yet
+[nurse_disinfect-3] [INFO] [1748520647.443126683] [nurse_disinfect]: I heard: "{"performative": "request", "sender": "Coordinator", "receiver": "nurse_disinfected1", "content": "Plan|a_approach_nurse,spotrobot1,nurse_disinfected1/a_authenticate_nurse,spotrobot1,nurse_disinfected1/a_authorize_patrol,spotrobot1,nurse_disinfected1"}"
+[nurse_disinfect-3] [INFO] [1748520647.443430922] [nurse_disinfect]: And it is for me
+[nurse_disinfect-3] [INFO] [1748520647.444812013] [nurse_disinfect]: a_approach_nurse
+[nurse_disinfect-3] [INFO] [1748520647.445344502] [nurse_disinfect]: a_authenticate_nurse
+[nurse_disinfect-3] [INFO] [1748520647.445809732] [nurse_disinfect]: Doing a_authenticate_nurse
+[nurse_disinfect-3] [INFO] [1748520647.446279940] [nurse_disinfect]: a_authenticate_nurse
+[nurse_disinfect-3] [INFO] [1748520647.446582726] [nurse_disinfect]: Robot is waiting, send action message
+[spotrobot-5] [INFO] [1748520647.447259165] [spotrobot]: I heard: "{"performative": "query", "sender": "nurse_disinfected1", "receiver": "spotrobot1", "content": "Done|a_authenticate_nurse"}"
+[nurse_disinfect-3] [INFO] [1748520647.447422997] [nurse_disinfect]: I heard: "{"performative": "query", "sender": "nurse_disinfected1", "receiver": "spotrobot1", "content": "Done|a_authenticate_nurse"}"
+[uvdrobot-4] [INFO] [1748520647.447527099] [uvdrobot]: I heard: "{"performative": "query", "sender": "nurse_disinfected1", "receiver": "spotrobot1", "content": "Done|a_authenticate_nurse"}"
+[spotrobot-5] [INFO] [1748520647.447650427] [spotrobot]: And it is for me
+[nurse_disinfect-3] [INFO] [1748520647.447788199] [nurse_disinfect]: And it is not for me
+[uvdrobot-4] [INFO] [1748520647.447909019] [uvdrobot]: And it is not for me
+[spotrobot-5] [INFO] [1748520647.448156478] [spotrobot]: Finished action
+[uvdrobot-4] [INFO] [1748520647.448697685] [uvdrobot]: I heard: "{"performative": "query", "sender": "spotrobot1", "receiver": "nurse_disinfected1", "content": "Done|a_authenticate_nurse"}"
+[spotrobot-5] [INFO] [1748520647.448700572] [spotrobot]: Doing a_authorize_patrol
+[nurse_disinfect-3] [INFO] [1748520647.448941788] [nurse_disinfect]: I heard: "{"performative": "query", "sender": "spotrobot1", "receiver": "nurse_disinfected1", "content": "Done|a_authenticate_nurse"}"
+[spotrobot-5] [INFO] [1748520647.448994179] [spotrobot]: a_authorize_patrol
+[uvdrobot-4] [INFO] [1748520647.449006423] [uvdrobot]: And it is not for me
+[nurse_disinfect-3] [INFO] [1748520647.449224367] [nurse_disinfect]: And it is for me
+[spotrobot-5] [INFO] [1748520647.449244729] [spotrobot]: Here first, waiting for nurse
+[nurse_disinfect-3] [INFO] [1748520647.449531924] [nurse_disinfect]: Finished action
+[uvdrobot-4] [INFO] [1748520647.449685025] [uvdrobot]: I heard: "{"performative": "query", "sender": "spotrobot1", "receiver": "nurse_disinfected1", "content": "Ready|a_authorize_patrol"}"
+[uvdrobot-4] [INFO] [1748520647.449948028] [uvdrobot]: And it is not for me
+[nurse_disinfect-3] [INFO] [1748520647.450041852] [nurse_disinfect]: a_authorize_patrol
+[spotrobot-5] [INFO] [1748520647.450075396] [spotrobot]: I heard: "{"performative": "query", "sender": "spotrobot1", "receiver": "nurse_disinfected1", "content": "Done|a_authenticate_nurse"}"
+[uvdrobot-4] [INFO] [1748520647.450417054] [uvdrobot]: I heard: "{"performative": "query", "sender": "nurse_disinfected1", "receiver": "spotrobot1", "content": "Done|a_authenticate_nurse"}"
+[spotrobot-5] [INFO] [1748520647.450427227] [spotrobot]: And it is not for me
+[nurse_disinfect-3] [INFO] [1748520647.450508371] [nurse_disinfect]: Doing a_authorize_patrol
+[uvdrobot-4] [INFO] [1748520647.450677207] [uvdrobot]: And it is not for me
+[nurse_disinfect-3] [INFO] [1748520647.450863899] [nurse_disinfect]: a_authorize_patrol
+[spotrobot-5] [INFO] [1748520647.450933530] [spotrobot]: I heard: "{"performative": "query", "sender": "spotrobot1", "receiver": "nurse_disinfected1", "content": "Ready|a_authorize_patrol"}"
+[nurse_disinfect-3] [INFO] [1748520647.451143574] [nurse_disinfect]: Here first, waiting for robot
+[spotrobot-5] [INFO] [1748520647.451289102] [spotrobot]: And it is not for me
+[uvdrobot-4] [INFO] [1748520647.451811626] [uvdrobot]: I heard: "{"performative": "query", "sender": "nurse_disinfected1", "receiver": "spotrobot1", "content": "Ready|a_authorize_patrol"}"
+[spotrobot-5] [INFO] [1748520647.452050644] [spotrobot]: I heard: "{"performative": "query", "sender": "nurse_disinfected1", "receiver": "spotrobot1", "content": "Done|a_authenticate_nurse"}"
+[nurse_disinfect-3] [INFO] [1748520647.452144025] [nurse_disinfect]: I heard: "{"performative": "query", "sender": "spotrobot1", "receiver": "nurse_disinfected1", "content": "Ready|a_authorize_patrol"}"
+[uvdrobot-4] [INFO] [1748520647.452156432] [uvdrobot]: And it is not for me
+[spotrobot-5] [INFO] [1748520647.452506758] [spotrobot]: And it is for me
+[nurse_disinfect-3] [INFO] [1748520647.452740473] [nurse_disinfect]: And it is for me
+[spotrobot-5] [INFO] [1748520647.452810888] [spotrobot]: Already finished action
+[nurse_disinfect-3] [INFO] [1748520647.453130509] [nurse_disinfect]: Ready to act
+[spotrobot-5] [INFO] [1748520647.453754504] [spotrobot]: I heard: "{"performative": "query", "sender": "nurse_disinfected1", "receiver": "spotrobot1", "content": "Ready|a_authorize_patrol"}"
+[uvdrobot-4] [INFO] [1748520647.453948589] [uvdrobot]: I heard: "{"performative": "query", "sender": "nurse_disinfected1", "receiver": "spotrobot1", "content": "Done|a_authorize_patrol"}"
+[nurse_disinfect-3] [INFO] [1748520647.454087940] [nurse_disinfect]: I heard: "{"performative": "query", "sender": "nurse_disinfected1", "receiver": "spotrobot1", "content": "Done|a_authenticate_nurse"}"
+[spotrobot-5] [INFO] [1748520647.454275379] [spotrobot]: And it is for me
+[uvdrobot-4] [INFO] [1748520647.454454225] [uvdrobot]: And it is not for me
+[nurse_disinfect-3] [INFO] [1748520647.454531195] [nurse_disinfect]: And it is not for me
+[spotrobot-5] [INFO] [1748520647.454796578] [spotrobot]: Ready to act
+[nurse_disinfect-3] [INFO] [1748520647.455225298] [nurse_disinfect]: I heard: "{"performative": "query", "sender": "nurse_disinfected1", "receiver": "spotrobot1", "content": "Ready|a_authorize_patrol"}"
+[uvdrobot-4] [INFO] [1748520647.455636912] [uvdrobot]: I heard: "{"performative": "query", "sender": "spotrobot1", "receiver": "nurse_disinfected1", "content": "Done|a_authorize_patrol"}"
+[nurse_disinfect-3] [INFO] [1748520647.455646118] [nurse_disinfect]: And it is not for me
+[spotrobot-5] [INFO] [1748520647.455897227] [spotrobot]: I heard: "{"performative": "query", "sender": "nurse_disinfected1", "receiver": "spotrobot1", "content": "Done|a_authorize_patrol"}"
+[uvdrobot-4] [INFO] [1748520647.456180888] [uvdrobot]: And it is not for me
+[nurse_disinfect-3] [INFO] [1748520647.456351402] [nurse_disinfect]: I heard: "{"performative": "query", "sender": "nurse_disinfected1", "receiver": "spotrobot1", "content": "Done|a_authorize_patrol"}"
+[spotrobot-5] [INFO] [1748520647.456426479] [spotrobot]: And it is for me
+[nurse_disinfect-3] [INFO] [1748520647.456853846] [nurse_disinfect]: And it is not for me
+[spotrobot-5] [INFO] [1748520647.456922052] [spotrobot]: Finished action
+[nurse_disinfect-3] [INFO] [1748520647.457607877] [nurse_disinfect]: I heard: "{"performative": "query", "sender": "spotrobot1", "receiver": "nurse_disinfected1", "content": "Done|a_authorize_patrol"}"
+[spotrobot-5] [INFO] [1748520647.457634405] [spotrobot]: Doing a_patrol_room
+[uvdrobot-4] [INFO] [1748520647.457700763] [uvdrobot]: I heard: "{"performative": "query", "sender": "spotrobot1", "receiver": "nurse_disinfected1", "content": "Done|a_authorize_patrol"}"
+[nurse_disinfect-3] [INFO] [1748520647.457922377] [nurse_disinfect]: And it is for me
+[uvdrobot-4] [INFO] [1748520647.458237751] [uvdrobot]: And it is not for me
+[spotrobot-5] [INFO] [1748520647.458268409] [spotrobot]: Wating for response
+[nurse_disinfect-3] [INFO] [1748520647.458375794] [nurse_disinfect]: Finished action
+[spotrobot-5] [INFO] [1748520647.459139968] [spotrobot]: I heard: "{"performative": "query", "sender": "spotrobot1", "receiver": "nurse_disinfected1", "content": "Done|a_authorize_patrol"}"
+[uvdrobot-4] [INFO] [1748520647.459348671] [uvdrobot]: I heard: "{"performative": "query", "sender": "nurse_disinfected1", "receiver": "spotrobot1", "content": "Done|a_authorize_patrol"}"
+[nurse_disinfect-3] [INFO] [1748520647.459416958] [nurse_disinfect]: I heard: "{"performative": "query", "sender": "spotrobot1", "receiver": "nurse_disinfected1", "content": "Done|a_authorize_patrol"}"
+[spotrobot-5] [INFO] [1748520647.459601348] [spotrobot]: And it is not for me
+[uvdrobot-4] [INFO] [1748520647.459718707] [uvdrobot]: And it is not for me
+[nurse_disinfect-3] [INFO] [1748520647.459861575] [nurse_disinfect]: And it is for me
+[nurse_disinfect-3] [INFO] [1748520647.460282152] [nurse_disinfect]: Already finished action
+[spotrobot-5] [INFO] [1748520647.460463215] [spotrobot]: I heard: "{"performative": "query", "sender": "spotrobot1", "receiver": "nurse_disinfected1", "content": "Done|a_authorize_patrol"}"
+[spotrobot-5] [INFO] [1748520647.460955361] [spotrobot]: And it is not for me
+[nurse_disinfect-3] [INFO] [1748520647.461231684] [nurse_disinfect]: I heard: "{"performative": "query", "sender": "nurse_disinfected1", "receiver": "spotrobot1", "content": "Done|a_authorize_patrol"}"
+[nurse_disinfect-3] [INFO] [1748520647.461672180] [nurse_disinfect]: And it is not for me
+[spotrobot-5] [INFO] [1748520647.461744153] [spotrobot]: I heard: "{"performative": "query", "sender": "nurse_disinfected1", "receiver": "spotrobot1", "content": "Done|a_authorize_patrol"}"
+[spotrobot-5] [INFO] [1748520647.462223756] [spotrobot]: And it is for me
+[spotrobot-5] [INFO] [1748520647.462767562] [spotrobot]: Already finished action
+[spotrobot-5] [INFO] [1748520647.463952751] [spotrobot]: success
+[spotrobot-5] [INFO] [1748520647.464356557] [spotrobot]: Doing a_authorize_disinfect
+[spotrobot-5] [INFO] [1748520647.464663888] [spotrobot]: a_authorize_disinfect
+[spotrobot-5] [INFO] [1748520647.464965916] [spotrobot]: Here first, waiting for spotrobot
+[nurse_disinfect-3] [INFO] [1748520647.465651865] [nurse_disinfect]: I heard: "{"performative": "query", "sender": "spotrobot1", "receiver": "uvdrobot1", "content": "Ready|a_authorize_disinfect"}"
+[uvdrobot-4] [INFO] [1748520647.465678180] [uvdrobot]: I heard: "{"performative": "query", "sender": "spotrobot1", "receiver": "uvdrobot1", "content": "Ready|a_authorize_disinfect"}"
+[spotrobot-5] [INFO] [1748520647.465938234] [spotrobot]: I heard: "{"performative": "query", "sender": "spotrobot1", "receiver": "uvdrobot1", "content": "Ready|a_authorize_disinfect"}"
+[uvdrobot-4] [INFO] [1748520647.466176584] [uvdrobot]: And it is for me
+[nurse_disinfect-3] [INFO] [1748520647.466177943] [nurse_disinfect]: And it is not for me
+[spotrobot-5] [INFO] [1748520647.466525219] [spotrobot]: And it is not for me
+[uvdrobot-4] [INFO] [1748520647.466835051] [uvdrobot]: Ready to act
+[nurse_disinfect-3] [INFO] [1748520647.467494562] [nurse_disinfect]: I heard: "{"performative": "query", "sender": "uvdrobot1", "receiver": "spotrobot1", "content": "Done|a_authorize_disinfect"}"
+[spotrobot-5] [INFO] [1748520647.467768476] [spotrobot]: I heard: "{"performative": "query", "sender": "uvdrobot1", "receiver": "spotrobot1", "content": "Done|a_authorize_disinfect"}"
+[uvdrobot-4] [INFO] [1748520647.467803104] [uvdrobot]: I heard: "{"performative": "query", "sender": "uvdrobot1", "receiver": "spotrobot1", "content": "Done|a_authorize_disinfect"}"
+[nurse_disinfect-3] [INFO] [1748520647.467830026] [nurse_disinfect]: And it is not for me
+[spotrobot-5] [INFO] [1748520647.468153624] [spotrobot]: And it is for me
+[uvdrobot-4] [INFO] [1748520647.468340534] [uvdrobot]: And it is not for me
+[spotrobot-5] [INFO] [1748520647.468554048] [spotrobot]: Finished action
+[spotrobot-5] [INFO] [1748520647.469312786] [spotrobot]: I heard: "{"performative": "query", "sender": "spotrobot1", "receiver": "uvdrobot1", "content": "Done|a_authorize_disinfect"}"
+[nurse_disinfect-3] [INFO] [1748520647.469414165] [nurse_disinfect]: I heard: "{"performative": "query", "sender": "spotrobot1", "receiver": "uvdrobot1", "content": "Done|a_authorize_disinfect"}"
+[uvdrobot-4] [INFO] [1748520647.469518073] [uvdrobot]: I heard: "{"performative": "query", "sender": "spotrobot1", "receiver": "uvdrobot1", "content": "Done|a_authorize_disinfect"}"
+[spotrobot-5] [INFO] [1748520647.469846312] [spotrobot]: And it is not for me
+[uvdrobot-4] [INFO] [1748520647.469935774] [uvdrobot]: And it is for me
+[nurse_disinfect-3] [INFO] [1748520647.469950369] [nurse_disinfect]: And it is not for me
+[uvdrobot-4] [INFO] [1748520647.470374953] [uvdrobot]: Finished action
+[uvdrobot-4] [INFO] [1748520647.470819534] [uvdrobot]: Doing a_navto
+[nurse_disinfect-3] [INFO] [1748520647.471125725] [nurse_disinfect]: I heard: "{"performative": "query", "sender": "uvdrobot1", "receiver": "spotrobot1", "content": "Done|a_authorize_disinfect"}"
+[spotrobot-5] [INFO] [1748520647.471338423] [spotrobot]: I heard: "{"performative": "query", "sender": "uvdrobot1", "receiver": "spotrobot1", "content": "Done|a_authorize_disinfect"}"
+[uvdrobot-4] [INFO] [1748520647.471382212] [uvdrobot]: Waiting for response
+[nurse_disinfect-3] [INFO] [1748520647.471683029] [nurse_disinfect]: And it is not for me
+[spotrobot-5] [INFO] [1748520647.471845564] [spotrobot]: And it is for me
+[uvdrobot-4] [INFO] [1748520647.471950436] [uvdrobot]: I heard: "{"performative": "query", "sender": "uvdrobot1", "receiver": "spotrobot1", "content": "Done|a_authorize_disinfect"}"
+[spotrobot-5] [INFO] [1748520647.472325781] [spotrobot]: Already finished action
+[uvdrobot-4] [INFO] [1748520647.472352654] [uvdrobot]: And it is not for me
+[uvdrobot-4] [INFO] [1748520647.473258552] [uvdrobot]: success
+[uvdrobot-4] [INFO] [1748520647.473618119] [uvdrobot]: Doing a_disinfect_room
+[uvdrobot-4] [INFO] [1748520647.474185928] [uvdrobot]: Waiting for response
+[uvdrobot-4] [INFO] [1748520647.475587179] [uvdrobot]: success
+[disinfect_environment-1] [INFO] [1748520647.477942843] [disinfect_environment]: Recebido sinal de desligamento do coordenador, finalizando...
+[nurse_disinfect-3] [INFO] [1748520647.478051616] [nurse_disinfect]: Recebido sinal de desligamento do coordenador, finalizando...
+[disinfect_planner-2] [INFO] [1748520647.478183851] [disinfect_planner]: Recebido sinal de desligamento do coordenador, finalizando...
+[uvdrobot-4] [INFO] [1748520647.478194171] [uvdrobot]: Recebido sinal de desligamento do coordenador, finalizando...
+[spotrobot-5] [INFO] [1748520647.478263500] [spotrobot]: Recebido sinal de desligamento do coordenador, finalizando...
+[disinfect_environment-1] [INFO] [1748520647.478326819] [Quitting]: Done
+[nurse_disinfect-3] [INFO] [1748520647.478671463] [Quitting]: Done
+[disinfect_planner-2] [INFO] [1748520647.478819081] [Quitting]: Done
+[uvdrobot-4] [INFO] [1748520647.479410282] [Quitting]: Done
+[spotrobot-5] [INFO] [1748520647.479526927] [Quitting]: Done
+[INFO] [disinfect_environment-1]: process has finished cleanly [pid 10761]
+[INFO] [nurse_disinfect-3]: process has finished cleanly [pid 10765]
+[INFO] [spotrobot-5]: process has finished cleanly [pid 10769]
+[INFO] [uvdrobot-4]: process has finished cleanly [pid 10767]

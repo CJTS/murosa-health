@@ -67,8 +67,6 @@ class Environment(Node):
             self.state['disinfected'][actionTuple[1]] = False
         elif actionTuple[0] == 'a_patrol_room' and not self.state['cleaned'][actionTuple[2]]:
             response.observation = 'dirty room'
-        elif actionTuple[0] == 'a_disinfect_room' and not self.state['cleaned'][actionTuple[2]]:
-            response.observation = 'dirty room'
         elif actionTuple[0] == 'a_clean_room':
             self.state['cleaned'][actionTuple[2]] = True
             response.observation = 'success'
@@ -76,8 +74,6 @@ class Environment(Node):
             if self.state['cleaned'][actionTuple[2]]:
                 self.state['disinfected'][actionTuple[2]] = True
                 response.observation = 'success'
-            else:
-                response.observation = 'dirty room'
 
         return response
 
