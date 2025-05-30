@@ -36,6 +36,10 @@ class Agent(Node):
         self.subscription_coordinator = self.create_subscription(
              String, '/coordinator/agent/plan', self.listener_plan_callback, 10
          )
+         #colocado para disinfect
+        self.subscription_reset = self.create_subscription(
+            String, '/coordinator/agent/reset', self.listener_reset_callback, 10
+        )
 
         # Publisher para falar o resultado da ação para o Jason
         self.publisher = self.create_publisher(String, '/agent/jason/result', 10)
@@ -106,6 +110,21 @@ class Agent(Node):
         ## Perform action
         message = decoded_msg.content.split('|')
         self.plan = list(map(action_string_to_tuple, message[1].split('/')))
+    #colocado para disinfect
+    def listener_reset_callback(self, msg):
+        # Receive messagem from jason
+        self.get_logger().info('I heard: "%s"' % msg.data)
+        decoded_msg = FIPAMessage.decode(msg.data)
+        if not self.is_for_me(decoded_msg):
+            self.get_logger().info('And it is not for me')
+            return
+
+        self.get_logger().info('And it is for me')
+        ## Perform action
+        self.actions = []
+        self.plan = []
+        self.wating_response = []
+        self.wating = False
 
     def is_for_me(self, msg):
         return msg.receiver == self.agentName

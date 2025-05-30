@@ -30,6 +30,8 @@ class Coordinator(AgnosticCoordinator):
         self.current_team = []	
         self.agents_actions = {}
 
+
+        self.reset_publisher = self.create_publisher(String, '/coordinator/agent/reset', 10)
     '''
     def set_agent_ready(self, decoded_msg):
         if "uvdrobot" in decoded_msg.sender:
@@ -120,7 +122,8 @@ class Coordinator(AgnosticCoordinator):
                 if not self.state['disinfected'][location]:
                     # Verifica se essa sala já não está em missão
                     if all(agent not in team for team in self.missions):
-                        self.room_queue.append(agent)
+                        if agent not in self.room_queue:
+                            self.room_queue.append(agent)
                         self.start_mission()
                 else:
                     #self.get_logger().info(f"Room {location} already disinfected by {agent}, skipping mission.")
@@ -128,9 +131,13 @@ class Coordinator(AgnosticCoordinator):
                         for agent_context in self.current_team:
                             self.free_agent(agent_context)
                             self.get_logger().info(f"Freeing agent: {agent_context}")
+                        if  (len(self.room_queue)) > 0:
+                            self.send_reset_request(self.current_team)
+                        
                             # Verify if the mission is complete
                     if (len(self.room_queue)) == 0:
                         self.verify_mission_complete(agent)
+                    
 
     def get_team_from_context(self, context):
         return [context[2], context[3],context[0]]
@@ -169,11 +176,7 @@ class Coordinator(AgnosticCoordinator):
 
 
     def idk(self, mission, error):
-        for agent in mission[0]:
-            self.get_logger().info('Sending restart to:' + agent)
-            msg = String()
-            msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent, 'Start|' + ','.join(mission[0])).encode()
-            self.agent_publisher.publish(msg)
+        self.send_reset_request(self.current_team)
         return
 
     def start_mission(self):
@@ -212,6 +215,7 @@ class Coordinator(AgnosticCoordinator):
             for action in tuples:
                 if agent in action:
                     self.agents_actions[agent].append(action)
+                    
         
         self.send_plans_request(team)
         #for action in self.current_plan:
@@ -222,43 +226,6 @@ class Coordinator(AgnosticCoordinator):
         # Remove the room from the queue
         self.room_queue.remove(team[2])
 
-    
-
-    def restart_mission(self, context):
-        team = self.get_team_from_context(context)
-        for agent in team:
-            self.get_logger().info('Sending restart to:' + agent)
-            msg = String()
-            msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent, 'Start|' + ','.join(context)).encode()
-            self.agent_publisher.publish(msg)
-            
-        self.send_update_uncleaned_room_request(context[1])
-
-        self.agents_actions = {}
-        self.get_logger().info(",".join(context))
-        team = self.get_team_from_context(context)
-
-        self.get_logger().info('Creating new plan for: %s ' % (
-            ','.join(team)
-        ))
-        future = self.send_need_plan_request(','.join(team))
-        rclpy.spin_until_future_complete(self, future)
-        plan_response = future.result()
-        self.get_logger().info('Plan received for: %s ' % (
-            ','.join(team)
-        ))
-
-        self.get_logger().info(plan_response.observation)
-        self.current_plan = plan_response.observation.split('/')
-        self.current_team = team
-        tuples = list(map(action_string_to_tuple, self.current_plan))
-
-        for agent in team:
-            self.agents_actions[agent] = []
-            for action in tuples:
-                if agent in action:
-                    self.agents_actions[agent].append(action)
-        self.send_plans_request(team)
 
     def send_update_uncleaned_room_request(self, room):
         self.get_logger().info(f"Updating uncleaned room: {room}")
@@ -272,14 +239,6 @@ class Coordinator(AgnosticCoordinator):
     def fix_plan(self, context):
         self.send_update_uncleaned_room_request(context[1])
         team = self.get_team_from_context(context)
-        for agent in team:
-            self.get_logger().info('Sending restart to:' + agent)
-            msg = String()
-            msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent, 'Start|' + ','.join(context)).encode()
-            self.agent_publisher.publish(msg)
-        self.agents_actions = {}
-        self.get_logger().info(",".join(context))
-        team = self.get_team_from_context(context)
 
         self.get_logger().info('Creating new plan for: %s ' % (
             ','.join(team)
@@ -303,6 +262,19 @@ class Coordinator(AgnosticCoordinator):
                     self.agents_actions[agent].append(action)
         self.send_plans_request(team)
 
+    def send_reset_request(self, team):
+        self.get_logger().info('Sending reset requests...')
+        for agent in team:
+            reset_msg = String()
+            reset_msg.data = FIPAMessage(
+                FIPAPerformative.REQUEST.value,
+                'Coordinator',
+                agent,
+                'Reset'
+            ).encode()
+            self.reset_publisher.publish(reset_msg)
+
+        self.get_logger().info('Reset requests sent.')
 def main():
     rclpy.init()
     coordinator = Coordinator()

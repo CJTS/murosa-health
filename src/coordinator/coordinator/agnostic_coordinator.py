@@ -251,6 +251,7 @@ class AgnosticCoordinator(Node):
                             self.get_logger().info('Error found')
                             self.fix_plan(mission)
                     else:
+                        self.get_logger().info('Error found')
                         self.end_simulation()
 
     def end_simulation(self):
