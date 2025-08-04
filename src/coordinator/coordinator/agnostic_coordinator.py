@@ -103,9 +103,8 @@ class AgnosticCoordinator(Node):
 
     def start_mission(self):
         team = self.get_team()
-
         if(team == None):
-            # self.get_logger().info("No team to start mission")
+            #self.get_logger().info("No team to start mission")
             return
 
         start_context = self.get_start_context(team)
@@ -113,8 +112,9 @@ class AgnosticCoordinator(Node):
         if(start_context == None):
             # self.get_logger().info("Not possible to start mission")
             return
-        
+    
         for agent in team:
+        
             msg = String()
             msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent, 'Start|' + ','.join(start_context)).encode()
             self.agent_publisher.publish(msg)
@@ -251,6 +251,7 @@ class AgnosticCoordinator(Node):
                             self.get_logger().info('Error found')
                             self.fix_plan(mission)
                     else:
+                        self.get_logger().info('Error found')
                         self.end_simulation()
 
     def end_simulation(self):

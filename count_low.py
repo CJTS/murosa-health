@@ -19,7 +19,7 @@ def count_low_battery_occurrences(base_path, start, end):
     return results
 
 def main():
-    base_path = "/home/carlos/workspace/murosa-health/logs"
+    base_path = "/home/user/workspace/murosa-health/logs"
     start = 301
     end = 330
     

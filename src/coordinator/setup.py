@@ -17,7 +17,7 @@ setup(
     install_requires=['setuptools'],
     zip_safe=True,
     maintainer='Carlos',
-    maintainer_email='carlosjoel.tavares@gmail.com',
+    maintainer_email='user@gmail.com',
     description='TODO: Package description',
     license='TODO: License declaration',
     tests_require=['pytest'],
@@ -25,6 +25,7 @@ setup(
         'console_scripts': [
             'coordinator = coordinator.coordinator_node:main',
             'patrol_coordinator = coordinator.patrol_coordinator_node:main',
+            'disinfect_coordinator = coordinator.disinfect_coordinator_node:main',
         ],
     },
 )

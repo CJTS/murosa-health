@@ -8,3 +8,5 @@ class FIPAPerformative(Enum):
     FAILURE = 'failure'
     REFUSE = 'refuse'
     SUBSCRIBE = 'subscribe'
+
+    

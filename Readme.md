@@ -64,3 +64,7 @@ Then source the build, set the ENV variables REPLAN and PROBLEM_RATE, run the co
 ### Patrol
 ```ros2 launch coordinator patrol.launch.py```
 ```ros2 launch murosa_plan patrol.launch.py```
+
+### Disinfect
+```ros2 launch coordinator disinfect.launch.py```
+```ros2 launch murosa_plan disinfect.launch.py```

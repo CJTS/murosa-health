@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import os
 import subprocess
 import signal
@@ -9,7 +7,7 @@ import time
 
 def setup_log_directory(mission, run_number, problem_rate, replan):
     """Create logs directory for specific run if it doesn't exist"""
-    log_dir = Path(f"logs/run_{mission}_{run_number}_rate_{problem_rate}_replan_{replan}")
+    log_dir = Path(f"logsdisinfect/run_{mission}_{run_number}_rate_{problem_rate}_replan_{replan}")
     log_dir.mkdir(parents=True, exist_ok=True)
     return log_dir
 
@@ -75,7 +73,7 @@ def cleanup_processes(processes):
 
 def analyze_health_log(mission, run_number, runtime, problem_rate, replan):
     """Analyze the health log file for specific patterns and return results"""
-    log_path = f"logs/run_{mission}_{run_number}_rate_{problem_rate}_replan_{replan}/coordinator.log"
+    log_path = f"logsdisinfect/run_{mission}_{run_number}_rate_{problem_rate}_replan_{replan}/coordinator.log"
     results = {
         "run_number": run_number,
         "runtime": runtime,
@@ -97,7 +95,7 @@ def analyze_health_log(mission, run_number, runtime, problem_rate, replan):
 
 def write_summary(results_list, mission, problem_rate, replan):
     """Write a summary of all simulation runs to a CSV file"""
-    summary_path = f"logs/simulation_summary_{mission}_{problem_rate}_{replan}.csv"
+    summary_path = f"logsdisinfect/simulation_summary_{mission}_{problem_rate}_{replan}.csv"
     with open(summary_path, 'w') as f:
         # Write header
         f.write("Run Number,Problem Rate,Replan,Runtime (s),Had Failure,Successful Termination\n")
@@ -122,7 +120,7 @@ def run_simulation_with_timeout(mission, run_number, processes, problem_rate, re
         return False, runtime
     finally:
         # Log the actual runtime
-        with open(f"logs/run_{mission}_{run_number}_rate_{problem_rate}_replan_{replan}/runtime.log", "w") as f:
+        with open(f"logsdisinfect/run_{mission}_{run_number}_rate_{problem_rate}_replan_{replan}/runtime.log", "w") as f:
             f.write(f"Runtime: {runtime:.2f} seconds\n")
             if runtime > timeout:
                 f.write("Simulation was terminated due to timeout\n")
@@ -131,16 +129,16 @@ def main():
     processes = {}
     try:
         # Create main logs directory
-        Path("logs").mkdir(exist_ok=True)
+        Path("logsdisinfect").mkdir(exist_ok=True)
         
         all_results = []
         # missions = ["health", "patrol"]
         # problem_rates = [0, 25, 50, 75, 100]
         # replan_values = [False, True]
         
-        missions = ["health"]
-        problem_rates = [25]
-        replan_values = [True]
+        missions = ["disinfect"]
+        problem_rates = [10, 25, 50, 75]
+        replan_values = [True, False]
 
         run_number = 1
         
@@ -179,14 +177,15 @@ def main():
                         # Add a small delay between runs to ensure proper cleanup
                         time.sleep(2)
         
-                write_summary(all_results, mission, problem_rate, replan)
+                    write_summary(all_results, mission, problem_rate, replan)
+                    all_results = []
         print("\nAll simulation runs completed successfully!")
         print(f"Summary written to logs/simulation_summary.csv")
         
         # Run analysis script
         print("\nRunning analysis script...")
-        # subprocess.run(["python3", "analyze_results.py"], check=True)
-        
+        subprocess.run(["python3", "analyze_results_disinfect.py"], check=True)
+
     except KeyboardInterrupt:
         print("\nReceived interrupt signal. Stopping all services...")
         cleanup_processes(processes)
