@@ -109,7 +109,7 @@ class Spotrobot(Agent):
         else:
             self.get_logger().info("Nurse is waiting, send action message")
             self.acting_for_agent(uvdrobot_, 'a_authorize_disinfect')
-    
+    '''
     def act(self):
         if(len(self.plan) > 0) :
             action = self.plan.pop(0)
@@ -137,7 +137,7 @@ class Spotrobot(Agent):
                 self.get_logger().info("ActionResult.WAITING")
                 self.wating = True
                 self.actions.append(action)
-
+    
     def respond_agent(self, msg):
         self.get_logger().info('I heard: "%s"' % msg.data)
         decoded_msg = FIPAMessage.decode(msg.data)
@@ -162,7 +162,7 @@ class Spotrobot(Agent):
                 self.acting_for_agent(decoded_msg.sender, decoded_msg.content.split("|")[1])
             else:
                 self.get_logger().info('Already finished action')
-    
+    '''
 def main():
     rclpy.init()
     robot = Spotrobot('Spotrobot')

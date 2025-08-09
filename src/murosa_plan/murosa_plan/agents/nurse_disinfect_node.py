@@ -108,7 +108,7 @@ class Nurse(Agent):
             ('a_clean_room', nurse, room)
         )
         return self.environment_client.call_async(self.action_request)
-    
+    '''
     def act(self):
         if(len(self.plan) > 0) :
             action = self.plan.pop(0)
@@ -162,7 +162,7 @@ class Nurse(Agent):
             else:
                 self.get_logger().info('Already finished action')
 
-
+    '''
 def main():
     rclpy.init()
     nurse = Nurse('Nurse_Disinfected')

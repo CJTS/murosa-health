@@ -66,7 +66,7 @@ class Uvdrobot(Agent):
             self.get_logger().info("spotrobot is waiting, send action message")
             self.acting_for_agent(spotrobot_, 'a_authorize_disinfect')
 
-
+    '''
     def act(self):
         if(len(self.plan) > 0) :
             action = self.plan.pop(0)
@@ -119,7 +119,7 @@ class Uvdrobot(Agent):
                 self.acting_for_agent(decoded_msg.sender, decoded_msg.content.split("|")[1])
             else:
                 self.get_logger().info('Already finished action')
-    
+    '''
 
 def main():
     rclpy.init()
