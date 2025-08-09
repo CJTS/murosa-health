@@ -49,6 +49,7 @@ def plot_success_rate_by_parameters(df, plot_dir):
         data=rate_bar,
         palette=['#1f77b4', '#8c564b']
     )
+    ax1.set_xlabel('Obstacle Occurrence Rate (%)')
     ax1.set_ylabel('Successful Termination')
     #ax2 = ax1.twinx()
     # sns.lineplot(
@@ -84,6 +85,8 @@ def plot_failure_rate_by_parameters(df, plot_dir):
     plt.figure(figsize=(10, 6))
     sns.barplot(x='Problem Rate', y='Had Failure', hue='Replan', data=failure_rate)
     # plt.title('Failure Rate by Problem Rate and Replan Status')
+    plt.xlabel('Obstacle Occurrence Rate (%)')
+    plt.ylabel('Proportion of Missions with Problems')
     plt.ylim(0, 1)
     plt.savefig(plot_dir / 'failure_rate_by_parameters.png')
     plt.close()
