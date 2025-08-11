@@ -10,6 +10,4 @@
 
 +!a_disinfect_room(UvdRobot, NurseDisinfectRoom): milestone7 <- a_disinfect_room(UvdRobot, NurseDisinfectRoom).
 
-+success_a_disinfect_room(UvdRobot, NurseDisinfectRoom): milestone7 <-
-    -milestone7;
-    end.
++success_a_disinfect_room(UvdRobot, NurseDisinfectRoom): milestone7 <- -milestone7; end.

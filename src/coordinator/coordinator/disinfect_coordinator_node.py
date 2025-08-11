@@ -42,7 +42,7 @@ class Coordinator(AgnosticCoordinator):
             self.get_logger().info(f"ready spot: {len(self.ready_spotrobots)}")
         elif "nurse" in decoded_msg.sender:
             self.ready_nurses.append(decoded_msg.sender)
-            self.get_logger().info(f"ready 123: {len(self.ready_nurses)}")
+            self.get_logger().info(f"ready nurse: {len(self.ready_nurses)}")
     
 
 
