@@ -37,7 +37,6 @@ class Nurse(Agent):
         return self.cli.call_async(ros_msg)
 
     def choose_action(self, actionTuple):
-        self.get_logger().info('Choosing action')
         self.get_logger().info(actionTuple[0])
         future = None
         if actionTuple[0] == 'a_authenticate_nurse':
