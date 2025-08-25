@@ -24,8 +24,9 @@ class Coordinator(AgnosticCoordinator):
         
         #list of dirty rooms
         self.room_queue = []
-        self.mission_context = "start(NurseDesinfect, NurseRoom, uvdrobot, spotrobot)"
-        self.variables = ["NurseDesinfect", "NurseRoom", "uvdrobot", "spotrobot"]
+        self.mission_context = "start(NurseDesinfect, NurseRoom, Spotrobot, Uvdrobot)"
+        #self.variables = ["NurseDesinfect", "NurseRoom", "uvdrobot", "spotrobot"]
+        self.variables =["Spotrobot", "NurseRoom", "NurseDesinfect", "Uvdrobot"]
         self.current_plan = []
         self.current_team = []	
         self.agents_actions = {}
@@ -68,7 +69,6 @@ class Coordinator(AgnosticCoordinator):
         self.get_logger().info("Response: " + response)
         self.register_queue.append((response, agent_type))
         self.get_logger().info(f"colocando: {agent_type} {len(self.register_queue)}")
-        self.get_logger().info(f"lista ready uvdrobots:{len(self.ready_uvdrobots)}")
         '''
         if "uvdrobot" in decoded_msg.sender:
             self.ready_uvdrobots.append(decoded_msg.sender + id)
