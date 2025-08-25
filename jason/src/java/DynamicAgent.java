@@ -56,7 +56,7 @@ public class DynamicAgent extends AgArch {
                         } else if (decodedContent[0].equals("Belief")) {
                             try {
                                 getTS().getAg().addBel(Literal.parseLiteral(decodedContent[1]));
-                            } catch (RevisionFailedException ex) { 
+                            } catch (RevisionFailedException ex) {
                                 System.err.println("Error: " + ex.getMessage());
                             }
                         }
