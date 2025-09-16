@@ -17,22 +17,23 @@ class Coordinator(AgnosticCoordinator):
         self.occ_spotrobots = []
         self.occ_uvdrobots = []
         #list of agents that are ready
-        '''
+        
         self.ready_spotrobots = []
         self.ready_uvdrobots = []
         self.ready_nurses = []
-        '''
+        
         #list of dirty rooms
         self.room_queue = []
-        self.mission_context = "start(NurseDesinfect, NurseRoom, uvdrobot, spotrobot)"
-        self.variables = ["NurseDesinfect", "NurseRoom", "uvdrobot", "spotrobot"]
+        self.mission_context = "start(NurseDesinfect, NurseRoom, Spotrobot, Uvdrobot)"
+        #self.variables = ["NurseDesinfect", "NurseRoom", "uvdrobot", "spotrobot"]
+        self.variables =["Spotrobot", "NurseRoom", "NurseDesinfect", "Uvdrobot"]
         self.current_plan = []
         self.current_team = []	
         self.agents_actions = {}
 
 
-        self.reset_publisher = self.create_publisher(String, '/coordinator/agent/reset', 10)
-    '''
+        #self.reset_publisher = self.create_publisher(String, '/coordinator/agent/reset', 10)
+    
     def set_agent_ready(self, decoded_msg):
         if "uvdrobot" in decoded_msg.sender:
             self.ready_uvdrobots.append(decoded_msg.sender)
@@ -42,8 +43,8 @@ class Coordinator(AgnosticCoordinator):
             self.get_logger().info(f"ready spot: {len(self.ready_spotrobots)}")
         elif "nurse" in decoded_msg.sender:
             self.ready_nurses.append(decoded_msg.sender)
-            self.get_logger().info(f"ready 123: {len(self.ready_nurses)}")
-    '''
+            self.get_logger().info(f"ready nurse: {len(self.ready_nurses)}")
+    
 
 
 
@@ -67,6 +68,7 @@ class Coordinator(AgnosticCoordinator):
         response = decoded_msg.sender + id
         self.get_logger().info("Response: " + response)
         self.register_queue.append((response, agent_type))
+        self.get_logger().info(f"colocando: {agent_type} {len(self.register_queue)}")
         '''
         if "uvdrobot" in decoded_msg.sender:
             self.ready_uvdrobots.append(decoded_msg.sender + id)
@@ -176,9 +178,9 @@ class Coordinator(AgnosticCoordinator):
 
 
     def idk(self, mission, error):
-        self.send_reset_request(self.current_team)
+        #self.send_reset_request(self.current_team)
         return
-
+    '''
     def start_mission(self):
         self.agents_actions = {}
         #self.get_logger().info("Starting mission")
@@ -275,6 +277,8 @@ class Coordinator(AgnosticCoordinator):
             self.reset_publisher.publish(reset_msg)
 
         self.get_logger().info('Reset requests sent.')
+
+    '''
 def main():
     rclpy.init()
     coordinator = Coordinator()

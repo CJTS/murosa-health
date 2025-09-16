@@ -36,95 +36,105 @@ def map_params_to_variables(params, variables_map):
     return mapped_params
 
 def generate_bdi(agents, actions, context, variables):
-    # Generate variables array based on action parameters
-    ordered_instanciated_variables = get_ordered_instanciated_variables(actions)
-    variables_map = map_intaciated_to_variables(variables, ordered_instanciated_variables)
-    
-    bdies = defaultdict(list)
-    i = 0
-    # Da primeira ate a penultima ação
-    while i < len(actions) - 1:
-        current_action = actions[i]
-        next_action = actions[i + 1]
+        # Generate variables array based on action parameters
+        ordered_instanciated_variables = get_ordered_instanciated_variables(actions)
+        variables_map = map_intaciated_to_variables(variables, ordered_instanciated_variables)
+        
+        bdies = defaultdict(list)
+        i = 0
+        # Da primeira ate a penultima ação
+        while i < len(actions) - 1:
+            current_action = actions[i]
+            next_action = actions[i + 1]
 
-        action1, params1 = extract_agent_name(current_action)
-        action2, params2 = extract_agent_name(next_action)
+            action1, params1 = extract_agent_name(current_action)
+            action2, params2 = extract_agent_name(next_action)
 
-        agents1 = set(params1) & set(agents)
-        agents2 = set(params2) & set(agents)
-        other_agents = list(set(agents2) - set(agents1))
 
-        # Map parameters to variables
-        mapped_params1 = map_params_to_variables(params1, variables_map)
-        mapped_params2 = map_params_to_variables(params2, variables_map)
+            agents1 = set(params1) & set(agents)
+            
 
-        action1_with_params = f"{action1}({', '.join(mapped_params1)})"
-        action2_with_params = f"{action2}({', '.join(mapped_params2)})"
+            agents2 = set(params2) & set(agents)
+            
+            other_agents = list(set(agents2) - set(agents1))
+            
+            # Map parameters to variables
+            mapped_params1 = map_params_to_variables(params1, variables_map)
+            mapped_params2 = map_params_to_variables(params2, variables_map)
+            
+            action1_with_params = f"{action1}({', '.join(mapped_params1)})"
+            action2_with_params = f"{action2}({', '.join(mapped_params2)})"
+            
+            
+            # Verifica quantas vezes o agente aparece nas ações
+            count = defaultdict(int)
+            for ag in list(agents1) + list(agents2):
+                count[ag] += 1
 
-        # Verifica quantas vezes o agente aparece nas ações
-        count = defaultdict(int)
-        for ag in list(agents1) + list(agents2):
-            count[ag] += 1
-
-        # Para cada agente da ação atual
-        for agent1 in agents1:
-            # Cria o plano da execução da ação atual
-            if(i == 0):
-                bdies[agent1].append(f"+initial_trigger_{action1_with_params}: {context} <- !{action1_with_params}.")
-                bdies[agent1].append(f"+!{action1_with_params}: {context} <- {action1_with_params}.")
-            else:
-                bdies[agent1].append(f"+!{action1_with_params}: milestone{str(i - 1)} <- {action1_with_params}.")
-
-            # Se existem outros agentes
-            if len(other_agents) > 0:
-                # Cria o sends para todos os outros agentes
-                success_plan = '; '.join([f".send({variables_map[agent2]}, tell, trigger_{action2_with_params})" for agent2 in other_agents])
-                send_milestone_plan = '; '.join([f".send({variables_map[agent2]}, tell, milestone{str(i)})" for agent2 in other_agents])
-                # Verifica se o agente atual esta na lista de proximos agentes
-                if(agent1 in agents2):
-                    # Se sim, adiciona a chamada para a proxima ação no plano de sucesso junto dos sends
-                    bdies[agent1].append(f"+success_{action1_with_params}: {context} & milestone{str(i - 1)} <- -milestone{str(i - 1)}; +milestone{str(i)}; {send_milestone_plan}; {success_plan}; !{action2_with_params}.")
-                else:
-                    # Se não, adiciona somente os sends para os outros agentes executarem a proxima ação
-                    bdies[agent1].append(f"+success_{action1_with_params}: {context} <- {send_milestone_plan}; {success_plan}.")
-
-                # para cada outro agente
-                for agent2 in other_agents:
-                    # crie o trigger para começar a proxima ação
-                    bdies[agent2].append(f"+trigger_{action2_with_params}: {context} <- !{action2_with_params}.")
-            # Se não existem outros agentes
-            else:
-                # Verifica se o agente atual esta na lista de proximos agentes
-                if i > 0:
+            # Para cada agente da ação atual
+            for agent1 in agents1:
+                # Cria o plano da execução da ação atual
+                #elf.get_logger().info(f"BDI for {agent1}: {bdies[agent1]}, i = {i}")
+                if(i == 0):
+                    bdies[agent1].append(f"+initial_trigger_{action1_with_params}: {context} <- !{action1_with_params}.")
                     if(agent1 in agents2):
-                        # Se sim, adiciona a chamada para a proxima ação no plano de sucesso
-                        bdies[agent1].append(f"+success_{action1_with_params}: {context} & milestone{str(i - 1)} <- -milestone{str(i - 1)}; +milestone{str(i)}; !{action2_with_params}.")
+                        bdies[agent1].append(f"+!{action1_with_params}: {context} <- +milestone{str(i)}; {action1_with_params}.")
                     else:
-                        bdies[agent1].append(f"+success_{action1_with_params}: milestone{str(i - 1)} <- -milestone{str(i - 1)}.")
+                        bdies[agent1].append(f"+!{action1_with_params}: {context} <- {action1_with_params}.")
+                    
                 else:
+                    bdies[agent1].append(f"+!{action1_with_params}: milestone{str(i)} <- {action1_with_params}.")
+                #self.get_logger().info(f"BDI for {agent1}: {bdies[agent1]}")
+                # Se existem outros agentes
+                if len(other_agents) > 0:
+                    # Cria o sends para todos os outros agentes
+                    success_plan = '; '.join([f".send({variables_map[agent2]}, tell, trigger_{action2_with_params})" for agent2 in other_agents])
+                    send_milestone_plan = '; '.join([f".send({variables_map[agent2]}, tell, milestone{str(i+1)})" for agent2 in other_agents])
+                    # Verifica se o agente atual esta na lista de proximos agentes
                     if(agent1 in agents2):
-                        # Se sim, adiciona a chamada para a proxima ação no plano de sucesso
-                        bdies[agent1].append(f"+success_{action1_with_params}: {context} <- +milestone{str(i)}; !{action2_with_params}.")
+                        # Se sim, adiciona a chamada para a proxima ação no plano de sucesso junto dos sends
+                        bdies[agent1].append(f"+success_{action1_with_params}: {context} & milestone{str(i)} <- -milestone{str(i)}; +milestone{str(i+1)}; {send_milestone_plan}; {success_plan}; !{action2_with_params}.")
+                    else:
+                        # Se não, adiciona somente os sends para os outros agentes executarem a proxima ação
+                        bdies[agent1].append(f"+success_{action1_with_params}: {context} <- {send_milestone_plan}; {success_plan}.")
 
-        i += 1
-    # Por ultimo
-    current_action = actions[i]
-    action1, params1 = extract_agent_name(current_action)
-    agents1 = set(params1) & set(agents)
-    mapped_params1 = map_params_to_variables(params1, variables_map)
-    action1_with_params = f"{action1}({', '.join(mapped_params1)})"; 
+                    # para cada outro agente
+                    for agent2 in other_agents:
+                        # crie o trigger para começar a proxima ação
+                        bdies[agent2].append(f"+trigger_{action2_with_params}: {context} <- !{action2_with_params}.")
+                # Se não existem outros agentes
+                else:
+                    # Verifica se o agente atual esta na lista de proximos agentes
+                    if i > 0:
+                        if(agent1 in agents2):
+                            # Se sim, adiciona a chamada para a proxima ação no plano de sucesso
+                            bdies[agent1].append(f"+success_{action1_with_params}: {context} & milestone{str(i)} <- -milestone{str(i)}; +milestone{str(i+1)}; !{action2_with_params}.")
+                        else:
+                            bdies[agent1].append(f"+success_{action1_with_params}: milestone{str(i)} <- -milestone{str(i)}.")
+                    else:
+                        if(agent1 in agents2):
+                            # Se sim, adiciona a chamada para a proxima ação no plano de sucesso
+                            bdies[agent1].append(f"+success_{action1_with_params}: {context} <- +milestone{str(i+1)}; !{action2_with_params}.")
 
-    for agent1 in agents1:
-        bdies[agent1].append(f"+!{action1_with_params}: milestone{str(i - 1)} <- {action1_with_params}.")
-        bdies[agent1].append(f"+success_{action1_with_params}: milestone{str(i - 1)} <- -milestone{str(i - 1)}; end.")
+            i += 1
+        # Por ultimo
+        current_action = actions[i]
+        action1, params1 = extract_agent_name(current_action)
+        agents1 = set(params1) & set(agents)
+        mapped_params1 = map_params_to_variables(params1, variables_map)
+        action1_with_params = f"{action1}({', '.join(mapped_params1)})"; 
 
-    # Verify all agents have an end in last rule
-    for agent in bdies:
-        last_rule = bdies[agent][-1] if bdies[agent] else ""
-        if last_rule and last_rule.endswith(".") and not last_rule.endswith("; end."):
-            bdies[agent][-1] = last_rule[:-1] + "; end."
+        for agent1 in agents1:
+            bdies[agent1].append(f"+!{action1_with_params}: milestone{str(i)} <- {action1_with_params}.")
+            bdies[agent1].append(f"+success_{action1_with_params}: milestone{str(i)} <- -milestone{str(i)}; end.")
 
-    return bdies
+        # Verify all agents have an end in last rule
+        for agent in bdies:
+            last_rule = bdies[agent][-1] if bdies[agent] else ""
+            if last_rule and last_rule.endswith(".") and not last_rule.endswith("; end."):
+                bdies[agent][-1] = last_rule[:-1] + "; end."
+
+        return bdies
 
 # # Example usage
 # # context = "start(Nurse, LockedDoor, Robot, ArmRoom, Arm)"

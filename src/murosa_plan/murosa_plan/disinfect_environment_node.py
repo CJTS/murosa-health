@@ -23,7 +23,7 @@ class Environment(Node):
             'loc': { 'nurse_disinfected1': 'room1','nurse_disinfected2': 'room2', 'nurse_disinfected3': 'room3','uvdrobot1': 'room4', 'spotrobot1': 'room4'},
             'doors': { 'room1': False, 'room2': True, 'room3': True, 'room4': True },
             'cleaned': { 'room1': Uncleaned[0], 'room2': True, 'room3': True },
-            'disinfected': {'room1': False,'room2': True, 'room3': True}
+            'disinfected': {'room1': True,'room2': True, 'room3': True}
             }
         self.start_server()
 
@@ -64,7 +64,9 @@ class Environment(Node):
         elif actionTuple[0] == 'monitor':
             response.observation = json.dumps(self.state)
         elif actionTuple[0] == 'a_infected_room':
-            self.state['disinfected'][actionTuple[1]] = False
+            room = self.state['loc'][actionTuple[1]]
+            self.state['disinfected'][room] = False
+            self.get_logger().info(f"Room {room} marked as infected")
         elif actionTuple[0] == 'a_patrol_room' and not self.state['cleaned'][actionTuple[2]]:
             response.observation = 'dirty room'
         elif actionTuple[0] == 'a_clean_room':

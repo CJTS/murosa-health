@@ -33,13 +33,13 @@ class Agent(Node):
         )
 
         # # Subscriber para falar com o Coordenador (Ação)
-        self.subscription_coordinator = self.create_subscription(
-             String, '/coordinator/agent/plan', self.listener_plan_callback, 10
-         )
+        #self.subscription_coordinator = self.create_subscription(
+        #     String, '/coordinator/agent/plan', self.listener_plan_callback, 10
+        # )
          #colocado para disinfect
-        self.subscription_reset = self.create_subscription(
-            String, '/coordinator/agent/reset', self.listener_reset_callback, 10
-        )
+        # self.subscription_reset = self.create_subscription(
+        #     String, '/coordinator/agent/reset', self.listener_reset_callback, 10
+        # )
 
         # Publisher para falar o resultado da ação para o Jason
         self.publisher = self.create_publisher(String, '/agent/jason/result', 10)
