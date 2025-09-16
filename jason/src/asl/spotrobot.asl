@@ -59,6 +59,9 @@
     a_authorize_disinfect(UvdRobot, SpotRobot).
 
 +success_a_authorize_disinfect(UvdRobot, SpotRobot): start(NurseDisinfect, NurseDisinfectRoom, SpotRobot, UvdRobot) & milestone6 <-
-    -milestone6; end.
+    -milestone6; 
+    -start(NurseDisinfect, NurseDisinfectRoom, SpotRobot, UvdRobot);
+    -success_a_authorize_disinfect(UvdRobot, SpotRobot);
+    end.
 
 

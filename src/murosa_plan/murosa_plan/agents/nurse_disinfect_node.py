@@ -13,14 +13,14 @@ from interfaces.srv import Action
 class Nurse(Agent):
     def __init__(self, className):
         super().__init__(className)
-        self.infected_room = False
-        #self.run()
+        self.counter = 10000
 
     def run(self):
         while rclpy.ok():
+            # self.counter = self.counter + 1
             rclpy.spin_once(self, timeout_sec=0.001)
-            if not self.infected_room:
-                self.infected_room = True
+            if self.counter == 10000:
+                self.counter = 0
                 seconds = 1
                 time.sleep(seconds)
                 future = self.a_infected_room()
@@ -108,61 +108,7 @@ class Nurse(Agent):
             ('a_clean_room', nurse, room)
         )
         return self.environment_client.call_async(self.action_request)
-    '''
-    def act(self):
-        if(len(self.plan) > 0) :
-            action = self.plan.pop(0)
-            result = self.choose_action(action)
-            if result == ActionResult.WAITING:
-                self.wating = True
-                self.plan.insert(0, action)
-        elif(len(self.actions) > 0):
-            self.get_logger().info('Acting')
-            action = self.actions.pop(0)
-            result = self.choose_action(action)
-            if result == ActionResult.SUCCESS:
-                self.get_logger().info("ActionResult.SUCCESS")
-                msg = String()
-                msg.data = FIPAMessage(FIPAPerformative.INFORM.value, self.agentName, 'Jason', 'Success|' + ",".join(action)).encode()
-                self.publisher.publish(msg)
-                self.get_logger().info('Publishing: "%s"' % msg.data)
-            elif result == ActionResult.FAILURE:
-                self.get_logger().info("ActionResult.FAILURE")
-                msg = String()
-                msg.data = FIPAMessage(FIPAPerformative.INFORM.value, self.agentName, 'Jason', 'Failure|' + ",".join(action)).encode()
-                self.publisher.publish(msg)
-                self.get_logger().info('Publishing: "%s"' % msg.data)
-            elif result == ActionResult.WAITING:
-                self.get_logger().info("ActionResult.WAITING")
-                self.wating = True
-                self.actions.append(action)
 
-    def respond_agent(self, msg):
-        self.get_logger().info('I heard: "%s"' % msg.data)
-        decoded_msg = FIPAMessage.decode(msg.data)
-        if not self.is_for_me(decoded_msg):
-            self.get_logger().info('And it is not for me')
-            return
-
-        self.get_logger().info('And it is for me')
-        if "Ready" == decoded_msg.content.split("|")[0]:
-            if all(decoded_msg.content.split("|")[1] not in action for action in self.wating_response):
-                self.get_logger().info('No there yet')
-                self.wating_response.append((decoded_msg.sender, decoded_msg.content.split("|")[1]))
-            else:
-                self.get_logger().info('Ready to act')
-                self.acting_for_agent(decoded_msg.sender, decoded_msg.content.split("|")[1])
-        elif "Done" == decoded_msg.content.split("|")[0]:
-            if any(decoded_msg.content.split("|")[1] in action for action in self.actions) or any(decoded_msg.content.split("|")[1] in action for action in self.plan):
-                self.get_logger().info('Finished action')
-                self.plan.pop(0)
-                self.wating_response.clear()
-                self.wating = False
-                self.acting_for_agent(decoded_msg.sender, decoded_msg.content.split("|")[1])
-            else:
-                self.get_logger().info('Already finished action')
-
-    '''
 def main():
     rclpy.init()
     nurse = Nurse('Nurse_Disinfected')

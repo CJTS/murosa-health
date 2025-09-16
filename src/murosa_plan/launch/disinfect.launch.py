@@ -26,16 +26,31 @@ def generate_launch_description():
         Node(
             package='murosa_plan',
             executable='nurse_disinfect',
-            name='nurse_disinfect'
+            name='nurse_disinfect1'
+        ),
+        Node(
+            package='murosa_plan',
+            executable='nurse_disinfect',
+            name='nurse_disinfect2'
         ),
         Node(
             package='murosa_plan',
             executable='uvdrobot',
-            name='uvdrobot'
+            name='uvdrobot1'
+        ),
+        Node(
+            package='murosa_plan',
+            executable='uvdrobot',
+            name='uvdrobot2'
         ),
         Node(
             package='murosa_plan',
             executable='spotrobot',
-            name='spotrobot'
+            name='spotrobot1'
+        ),
+        Node(
+            package='murosa_plan',
+            executable='spotrobot',
+            name='spotrobot2'
         ),
     ])

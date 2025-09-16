@@ -20,10 +20,33 @@ class Environment(Node):
             100 - Uncleaned_percentage, Uncleaned_percentage), k=1)
 
         self.state = {
-            'loc': { 'nurse_disinfected1': 'room1','nurse_disinfected2': 'room2', 'nurse_disinfected3': 'room3','uvdrobot1': 'room4', 'spotrobot1': 'room4'},
-            'doors': { 'room1': False, 'room2': True, 'room3': True, 'room4': True },
-            'cleaned': { 'room1': Uncleaned[0], 'room2': True, 'room3': True },
-            'disinfected': {'room1': True,'room2': True, 'room3': True}
+            'loc': { 
+                'nurse_disinfected1': 'room1',
+                'nurse_disinfected2': 'room2', 
+                'nurse_disinfected3': 'room3',
+                'nurse_disinfected4': 'icu',
+                'uvdrobot1': 'room4', 
+                'spotrobot1': 'room4'
+            },
+            'doors': { 
+                'room1': False, 
+                'room2': True, 
+                'room3': True, 
+                'room4': True, 
+                'icu': True
+            },
+            'cleaned': { 
+                'room1': Uncleaned[0],
+                'room2': True,
+                'room3': True,
+                'icu': True
+            },
+            'disinfected': {
+                'room1': True,
+                'room2': True,
+                'room3': True,
+                'icu': True
+            }
             }
         self.start_server()
 
