@@ -89,9 +89,15 @@ public class RosEnv extends Environment {
 				PrimitiveMsg<String> msg = unpacker.unpackRosMessage(data);
 				FIPAMessage decodedMessage = FIPAMessage.decode(msg.data);
 				String regex = "[|]";
-				String[] decodedContent = decodedMessage.getContent().split(regex);
 				String agentActionRegex = "[,]";
-				String[] agents = decodedContent[1].split(agentActionRegex);
+
+				String[] decodedContent = decodedMessage.getContent().split(regex);
+				String[] agents = new String[0];
+
+				if(decodedContent.length >= 2) {
+					agents = decodedContent[1].split(agentActionRegex);
+				}
+				
 				logger.info(msg.data);
 
 				clearPercepts(decodedMessage.getSender());
@@ -101,6 +107,8 @@ public class RosEnv extends Environment {
 						addPercept(decodedMessage.getSender(), Literal.parseLiteral("success_" + formatFunction(agents) + ")"));
 					} else if(decodedContent[0].equals("Failure")) {
 						addPercept(decodedMessage.getSender(), Literal.parseLiteral("failure_" + formatFunction(agents) + ")"));
+					} else if(decodedContent[0].equals("BatteryFailure")) {
+						addPercept(decodedMessage.getSender(), Literal.parseLiteral("low_battery_failure(" + formatFunction(agents) + "))"));
 					}
 				} else if (decodedMessage.getPerformative().equals("request")) {
 					if (decodedContent[0].equals("End")) {
@@ -123,8 +131,10 @@ public class RosEnv extends Environment {
 			List<Term> terms = action.getTerms();
 			String termsStr = action.getFunctor();
 
-			for (Term term : terms) {
-				termsStr +=  "," + term.toString();
+			if(terms != null && !terms.isEmpty()) {
+				for (Term term : terms) {
+					termsStr +=  "," + term.toString();
+				}
 			}
 
 			message.setContent(termsStr);
@@ -148,8 +158,12 @@ public class RosEnv extends Environment {
 	}
 
 	public static String formatFunction(String[] input) {
-		if (input == null || input.length < 2) {
+		if (input == null || input.length < 1) {
 			throw new IllegalArgumentException("O array deve conter pelo menos um nome de função e um parâmetro.");
+		}
+
+		if(input.length == 1) {
+			return input[0];
 		}
 
 		String functionName = input[0];

@@ -7,16 +7,46 @@ from std_msgs.msg import String, Bool
 from coordinator.helper import FIPAMessage, action_string_to_tuple, action_tuple_to_string
 from coordinator.BDIParser import generate_bdi
 from coordinator.FIPAPerformatives import FIPAPerformative
+from enum import Enum
+from typing import List
+
+class MissionStatus(Enum):
+    CREATED = 1
+    ONGOING = 2
+    PAUSED = 3
+    ERROR = 4
+    FINISHED = 5
+
+class MissionRobot():
+    def __init__(self, robot):
+        self.robot = robot
+        self.finished = False
+    
+    def __str__(self):
+        return self.robot
+    
+class Team():
+    def __init__(self, robots: MissionRobot):
+        self.robots = robots
+
+class Mission():
+    def __init__(self, team: List[MissionRobot], context):
+        self.team = team
+        self.status = MissionStatus.CREATED
+        self.context = context
+        self.priority = -1
+        self.mission_context = "start()"
+        self.variables = []
 
 class AgnosticCoordinator(Node):
     def __init__(self, Name):
         super().__init__('AgnosticCoordinator')
         # List of missions
-        self.missions = []
+        self.missions: List[Mission] = []
         # List of messages to be sent to the agents
         self.register_queue = []
         # List of missions that have errors
-        self.missions_with_error = []
+        self.missions_with_error: List[Mission] = []
         self.known_errors = []
         self.declare_parameter('replan', rclpy.Parameter.Type.BOOL)
         replan_param = self.get_parameter('replan').get_parameter_value().bool_value
@@ -64,23 +94,67 @@ class AgnosticCoordinator(Node):
         
     def listener_callback(self, msg):
         decoded_msg = FIPAMessage.decode(msg.data)
-        self.get_logger().info('I heard: "%s"' % msg.data)
+        # self.get_logger().info('I heard: "%s"' % msg.data)
 
         if decoded_msg.content == 'Ready':
             self.set_agent_ready(decoded_msg)
         elif decoded_msg.content == 'Finished':
-            self.free_agent(decoded_msg.sender)
-            self.verify_mission_complete(decoded_msg.sender)
+            robot_name = decoded_msg.sender
+            mission = self.get_mission(robot_name)
 
-    def free_agent(self, agent):
+            if mission == None:
+                self.get_logger().info(f"No mission found for {robot_name}")
+                return
+
+            self.mark_agent_finished(mission, robot_name)
+            self.free_agent(robot_name)
+            if self.verify_mission_complete(mission):
+                self.finish_mission(mission)
+
+    def get_mission(self, agent: str):
+        for mission in self.missions:
+            for mission_robot in mission.team:
+                if mission_robot.robot == agent:
+                    return mission
+        return None
+
+    def mark_agent_finished(self, mission: Mission, agent: str):
+        for mission_robot in mission.team:
+            if mission_robot.robot == agent:
+                mission_robot.finished = True
+                self.get_logger().info(f"Marked {agent} as finished in mission.")
+                break
+
+    def free_agent(self, mission: Mission, agent: str):
         raise NotImplementedError("This method should be implemented by the subclass")
+
+    def verify_mission_complete(self, mission: Mission):
+        if all(mission_robot.finished for mission_robot in mission.team):
+            mission.status = MissionStatus.FINISHED
+            return True
+
+        return False
+    
+    def finish_mission(self, finished_mission: Mission):
+        self.get_logger().info("Mission Completed")
+        self.get_logger().info(", ".join([str(robot) for robot in finished_mission.team]))
+        self.missions.remove(finished_mission)
+        # for agent in mission:
+        #     msg = String()
+        #     msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, agent, 'Jason', 'End|' + agent).encode()
+        #     self.jason_publisher.publish(msg)
+        self.get_logger().info(str(len(self.missions)))
+        for mission in self.missions:
+            self.get_logger().info(", ".join([str(robot) for robot in mission.team]))
+        if(len(self.missions) == 0):
+            self.end_simulation()
 
     def set_agent_ready(self, decoded_msg):
         raise NotImplementedError("This method should be implemented by the subclass")
 
     def execute_callback(self, request, response):
         decoded_msg = FIPAMessage.decode(request.content)
-        self.get_logger().info(f'Received: Performative={decoded_msg.performative}, Sender={decoded_msg.sender}, Receiver={decoded_msg.receiver}, Content={decoded_msg.content}')
+        # self.get_logger().info(f'Received: Performative={decoded_msg.performative}, Sender={decoded_msg.sender}, Receiver={decoded_msg.receiver}, Content={decoded_msg.content}')
 
         if decoded_msg.performative == FIPAPerformative.REQUEST.value:
             if decoded_msg.content == 'Register':
@@ -89,40 +163,42 @@ class AgnosticCoordinator(Node):
             if "ERROR" in decoded_msg.content:
                 mission = [mission for mission in self.missions if decoded_msg.sender in mission]
                 self.missions_with_error.append((mission[0], decoded_msg.content))
-                self.idk(mission, decoded_msg.content)
         return response
     
-    def idk(self, mission, error):
-        raise NotImplementedError("This method should be implemented by the subclass")
-
     def register_agent(self, decoded_msg):
         raise NotImplementedError("This method should be implemented by the subclass")
 
     def restart_mission(self, mission):
         raise NotImplementedError("This method should be implemented by the subclass")
 
-    def start_mission(self):
+    def start_mission(self) -> Mission:
         team = self.get_team()
         if(team == None):
-            #self.get_logger().info("No team to start mission")
-            return
+            # self.get_logger().info("No team to start mission")
+            return None
 
         start_context = self.get_start_context(team)
 
         if(start_context == None):
             # self.get_logger().info("Not possible to start mission")
-            return
+            return None
+        
+        mission = self.create_mission(team, start_context)
     
         for agent in team:
-        
             msg = String()
-            msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent, 'Start|' + ','.join(start_context)).encode()
+            msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent.robot, 'Start|' + ','.join(start_context)).encode()
             self.agent_publisher.publish(msg)
+
+        return mission
     
-    def get_team(self):
+    def get_team(self) -> List[MissionRobot]:
         raise NotImplementedError("This method should be implemented by the subclass")
 
     def get_start_context(self, team):
+        raise NotImplementedError("This method should be implemented by the subclass")
+    
+    def create_mission(self, team: List[MissionRobot], start_context):
         raise NotImplementedError("This method should be implemented by the subclass")
 
     def get_agent_class(self, agent):
@@ -265,6 +341,36 @@ class AgnosticCoordinator(Node):
         self.action_request = Action.Request()
         self.action_request.action = 'need_plan|' + team
         return self.planner_communication_sync_client.call_async(self.action_request)
+    
+    def stop_low_priority_mission(self):
+        low_priority_missions = [mission for mission in self.missions if mission.priority == 0]
+        
+        if len(low_priority_missions) == 0:
+            return False
+        
+        low_mission = low_priority_missions[0]
+
+        self.get_logger().info("Missions vefore stopping low priority mission:")
+        self.get_logger().info(str(len(self.missions)))
+        for mission in self.missions:
+            self.get_logger().info(", ".join([str(robot) for robot in mission.team]))
+
+        self.get_logger().info(f"Stopping low priority mission with team: {', '.join([str(robot) for robot in low_mission.team])}")
+
+        for agent in low_mission.team:
+            msg = String()
+            msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', 'Jason', 'Stop|' + agent.robot).encode()
+            self.agent_publisher.publish(msg)
+            self.free_agent(agent.robot)
+        self.missions.remove(low_mission)
+
+        self.get_logger().info("Missions after stopping low priority mission:")
+        self.get_logger().info(str(len(self.missions)))
+        for mission in self.missions:
+            self.get_logger().info(", ".join([str(robot) for robot in mission.team]))
+
+
+        return True
 
     def run(self):
         while rclpy.ok():

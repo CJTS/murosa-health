@@ -17,6 +17,7 @@ To run the program you need to run ROS Bridge and Jason before.
 ```./gradlew run```
 
 Then source the build, set the ENV variables REPLAN and PROBLEM_RATE, run the coordinator, and run one of the cases
+```source /opt/ros/humble/setup.bash```
 ```source install/local_setup.bash```
 
 ### Health
@@ -30,5 +31,5 @@ Then source the build, set the ENV variables REPLAN and PROBLEM_RATE, run the co
 ### Desinfect
 BDI not implemented and needed.
 
-```ros2 launch coordinator disinfect.launch.py```
-```ros2 launch murosa_plan disinfect.launch.py```
+```REPLAN=True ros2 launch coordinator disinfect.launch.py```
+```PROBLEM_RATE=0 ros2 launch murosa_plan disinfect.launch.py```

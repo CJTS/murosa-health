@@ -1,3 +1,11 @@
++stop: start(NurseDisinfect, NurseDisinfectRoom, SpotRobot, UvdRobot) <- 
+    -start(NurseDisinfect, NurseDisinfectRoom, SpotRobot, UvdRobot);
+    -trigger_a_authenticate_nurse(SpotRobot, NurseDisinfect)[source(SpotRobot)];
+    -milestone2[source(SpotRobot)];
+    -trigger_a_authorize_patrol(SpotRobot, NurseDisinfect)[source(SpotRobot)];
+    -milestone3[source(SpotRobot)];
+    -success_a_authorize_patrol(SpotRobot, NurseDisinfect)[source(percept)].
+
 +start(NurseDisinfect, NurseDisinfectRoom, SpotRobot, UvdRobot): true <- +start(NurseDisinfect, NurseDisinfectRoom, SpotRobot, UvdRobot).
 
 +trigger_a_authenticate_nurse(SpotRobot, NurseDisinfect): start(NurseDisinfect, NurseDisinfectRoom, SpotRobot, UvdRobot) <-

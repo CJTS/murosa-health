@@ -44,11 +44,18 @@ public class DynamicAgent extends AgArch {
                     if(decodedMessage.getPerformative().equals("request")) {
                         if(decodedContent[0].equals("Start")) {
                             try {
-                                logger.info("Starting: " + "start(" + decodedContent[1] + ")");
+                                logger.info("Starting("+getAgName()+"): " + "start(" + decodedContent[1] + ")");
                                 getTS().getAg().addBel(Literal.parseLiteral("start(" + decodedContent[1] + ")"));
                             } catch (RevisionFailedException ex) {
                                 System.err.println("Error: " + ex.getMessage());
                             }
+                        } else if(decodedContent[0].equals("Stop")) {
+                            try {
+                                getTS().getAg().addBel(Literal.parseLiteral("stop"));
+                            } catch (RevisionFailedException ex) {
+                                System.err.println("Error: " + ex.getMessage());
+                            }
+
                         }
                     } else if(decodedMessage.getPerformative().equals("inform")) {
                         if(decodedContent[0].equals("Plan")) {

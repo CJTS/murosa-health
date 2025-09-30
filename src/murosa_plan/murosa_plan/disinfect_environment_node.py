@@ -1,5 +1,3 @@
-from threading import Thread
-import sys
 import rclpy
 import json
 import random
@@ -14,17 +12,20 @@ class Environment(Node):
         self.client_futures = []
         self.door = False
         numberList = [True, False]
+        nurse4Room = ['room4', 'icu']
         self.declare_parameter('problem_rate', rclpy.Parameter.Type.INTEGER)
-        Uncleaned_percentage = self.get_parameter('problem_rate').get_parameter_value().integer_value
-        Uncleaned = random.choices(numberList, weights=(
-            100 - Uncleaned_percentage, Uncleaned_percentage), k=1)
+        uncleaned_percentage = self.get_parameter('problem_rate').get_parameter_value().integer_value
+        uncleaned = random.choices(numberList, weights=(
+            100 - uncleaned_percentage, uncleaned_percentage), k=1)
+        icuRoom = random.choices(nurse4Room, weights=(
+            100 - uncleaned_percentage, uncleaned_percentage), k=1)
 
         self.state = {
             'loc': { 
                 'nurse_disinfected1': 'room1',
                 'nurse_disinfected2': 'room2', 
                 'nurse_disinfected3': 'room3',
-                'nurse_disinfected4': 'icu',
+                'nurse_disinfected4': icuRoom[0],
                 'uvdrobot1': 'room4', 
                 'spotrobot1': 'room4'
             },
@@ -36,15 +37,17 @@ class Environment(Node):
                 'icu': True
             },
             'cleaned': { 
-                'room1': Uncleaned[0],
+                'room1': uncleaned[0],
                 'room2': True,
                 'room3': True,
+                'room4': True,
                 'icu': True
             },
             'disinfected': {
                 'room1': True,
                 'room2': True,
                 'room3': True,
+                'room4': True,
                 'icu': True
             }
             }
@@ -99,7 +102,7 @@ class Environment(Node):
             if self.state['cleaned'][actionTuple[2]]:
                 self.state['disinfected'][actionTuple[2]] = True
                 response.observation = 'success'
-
+                
         return response
 
     def run(self):
