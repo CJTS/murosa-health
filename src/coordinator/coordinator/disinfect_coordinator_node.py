@@ -25,7 +25,7 @@ class DisinfectICUMission(Mission):
         super().__init__(team, context)
         self.priority = 1
         self.roles = [RobotRoles.SPOT, RobotRoles.UVD, RobotRoles.NURSE]
-        self.mission_context = "start(NurseDesinfect, NurseRoom, Spotrobot, Uvdrobot)"
+        self.mission_context = "start(Spotrobot, NurseRoom, NurseDesinfect, Uvdrobot)"
         self.variables = ["Spotrobot", "NurseRoom", "NurseDesinfect", "Uvdrobot"]
 
 class Coordinator(AgnosticCoordinator):
@@ -47,7 +47,7 @@ class Coordinator(AgnosticCoordinator):
         self.ready_nurses = []
 
         # Needed for the BDI Parser
-        self.mission_context = "start(NurseDesinfect, NurseRoom, Spotrobot, Uvdrobot)"
+        self.mission_context = "start(Spotrobot, NurseRoom, NurseDesinfect, Uvdrobot)"
         self.variables =["Spotrobot", "NurseRoom", "NurseDesinfect", "Uvdrobot"]
 
         self.crr_room = None

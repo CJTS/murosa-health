@@ -39,8 +39,9 @@ def generate_bdi(agents, actions, context, variables):
         # Generate variables array based on action parameters
         ordered_instanciated_variables = get_ordered_instanciated_variables(actions)
         variables_map = map_intaciated_to_variables(variables, ordered_instanciated_variables)
-        
+        milestone_sources = defaultdict(set)
         bdies = defaultdict(list)
+
         i = 0
         # Da primeira ate a penultima ação
         while i < len(actions) - 1:
@@ -90,6 +91,7 @@ def generate_bdi(agents, actions, context, variables):
                     # Cria o sends para todos os outros agentes
                     success_plan = '; '.join([f".send({variables_map[agent2]}, tell, trigger_{action2_with_params})" for agent2 in other_agents])
                     send_milestone_plan = '; '.join([f".send({variables_map[agent2]}, tell, milestone{str(i+1)})" for agent2 in other_agents])
+
                     # Verifica se o agente atual esta na lista de proximos agentes
                     if(agent1 in agents2):
                         # Se sim, adiciona a chamada para a proxima ação no plano de sucesso junto dos sends
@@ -102,6 +104,8 @@ def generate_bdi(agents, actions, context, variables):
                     for agent2 in other_agents:
                         # crie o trigger para começar a proxima ação
                         bdies[agent2].append(f"+trigger_{action2_with_params}: {context} <- !{action2_with_params}.")
+                        milestone_sources[f"milestone{str(i+1)}"].add(variables_map[agent2])
+
                 # Se não existem outros agentes
                 else:
                     # Verifica se o agente atual esta na lista de proximos agentes
@@ -134,40 +138,77 @@ def generate_bdi(agents, actions, context, variables):
             if last_rule and last_rule.endswith(".") and not last_rule.endswith("; end."):
                 bdies[agent][-1] = last_rule[:-1] + "; end."
 
+            max_milestone = len(actions)
+
+        # Build param string for start(...) belief
+        start_params = ', '.join(variables)
+        start_belief = f"start({start_params})"
+
+        # Verify all agents have an end in last rule
+        for agent in bdies:
+            last_rule = bdies[agent][-1] if bdies[agent] else ""
+            if last_rule and last_rule.endswith(".") and not last_rule.endswith("; end."):
+                bdies[agent][-1] = last_rule[:-1] + "; end."
+
+            # ================================
+            #  ADD STOP / START MISSION RULES
+            # ================================
+            stop_lines = []
+            stop_lines.append(f"+stop: {start_belief} <- ")
+            # Remove triggers for each action
+            for act in actions:
+                act_name, params = extract_agent_name(act)
+                mapped_params = map_params_to_variables(params, variables_map)
+                act_with_params = f"{act_name}({', '.join(mapped_params)})"
+                stop_lines.append(f"    -trigger_{act_with_params}[source({mapped_params[0]})];")
+            # Remove milestones
+            for m in range(1, max_milestone+1):
+                stop_lines.append(f"    -milestone{m};")
+                if f"milestone{m}" in milestone_sources:
+                    for src in milestone_sources[f"milestone{m}"]:
+                        stop_lines.append(f"    -milestone{m}[source({src})];")
+            # Remove last success of last action
+            last_action, last_params = extract_agent_name(actions[-1])
+            mapped_last_params = map_params_to_variables(last_params, variables_map)
+            last_action_with_params = f"{last_action}({', '.join(mapped_last_params)})"
+            stop_lines.append(f"    -success_{last_action_with_params};")
+            # Remove start belief itself
+            stop_lines.append(f"    -{start_belief}.")
+            bdies[agent].insert(0, "\n".join(stop_lines))
+
+            # Add start mission rule
+            bdies[agent].insert(1, 
+                f"+{start_belief}: true <- \n"
+                f"    +{start_belief}."
+        )
+
+        # ================================
+        #  ADD CHARGE PLANS
+        # ================================
+            bdies[agent].append("""+low_battery_failure(Task): true <- .print("Charging"); +after_charging(Task); +low_battery; charge.""")
+            bdies[agent].append("""+success_charge: low_battery & after_charging(Task) <- .print("Finished charging"); -after_charging(Task); -low_battery; !Task.""")
+
         return bdies
 
-# # Example usage
-# # context = "start(Nurse, LockedDoor, Robot, ArmRoom, Arm)"
-# context = "start(Patrol, Base, Room1, Room2, Room3, Room4)"
-# # variables = ["Nurse", "LockedDoor", "Robot", "ArmRoom", "Arm"]
-# # variables = ["Robot", "NurseRoom", "Nurse", "ArmRoom", "Arm"]
-# variables = ["Patrol", "Room1", "Base", "Room2", "Room3", "Room4"]
-# agents = ["patrol1"]
+# Example usage
+context = "start(NurseDesinfect, NurseRoom, Spotrobot, Uvdrobot)"
+variables = ["Spotrobot", "NurseRoom", "NurseDesinfect", "Uvdrobot"]
+agents = ["spotrobot1", "uvdrobot2", "nurse_disinfected1"]
 
-# actions = [
-# #    "a_open_door(nurse1,room1)",
-# #    "a_navto(robot1,room1)",
-# #    "a_approach_nurse(robot1, nurse1)",
-# #    "a_authenticate_nurse(robot1,nurse1)",
-# #    "a_open_drawer(robot1)",
-# #    "a_deposit(nurse1,robot1)",
-# #    "a_close_drawer(robot1)",
-# #    "a_navto(robot1,room4)",
-# #    "a_approach_arm(robot1,arm2)",
-# #    "a_open_drawer(robot1)",
-# #    "a_pick_up_sample(arm2,robot1)"
-#     "move(patrol1, wp1)",
-#     "move(patrol1, wp_control)",
-#     "move(patrol1, wp2)",
-#     "move(patrol1, wp_control)",
-#     "move(patrol1, wp3)",
-#     "move(patrol1, wp_control)",
-#     "move(patrol1, wp4)",
-#     "move(patrol1, wp_control)",
-# ]
+actions = [
+    "a_navto(spotrobot1,room1)",
+    "a_approach_nurse(spotrobot1,nurse_disinfected1)",
+    "a_authenticate_nurse(spotrobot1,nurse_disinfected1)",
+    "a_clean_room(nurse_disinfected1,room1)",
+    "a_authorize_patrol(spotrobot1,nurse_disinfected1)",
+    "a_patrol_room(spotrobot1,room1)",
+    "a_authorize_disinfect(uvdrobot2,spotrobot1)",
+    "a_navto(uvdrobot2,room1)",
+    "a_disinfect_room(uvdrobot2,room1)"
+]
 
-# bdis = generate_bdi(agents, actions, context, variables)
-# for agente, regras in bdis.items():
-#     print(f"\n/* {agente} */")
-#     for regra in regras:
-#         print(regra)
+bdis = generate_bdi(agents, actions, context, variables)
+for agente, regras in bdis.items():
+    print(f"\n/* {agente} */")
+    for regra in regras:
+        print(regra)

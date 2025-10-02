@@ -25,7 +25,7 @@ class Environment(Node):
                 'nurse_disinfected1': 'room1',
                 'nurse_disinfected2': 'room2', 
                 'nurse_disinfected3': 'room3',
-                'nurse_disinfected4': icuRoom[0],
+                'nurse_disinfected4': 'room4',
                 'uvdrobot1': 'room4', 
                 'spotrobot1': 'room4'
             },

@@ -161,8 +161,12 @@ class AgnosticCoordinator(Node):
                 response.response = self.register_agent(decoded_msg)
         elif decoded_msg.performative == FIPAPerformative.INFORM.value:
             if "ERROR" in decoded_msg.content:
-                mission = [mission for mission in self.missions if decoded_msg.sender in mission]
-                self.missions_with_error.append((mission[0], decoded_msg.content))
+                mission = self.get_mission(decoded_msg.sender)
+                if mission is  None:
+                    self.get_logger().info(f"No mission found for {decoded_msg.sender}")
+                    return response
+                mission.status = MissionStatus.ERROR
+                self.missions_with_error.append((mission, decoded_msg.content))
         return response
     
     def register_agent(self, decoded_msg):
@@ -238,7 +242,8 @@ class AgnosticCoordinator(Node):
             msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', 'Jason', 'Create|' + ','.join(agent)).encode()
             self.jason_publisher.publish(msg)
 
-    def fix_plan(self, context):
+    def fix_plan(self, mission: Mission):
+        context = mission.context
         self.get_logger().info(",".join(context))
         team = self.get_team_from_context(context)
 
@@ -264,12 +269,16 @@ class AgnosticCoordinator(Node):
                     start.append(param)
 
         bdies = generate_bdi(team, formated_plan, self.mission_context, self.variables)
+        self.get_logger().info('Rules received for: %s ' % (
+            ','.join(bdies.keys())
+        ))
         for agent, rules in bdies.items():
             plans = [f"+!{self.mission_context}: true <- +{self.mission_context}."]
             for rule in rules:
                 plans.append(rule)
             msg = String()
             msg.data = FIPAMessage(FIPAPerformative.INFORM.value, 'Coordinator', agent, 'Plan|' + '/'.join(plans)).encode()
+            self.get_logger().info('/'.join(plans))
             self.agent_publisher.publish(msg)
 
         start_msg = "initial_trigger_" + formated_plan[0] + "."
