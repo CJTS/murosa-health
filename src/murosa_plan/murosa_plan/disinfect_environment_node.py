@@ -29,7 +29,7 @@ class Environment(Node):
                 'uvdrobot1': 'room4', 
                 'spotrobot1': 'room4',
                 'uvdrobot2': 'room4', 
-                'spotrobot2': 'room4'
+                'spotrobot2': icuRoom[0]
             },
             'doors': { 
                 'room1': False, 

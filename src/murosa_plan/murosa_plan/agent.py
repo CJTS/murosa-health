@@ -210,6 +210,7 @@ class Agent(Node):
             if result == ActionResult.WAITING:
                 self.wating = True
                 self.plan.insert(0, action)
+                self.get_logger().info("Action finished")
             elif result == ActionResult.BATTERY_FAILURE:
                 """Send battery failure to Coordinator"""
                 self.notifyError(
@@ -225,6 +226,7 @@ class Agent(Node):
                 msg.data = FIPAMessage(FIPAPerformative.INFORM.value, self.agentName, 'Jason', 'Success|' + ",".join(action)).encode()
                 self.publisher.publish(msg)
                 # self.get_logger().info('Publishing: "%s"' % msg.data)
+                self.get_logger().info("Action finished")
             elif result == ActionResult.FAILURE:
                 # self.get_logger().info("ActionResult.FAILURE")
                 msg = String()
@@ -239,6 +241,7 @@ class Agent(Node):
                 self.publisher.publish(msg)
                 # self.get_logger().info('Publishing: "%s"' % msg.data)
             elif result == ActionResult.WAITING:
+                self.get_logger().info("Action finished")
                 # self.get_logger().info("ActionResult.WAITING")
                 self.wating = True
                 self.actions.append(action)

@@ -12,15 +12,17 @@ from typing import List
 
 class MissionStatus(Enum):
     CREATED = 1
-    ONGOING = 2
-    PAUSED = 3
-    ERROR = 4
-    FINISHED = 5
+    WAITING_TEAM = 2
+    ONGOING = 3
+    PAUSED = 4
+    ERROR = 5
+    FINISHED = 6
 
 class MissionRobot():
     def __init__(self, robot):
         self.robot = robot
         self.finished = False
+        self.trigger = None
     
     def __str__(self):
         return self.robot
@@ -159,7 +161,7 @@ class AgnosticCoordinator(Node):
             if "ERROR" in decoded_msg.content:
                 self.get_logger().info('Error found')
                 mission = self.get_mission(decoded_msg.sender)
-                if mission is  None:
+                if mission is None:
                     self.get_logger().info(f"No mission found for {decoded_msg.sender}")
                     return response
                 mission.status = MissionStatus.ERROR
@@ -195,6 +197,10 @@ class AgnosticCoordinator(Node):
             self.get_logger().info('Plan received for: %s ' % (
                 ','.join([str(robot) for robot in mission.team])
             ))
+            if plan_response.observation == '':
+                self.get_logger().info('No plan found, stopping mission')
+                self.missions.remove(mission)
+                return mission
             self.get_logger().info(plan_response.observation)
             self.current_plan = plan_response.observation.split('/')
             mission.plan = self.current_plan
@@ -394,17 +400,27 @@ class AgnosticCoordinator(Node):
         for mission in self.missions:
             self.get_logger().info(", ".join([str(robot) for robot in mission.team]))
 
-
         return True
     
     def analyze_missions(self):
         for mission in self.missions:
             if mission.status == MissionStatus.CREATED:
-                self.get_logger().info(f"Starting mission with team: {', '.join([str(robot) for robot in mission.team])}")
                 self.start_mission(mission)
                 mission.status = MissionStatus.ONGOING
             elif mission.status == MissionStatus.ERROR:
                 self.fix_missions(mission)
+                mission.status = MissionStatus.ONGOING
+            elif mission.status == MissionStatus.WAITING_TEAM:
+                # TODO check if a mission finished recently
+                team = self.get_team()
+                if team == None:
+                    continue
+                self.get_logger().info("Team found to start mission")
+                start_context = self.get_start_context(team, mission.trigger)
+                # TODO NOT AGNOSTIC
+                mission.team = team
+                mission.context = start_context
+                self.start_mission(mission)
                 mission.status = MissionStatus.ONGOING
 
     def run(self):
