@@ -51,8 +51,6 @@ class Coordinator(AgnosticCoordinator):
         self.variables =["Spotrobot", "NurseRoom", "NurseDesinfect", "Uvdrobot"]
 
         self.crr_room = None
-
-        #self.reset_publisher = self.create_publisher(String, '/coordinator/agent/reset', 10)
     
     def set_agent_ready(self, decoded_msg):
         if "uvdrobot" in decoded_msg.sender:
@@ -84,7 +82,8 @@ class Coordinator(AgnosticCoordinator):
 
         response = decoded_msg.sender + id
         # self.get_logger().info("Response: " + response)
-        self.register_queue.append((response, agent_type))
+        if self.should_use_bdi:
+            self.register_queue.append((response, agent_type))
         # self.get_logger().info(f"colocando: {agent_type} {len(self.register_queue)}")
 
         return response
@@ -157,7 +156,7 @@ class Coordinator(AgnosticCoordinator):
                     #     self.verify_mission_complete(agent) 
 
     def get_team_from_context(self, context):
-        return [context[2], context[3],context[0]]
+        return [context[2], context[3], context[0]]
     
     def free_agent(self, agent: str):
         if agent in self.occ_nurses:

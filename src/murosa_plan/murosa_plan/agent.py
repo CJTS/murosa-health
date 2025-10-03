@@ -15,6 +15,9 @@ class Agent(Node):
         self.plan = []
         self.wating_response = []
         self.wating = False
+        self.declare_parameter('bdi', rclpy.Parameter.Type.BOOL)
+        self.should_use_bdi = self.get_parameter('bdi').get_parameter_value().bool_value
+        self.with_plan = False
 
         # Coordinator Client
         self.cli = self.create_client(Message, 'coordinator')
@@ -29,29 +32,30 @@ class Agent(Node):
             self.get_logger().info('environment service not available, waiting again...')
 
         # Subscriber para falar com o Jason (Ação)
-        self.subscription_jason = self.create_subscription(
-            String, '/jason/agent/action', self.listener_callback, 10
-        )
+        if self.should_use_bdi:
+            self.subscription_jason = self.create_subscription(
+                String, '/jason/agent/action', self.listener_callback, 10
+            )
 
-        # # Subscriber para falar com o Coordenador (Ação)
-        #self.subscription_coordinator = self.create_subscription(
-        #     String, '/coordinator/agent/plan', self.listener_plan_callback, 10
-        # )
-         #colocado para disinfect
-        # self.subscription_reset = self.create_subscription(
-        #     String, '/coordinator/agent/reset', self.listener_reset_callback, 10
-        # )
+        # Subscriber para falar com o Coordenador (Ação)
+        if not self.should_use_bdi:
+            self.subscription_coordinator = self.create_subscription(
+                String, '/coordinator/agent/plan', self.listener_plan_callback, 10
+            )
 
         # Publisher para falar o resultado da ação para o Jason
-        self.publisher = self.create_publisher(String, '/agent/jason/result', 10)
+        if self.should_use_bdi:
+            self.publisher = self.create_publisher(String, '/agent/jason/result', 10)
 
         # Publisher para falar o resultado da ação para o coordenador
         self.publisher_coordinator = self.create_publisher(String, '/agent/coordinator/result', 10)
 
         # Subscriber para indicar fim da execução
-        self.end_subscription = self.create_subscription(
-            Bool, '/jason/shutdown_signal', self.shutdown_callback, 10
-        )
+        if self.should_use_bdi:
+            self.end_subscription = self.create_subscription(
+                Bool, '/jason/shutdown_signal', self.shutdown_callback, 10
+            )
+
         self.end_simulation_subscription = self.create_subscription(
             Bool, '/coordinator/shutdown_signal', self.end_simulation_callback, 10
         )
@@ -93,9 +97,7 @@ class Agent(Node):
         # self.get_logger().info('And it is for me')
         ## Perform action
         if decoded_msg.content == 'Mission Completed':
-            msg = String()
-            msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, self.agentName, 'Coordinator', 'Finished').encode()
-            self.publisher_coordinator.publish(msg)
+            self.end_local_mission()
         else:
             self.add_action(decoded_msg)
 
@@ -111,6 +113,8 @@ class Agent(Node):
         ## Perform action
         message = decoded_msg.content.split('|')
         self.plan = list(map(action_string_to_tuple, message[1].split('/')))
+        self.with_plan = True
+
     #colocado para disinfect
     def listener_reset_callback(self, msg):
         # Receive messagem from jason
@@ -126,6 +130,17 @@ class Agent(Node):
         self.plan = []
         self.wating_response = []
         self.wating = False
+    
+    def end_local_mission(self):
+        self.get_logger().info('Mission Completed, resetting local state')
+        self.actions = []
+        self.plan = []
+        self.wating_response = []
+        self.wating = False
+        msg = String()
+        msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, self.agentName, 'Coordinator', 'Finished').encode()
+        self.publisher_coordinator.publish(msg)
+
 
     def is_for_me(self, msg):
         return msg.receiver == self.agentName
@@ -141,9 +156,6 @@ class Agent(Node):
     def end_simulation_callback(self, msg):
         if msg.data:
             self.get_logger().info("Recebido sinal de desligamento do coordenador, finalizando...")
-            msg = String()
-            msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, self.agentName, 'Jason', 'End|' + self.agentName).encode()
-            self.publisher.publish(msg)
             raise SystemExit
 
     def ask_for_agent(self, agent, action):
@@ -168,38 +180,42 @@ class Agent(Node):
         # self.get_logger().info('And it is for me')
         if "Ready" == decoded_msg.content.split("|")[0]:
             if all(decoded_msg.content.split("|")[1] not in action for action in self.wating_response):
-                self.get_logger().info('No there yet')
+                self.get_logger().info('No there yet ' + decoded_msg.content.split("|")[1])
                 self.wating_response.append((decoded_msg.sender, decoded_msg.content.split("|")[1]))
             else:
-                self.get_logger().info('Ready to act')
+                self.get_logger().info('Ready to act ' + decoded_msg.content.split("|")[1])
                 self.acting_for_agent(decoded_msg.sender, decoded_msg.content.split("|")[1])
         elif "Done" == decoded_msg.content.split("|")[0]:
             # Check if the action is in the actions or plans
-            if len(self.actions) > 0 or len(self.plan) > 0:
-                self.get_logger().info('Finished action')
-                msg = String()
-                action = self.actions.pop()
-                msg.data = FIPAMessage(FIPAPerformative.INFORM.value, self.agentName, 'Jason', 'Success|' + ",".join(action)).encode()
-                self.publisher.publish(msg)
+            if len(self.actions) > 0 or any(decoded_msg.content.split("|")[1] in action for action in self.plan):
+                self.get_logger().info('Finished action ' + decoded_msg.content.split("|")[1])
+                if self.should_use_bdi:
+                    msg = String()
+                    action = self.actions.pop()
+                    msg.data = FIPAMessage(FIPAPerformative.INFORM.value, self.agentName, 'Jason', 'Success|' + ",".join(action)).encode()
+                    self.publisher.publish(msg)
+                else:
+                    action = self.plan.pop(0)
+
                 # self.get_logger().info('Publishing: "%s"' % msg.data)
                 self.wating = False
                 self.acting_for_agent(decoded_msg.sender, decoded_msg.content.split("|")[1])
             else:
-                self.get_logger().info('Already finished action')
+                self.get_logger().info('Already finished action ' + decoded_msg.content.split("|")[1])
 
     def add_action(self, msg):
         self.get_logger().info('Adding action: ' + msg.content)
         self.actions.append(msg.content.split(","))
 
     def act(self):
-        time.sleep(.2)
-        if(len(self.plan) > 0) :
-            action = self.plan.pop()
+        time.sleep(0.2)  # To avoid overloading the CPU
+        if(len(self.plan) > 0):
+            action = self.plan.pop(0)
             result = self.choose_action(action)
             if result == ActionResult.WAITING:
                 self.wating = True
-                self.plan.append(action)
-        elif(len(self.actions) > 0):
+                self.plan.insert(0, action)
+        elif(len(self.actions) > 0 and self.should_use_bdi):
             self.get_logger().info('Acting')
             action = self.actions.pop()
             result = self.choose_action(action)
@@ -226,6 +242,10 @@ class Agent(Node):
                 # self.get_logger().info("ActionResult.WAITING")
                 self.wating = True
                 self.actions.append(action)
+        
+        if len(self.plan) == 0 and self.with_plan:
+            self.end_local_mission()
+            self.with_plan = False
 
     def notifyError(self, error):
         message = FIPAMessage(FIPAPerformative.INFORM.value, self.agentName, 'Coordinator', 'ERROR|' + error).encode()

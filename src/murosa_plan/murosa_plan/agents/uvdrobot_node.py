@@ -6,7 +6,7 @@ from interfaces.srv import Action
 class Uvdrobot(Agent):
     def __init__(self, className):
         super().__init__(className)
-        self.battery = 3
+        self.battery = 10000000000
 
     def choose_action(self, actionTuple):
         self.current_action = actionTuple[0]
@@ -73,7 +73,6 @@ class Uvdrobot(Agent):
         return self.environment_client.call_async(self.action_request)
     
     def a_authorize_disinfect(self, uvdrobot_,spotrobot_):
-        self.get_logger().info("a_authorize_disinfect")
         if all('a_authorize_disinfect' not in action for action in self.wating_response):
             self.get_logger().info("Here first, waiting for spotrobot")
             self.ask_for_agent(spotrobot_, 'a_authorize_disinfect')

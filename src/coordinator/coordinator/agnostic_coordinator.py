@@ -37,6 +37,7 @@ class Mission():
         self.priority = -1
         self.mission_context = "start()"
         self.variables = []
+        self.plan = []
 
 class AgnosticCoordinator(Node):
     def __init__(self, Name):
@@ -49,8 +50,10 @@ class AgnosticCoordinator(Node):
         self.missions_with_error: List[Mission] = []
         self.known_errors = []
         self.declare_parameter('replan', rclpy.Parameter.Type.BOOL)
-        replan_param = self.get_parameter('replan').get_parameter_value().bool_value
-        self.should_replan = replan_param
+        self.declare_parameter('bdi', rclpy.Parameter.Type.BOOL)
+        self.should_replan = self.get_parameter('replan').get_parameter_value().bool_value
+        self.should_use_bdi = self.get_parameter('bdi').get_parameter_value().bool_value
+        self.agents_actions = {}
 
         # Coordinator server
         self._action_server = self.create_service(
@@ -58,7 +61,10 @@ class AgnosticCoordinator(Node):
             'coordinator',
             self.execute_callback
         )
-        self.jason_publisher = self.create_publisher(String, '/coordinator/jason/plan', 10)
+
+        if self.should_use_bdi:
+            self.jason_publisher = self.create_publisher(String, '/coordinator/jason/plan', 10)
+        
         self.agent_publisher = self.create_publisher(String, '/coordinator/agent/plan', 10)
 
         # Subscriber para falar com os agents (Ação)
@@ -139,10 +145,6 @@ class AgnosticCoordinator(Node):
         self.get_logger().info("Mission Completed")
         self.get_logger().info(", ".join([str(robot) for robot in finished_mission.team]))
         self.missions.remove(finished_mission)
-        # for agent in mission:
-        #     msg = String()
-        #     msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, agent, 'Jason', 'End|' + agent).encode()
-        #     self.jason_publisher.publish(msg)
         self.get_logger().info(str(len(self.missions)))
         for mission in self.missions:
             self.get_logger().info(", ".join([str(robot) for robot in mission.team]))
@@ -188,11 +190,25 @@ class AgnosticCoordinator(Node):
             return None
         
         mission = self.create_mission(team, start_context)
-    
-        for agent in team:
-            msg = String()
-            msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent.robot, 'Start|' + ','.join(start_context)).encode()
-            self.agent_publisher.publish(msg)
+
+        if self.should_use_bdi: 
+            for agent in team:
+                msg = String()
+                msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent.robot, 'Start|' + ','.join(start_context)).encode()
+                self.agent_publisher.publish(msg)
+        else:
+            context_team = self.get_team_from_context(start_context)
+            future = self.send_need_plan_request(','.join(context_team))
+            rclpy.spin_until_future_complete(self, future)
+            plan_response = future.result()
+            self.get_logger().info('Plan received for: %s ' % (
+                ','.join([str(robot) for robot in team])
+            ))
+            self.get_logger().info(plan_response.observation)
+            self.current_plan = plan_response.observation.split('/')
+            mission.plan = self.current_plan
+            self.split_plans(context_team)
+            self.send_plans_request(context_team)
 
         return mission
     
@@ -299,12 +315,12 @@ class AgnosticCoordinator(Node):
         raise NotImplementedError("This method should be implemented by the subclass")
 
     def split_plans(self, team):
-        tuples = map(action_string_to_tuple, self.current_plan)
-
         for agent in team:
+            tuples = map(action_string_to_tuple, self.current_plan)
             self.agents_actions[agent] = []
 
             for action in tuples:
+                self.get_logger().info(action[0])
                 if agent in action:
                     self.agents_actions[agent].append(action)
 
@@ -384,6 +400,7 @@ class AgnosticCoordinator(Node):
     def run(self):
         while rclpy.ok():
             rclpy.spin_once(self, timeout_sec=0.001)
-            self.register_agents()
+            if self.should_use_bdi:
+                self.register_agents()
             self.fix_missions()
             self.check_env()

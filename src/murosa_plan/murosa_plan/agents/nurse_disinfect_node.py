@@ -37,7 +37,6 @@ class Nurse(Agent):
         return self.cli.call_async(ros_msg)
 
     def choose_action(self, actionTuple):
-        self.get_logger().info(actionTuple[0])
         future = None
         if actionTuple[0] == 'a_authenticate_nurse':
             self.get_logger().info('Doing a_authenticate_nurse')
@@ -78,7 +77,6 @@ class Nurse(Agent):
         return self.environment_client.call_async(self.action_request)
     
     def a_authorize_patrol(self, spotrobot, nurse):
-        self.get_logger().info("a_authorize_patrol")
         if all('a_authorize_patrol' not in action for action in self.wating_response):
             self.get_logger().info("Here first, waiting for robot")
             self.ask_for_agent(spotrobot, 'a_authorize_patrol')
@@ -87,7 +85,6 @@ class Nurse(Agent):
             self.acting_for_agent(spotrobot, 'a_authorize_patrol')
 
     def a_authenticate_nurse(self, spotrobot, nurse):
-        self.get_logger().info("a_authenticate_nurse")
         if all('a_authenticate_nurse' not in action for action in self.wating_response):
             self.get_logger().info("Here first, waiting for robot")
             self.ask_for_agent(spotrobot, 'a_authenticate_nurse')
