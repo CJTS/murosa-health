@@ -42,6 +42,9 @@ class Agent(Node):
             self.subscription_coordinator = self.create_subscription(
                 String, '/coordinator/agent/plan', self.listener_plan_callback, 10
             )
+            self.subscription_coordinator = self.create_subscription(
+                String, '/coordinator/agent/reset', self.listener_reset_callback, 10
+            )
 
         # Publisher para falar o resultado da ação para o Jason
         if self.should_use_bdi:
@@ -49,12 +52,6 @@ class Agent(Node):
 
         # Publisher para falar o resultado da ação para o coordenador
         self.publisher_coordinator = self.create_publisher(String, '/agent/coordinator/result', 10)
-
-        # Subscriber para indicar fim da execução
-        if self.should_use_bdi:
-            self.end_subscription = self.create_subscription(
-                Bool, '/jason/shutdown_signal', self.shutdown_callback, 10
-            )
 
         self.end_simulation_subscription = self.create_subscription(
             Bool, '/coordinator/shutdown_signal', self.end_simulation_callback, 10
@@ -115,8 +112,8 @@ class Agent(Node):
         self.plan = list(map(action_string_to_tuple, message[1].split('/')))
         self.with_plan = True
 
-    #colocado para disinfect
     def listener_reset_callback(self, msg):
+        self.get_logger().info('Stopping mission')
         # Receive messagem from jason
         # self.get_logger().info('I heard: "%s"' % msg.data)
         decoded_msg = FIPAMessage.decode(msg.data)
@@ -144,18 +141,14 @@ class Agent(Node):
 
     def is_for_me(self, msg):
         return msg.receiver == self.agentName
-
-    def shutdown_callback(self, msg):
-        if msg.data:
-            self.get_logger().info("Recebido sinal de desligamento, finalizando...")
-            msg = String()
-            msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, self.agentName, 'Jason', 'End|' + self.agentName).encode()
-            self.publisher.publish(msg)
-            raise SystemExit
         
     def end_simulation_callback(self, msg):
         if msg.data:
             self.get_logger().info("Recebido sinal de desligamento do coordenador, finalizando...")
+            if self.should_use_bdi:
+                msg = String()
+                msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, self.agentName, 'Jason', 'End|' + self.agentName).encode()
+                self.publisher.publish(msg)
             raise SystemExit
 
     def ask_for_agent(self, agent, action):

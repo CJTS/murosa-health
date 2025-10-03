@@ -17,20 +17,11 @@ class Planner(Node):
         )
         self.state = init_state
 
-        # Subscriber para indicar fim da execução
-        self.end_subscription = self.create_subscription(
-            Bool, '/jason/shutdown_signal', self.shutdown_callback, 10
-        )
         self.end_simulation_subscription = self.create_subscription(
             Bool, '/coordinator/shutdown_signal', self.end_simulation_callback, 10
         )
 
         self.get_logger().info('Planner server started')
-
-    def shutdown_callback(self, msg):
-        if msg.data:
-            self.get_logger().info("Recebido sinal de desligamento, finalizando...")
-            raise SystemExit
         
     def end_simulation_callback(self, msg):
         if msg.data:
@@ -45,7 +36,7 @@ class Planner(Node):
             self.get_logger().info('Creating plan for: %s %s %s' % (
                 actionTuple[0], actionTuple[1], actionTuple[2]
             ))
-
+            
             planner = IPyHOP(methods, actions)
             plan = planner.plan(self.state, [(
                 'm_patrol_and_disinfect', actionTuple[0], actionTuple[1], actionTuple[2]

@@ -38,6 +38,8 @@ class Mission():
         self.mission_context = "start()"
         self.variables = []
         self.plan = []
+        self.state = {}
+        self.error = None
 
 class AgnosticCoordinator(Node):
     def __init__(self, Name):
@@ -47,13 +49,13 @@ class AgnosticCoordinator(Node):
         # List of messages to be sent to the agents
         self.register_queue = []
         # List of missions that have errors
-        self.missions_with_error: List[Mission] = []
         self.known_errors = []
         self.declare_parameter('replan', rclpy.Parameter.Type.BOOL)
         self.declare_parameter('bdi', rclpy.Parameter.Type.BOOL)
         self.should_replan = self.get_parameter('replan').get_parameter_value().bool_value
         self.should_use_bdi = self.get_parameter('bdi').get_parameter_value().bool_value
         self.agents_actions = {}
+        self.update_state = False
 
         # Coordinator server
         self._action_server = self.create_service(
@@ -66,6 +68,7 @@ class AgnosticCoordinator(Node):
             self.jason_publisher = self.create_publisher(String, '/coordinator/jason/plan', 10)
         
         self.agent_publisher = self.create_publisher(String, '/coordinator/agent/plan', 10)
+        self.agent_reset_publisher = self.create_publisher(String, '/coordinator/agent/reset', 10)
 
         # Subscriber para falar com os agents (Ação)
         self.subscription = self.create_subscription(
@@ -87,16 +90,7 @@ class AgnosticCoordinator(Node):
         while not self.planner_communication_sync_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('planner sync service not available, waiting again...')
 
-        # Subscriber para indicar fim da execução
-        self.end_subscription = self.create_subscription(
-            Bool, '/jason/shutdown_signal', self.shutdown_callback, 10
-        )
         self.end_publisher = self.create_publisher(Bool, '/coordinator/shutdown_signal', 10)
-
-    def shutdown_callback(self, msg):
-        if msg.data:
-            self.get_logger().info("Recebido sinal de desligamento, finalizando...")
-            raise SystemExit
         
     def listener_callback(self, msg):
         decoded_msg = FIPAMessage.decode(msg.data)
@@ -163,12 +157,14 @@ class AgnosticCoordinator(Node):
                 response.response = self.register_agent(decoded_msg)
         elif decoded_msg.performative == FIPAPerformative.INFORM.value:
             if "ERROR" in decoded_msg.content:
+                self.get_logger().info('Error found')
                 mission = self.get_mission(decoded_msg.sender)
                 if mission is  None:
                     self.get_logger().info(f"No mission found for {decoded_msg.sender}")
                     return response
                 mission.status = MissionStatus.ERROR
-                self.missions_with_error.append((mission, decoded_msg.content))
+                mission.error = decoded_msg.content
+                self.agent_reset_publisher.publish(String(data=FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', decoded_msg.sender, 'Reset|').encode()))
             if "InitialTrigger" in decoded_msg.content:
                 self.initial_trigger(decoded_msg.content)
                 
@@ -184,20 +180,6 @@ class AgnosticCoordinator(Node):
         raise NotImplementedError("This method should be implemented by the subclass")
 
     def start_mission(self, mission: Mission) -> Mission:
-        # self.get_logger().info("Starting mission")
-        # team = self.get_team()
-        # if(team == None):
-        #     # self.get_logger().info("No team to start mission")
-        #     return None
-
-        # start_context = self.get_start_context(team)
-
-        # if(start_context == None):
-        #     # self.get_logger().info("Not possible to start mission")
-        #     return None
-        
-        # mission = self.create_mission(team, start_context)
-
         if self.should_use_bdi: 
             for agent in mission.team:
                 msg = String()
@@ -238,6 +220,7 @@ class AgnosticCoordinator(Node):
         return self.environment_client.call_async(self.update_state_request)
 
     def check_env(self):
+        self.get_logger().info('Checking environment state')
         future = self.send_monitor_state_request(','.join(('monitor',)))
         rclpy.spin_until_future_complete(self, future)
         response = future.result()
@@ -291,32 +274,41 @@ class AgnosticCoordinator(Node):
                 if param not in start:
                     start.append(param)
 
-        bdies = generate_bdi(team, formated_plan, self.mission_context, self.variables)
-        self.get_logger().info('Rules received for: %s ' % (
-            ','.join(bdies.keys())
-        ))
-        for agent, rules in bdies.items():
-            plans = [f"+!{self.mission_context}: true <- +{self.mission_context}."]
-            for rule in rules:
-                plans.append(rule)
-            msg = String()
-            msg.data = FIPAMessage(FIPAPerformative.INFORM.value, 'Coordinator', agent, 'Plan|' + '/'.join(plans)).encode()
-            self.get_logger().info('/'.join(plans))
-            self.agent_publisher.publish(msg)
+        
+        if self.should_use_bdi:
+            bdies = generate_bdi(team, formated_plan, self.mission_context, self.variables)
+            self.get_logger().info('Rules received for: %s ' % (
+                ','.join(bdies.keys())
+            ))
+            for agent, rules in bdies.items():
+                plans = [f"+!{self.mission_context}: true <- +{self.mission_context}."]
+                for rule in rules:
+                    plans.append(rule)
+                msg = String()
+                msg.data = FIPAMessage(FIPAPerformative.INFORM.value, 'Coordinator', agent, 'Plan|' + '/'.join(plans)).encode()
+                self.get_logger().info('/'.join(plans))
+                self.agent_publisher.publish(msg)
 
-        start_msg = "initial_trigger_" + formated_plan[0] + "."
+            start_msg = "initial_trigger_" + formated_plan[0] + "."
 
-        for agent in team:
-            msg = String()
-            msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent, 'Start|' + ','.join(start)).encode()
-            self.agent_publisher.publish(msg)
+            for agent in team:
+                msg = String()
+                msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent, 'Start|' + ','.join(start)).encode()
+                self.agent_publisher.publish(msg)
 
-        splitted_action = self.current_plan[0].split(',')
-    
-        for initial_agents in splitted_action[1:len(splitted_action)]:
-            msg = String()
-            msg.data = FIPAMessage(FIPAPerformative.INFORM.value, 'Coordinator', initial_agents, 'Belief|' + start_msg).encode()
-            self.agent_publisher.publish(msg)
+            splitted_action = self.current_plan[0].split(',')
+        
+            for initial_agents in splitted_action[1:len(splitted_action)]:
+                msg = String()
+                msg.data = FIPAMessage(FIPAPerformative.INFORM.value, 'Coordinator', initial_agents, 'Belief|' + start_msg).encode()
+                self.agent_publisher.publish(msg)
+        else:
+            mission.plan = self.current_plan
+            self.split_plans(team)
+            self.send_plans_request(team)
+
+        for robot in mission.team:
+            robot.finished = False
 
     def get_team_from_context(self, context):
         raise NotImplementedError("This method should be implemented by the subclass")
@@ -342,24 +334,24 @@ class AgnosticCoordinator(Node):
 
         self.get_logger().info('Plans sent')
 
-    def fix_missions(self):
-        if len(self.missions_with_error) > 0:
-                mission_error = self.missions_with_error.pop()
-                mission = mission_error[0]
-                error = mission_error[1]
-                error_msg = error.split("|")
-                error_desc = error_msg[1].split(",")
-                if error_desc[0] in self.known_errors:
-                    self.get_logger().info('Restarting')
-                    time.sleep(1)
-                    self.restart_mission(mission)
-                else:
-                    if self.should_replan:
-                            self.get_logger().info('Error found')
-                            self.fix_plan(mission)
-                    else:
-                        self.get_logger().info('Error found')
-                        self.end_simulation()
+    def fix_missions(self, mission: Mission):
+        error = mission.error
+        self.get_logger().info(str(error))
+        error_msg = error.split("|")
+        error_desc = error_msg[1].split(",")
+        self.treat_error(error_desc)
+        if error_desc[0] in self.known_errors:
+            self.get_logger().info('Restarting')
+            time.sleep(1)
+            self.restart_mission(mission)
+        else:
+            if self.should_replan:
+                self.fix_plan(mission)
+            else:
+                self.end_simulation()
+
+    def treat_error(self, error_desc):
+        raise NotImplementedError("This method should be implemented by the subclass")
 
     def end_simulation(self):
         self.get_logger().info('Ending simulation')
@@ -409,12 +401,18 @@ class AgnosticCoordinator(Node):
                 self.get_logger().info(f"Starting mission with team: {', '.join([str(robot) for robot in mission.team])}")
                 self.start_mission(mission)
                 mission.status = MissionStatus.ONGOING
+            elif mission.status == MissionStatus.ERROR:
+                self.fix_missions(mission)
+                mission.status = MissionStatus.ONGOING
 
     def run(self):
         while rclpy.ok():
             rclpy.spin_once(self, timeout_sec=0.001)
             if self.should_use_bdi:
                 self.register_agents()
-            self.fix_missions()
-            self.check_env()
+            if self.update_state:
+                self.get_logger().info(str(self.state))
+                self.update_planner_state(json.dumps(self.state))
+                self.update_state = False
             self.analyze_missions()
+            # self.check_env()

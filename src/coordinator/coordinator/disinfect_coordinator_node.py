@@ -1,4 +1,5 @@
 import rclpy
+import json
 from coordinator.agnostic_coordinator import AgnosticCoordinator, MissionRobot, Mission, MissionStatus
 from coordinator.helper import FIPAMessage,  action_string_to_tuple, action_tuple_to_string
 from std_msgs.msg import String
@@ -51,6 +52,40 @@ class Coordinator(AgnosticCoordinator):
         self.variables =["Spotrobot", "NurseRoom", "NurseDesinfect", "Uvdrobot"]
 
         self.crr_room = None
+
+        self.state = {
+            'loc': { 
+                'nurse_disinfected1': 'room1',
+                'nurse_disinfected2': 'room2', 
+                'nurse_disinfected3': 'room3',
+                'nurse_disinfected4': 'room4',
+                'uvdrobot1': 'room4', 
+                'spotrobot1': 'room4',
+                'uvdrobot2': 'room4', 
+                'spotrobot2': 'room4'
+            },
+            'doors': { 
+                'room1': False, 
+                'room2': True, 
+                'room3': True, 
+                'room4': True, 
+                'icu': True
+            },
+            'cleaned': { 
+                'room1': True,
+                'room2': True,
+                'room3': True,
+                'room4': True,
+                'icu': True
+            },
+            'disinfected': {
+                'room1': True,
+                'room2': True,
+                'room3': True,
+                'room4': True,
+                'icu': True
+            }
+        }
     
     def set_agent_ready(self, decoded_msg):
         if "uvdrobot" in decoded_msg.sender:
@@ -124,6 +159,9 @@ class Coordinator(AgnosticCoordinator):
     
     def initial_trigger(self, msg):
         self.crr_room = msg.split('|')[1]
+        self.state['disinfected'][self.crr_room] = False
+        self.update_state = True
+
         self.get_logger().info(f"Initial trigger received for room: {self.crr_room}")
         self.get_logger().info("Creating mission")
         team = self.get_team()
@@ -182,6 +220,18 @@ class Coordinator(AgnosticCoordinator):
             self.occ_uvdrobots.remove(agent)
         elif agent in self.occ_spotrobots:
             self.occ_spotrobots.remove(agent)
+
+    def treat_error(self, error_desc):
+        if error_desc[0] == 'dirty_room':
+            room = error_desc[1]
+            self.state['cleaned'][room] = False
+            self.get_logger().info(f"Room {room} marked as dirty again")
+        elif error_desc[0] == 'closed_door':
+            door = error_desc[1]
+            self.state['doors'][door] = False
+            self.get_logger().info(f"Door {door} marked as closed")
+        self.update_planner_state(json.dumps(self.state))
+
 
 def main():
     rclpy.init()

@@ -7,10 +7,37 @@ from murosa_plan.ipyhop import State
 
 # ******************************************        Problem Definition      ****************************************** #
 init_state = State('init_state')
-init_state.loc = { 'nurse1': 'room1','nurse2': 'room2', 'nurse3': 'room3','uvdrobot': 'room4', 'spotrobot': 'room4'}
-init_state.doors = { 'room1': True, 'room2': True, 'room3': True, 'room4': True }
-init_state.cleaned = { 'room1' : True,'room2' : True, 'room3' : True }
-init_state.disinfected = {'room1': False,'room2': False, 'room3': False}
+init_state.loc = { 
+    'nurse_disinfected1': 'room1',
+    'nurse_disinfected2': 'room2', 
+    'nurse_disinfected3': 'room3',
+    'nurse_disinfected4': 'room4',
+    'uvdrobot1': 'room4', 
+    'spotrobot1': 'room4',
+    'uvdrobot2': 'room4', 
+    'spotrobot2': 'room4'
+}
+init_state.doors = { 
+    'room1': True, 
+    'room2': True, 
+    'room3': True, 
+    'room4': True, 
+    'icu': True
+},
+init_state.cleaned = { 
+    'room1': True,
+    'room2': True,
+    'room3': True,
+    'room4': True,
+    'icu': True
+}
+init_state.disinfected = {
+    'room1': True,
+    'room2': True,
+    'room3': True,
+    'room4': True,
+    'icu': True
+}
 
 # ******************************************    Demo / Test Routine         ****************************************** #
 if __name__ == '__main__':
