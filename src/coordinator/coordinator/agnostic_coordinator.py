@@ -169,40 +169,47 @@ class AgnosticCoordinator(Node):
                     return response
                 mission.status = MissionStatus.ERROR
                 self.missions_with_error.append((mission, decoded_msg.content))
+            if "InitialTrigger" in decoded_msg.content:
+                self.initial_trigger(decoded_msg.content)
+                
         return response
     
+    def initial_trigger(self, msg):
+        raise NotImplementedError("This method should be implemented by the subclass")
+
     def register_agent(self, decoded_msg):
         raise NotImplementedError("This method should be implemented by the subclass")
 
     def restart_mission(self, mission):
         raise NotImplementedError("This method should be implemented by the subclass")
 
-    def start_mission(self) -> Mission:
-        team = self.get_team()
-        if(team == None):
-            # self.get_logger().info("No team to start mission")
-            return None
+    def start_mission(self, mission: Mission) -> Mission:
+        # self.get_logger().info("Starting mission")
+        # team = self.get_team()
+        # if(team == None):
+        #     # self.get_logger().info("No team to start mission")
+        #     return None
 
-        start_context = self.get_start_context(team)
+        # start_context = self.get_start_context(team)
 
-        if(start_context == None):
-            # self.get_logger().info("Not possible to start mission")
-            return None
+        # if(start_context == None):
+        #     # self.get_logger().info("Not possible to start mission")
+        #     return None
         
-        mission = self.create_mission(team, start_context)
+        # mission = self.create_mission(team, start_context)
 
         if self.should_use_bdi: 
-            for agent in team:
+            for agent in mission.team:
                 msg = String()
-                msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent.robot, 'Start|' + ','.join(start_context)).encode()
+                msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent.robot, 'Start|' + ','.join(mission.context)).encode()
                 self.agent_publisher.publish(msg)
         else:
-            context_team = self.get_team_from_context(start_context)
+            context_team = self.get_team_from_context(mission.context)
             future = self.send_need_plan_request(','.join(context_team))
             rclpy.spin_until_future_complete(self, future)
             plan_response = future.result()
             self.get_logger().info('Plan received for: %s ' % (
-                ','.join([str(robot) for robot in team])
+                ','.join([str(robot) for robot in mission.team])
             ))
             self.get_logger().info(plan_response.observation)
             self.current_plan = plan_response.observation.split('/')
@@ -236,7 +243,7 @@ class AgnosticCoordinator(Node):
         response = future.result()
         self.state = json.loads(response.observation)
         self.update_planner_state(response.observation)
-        self.verify_initial_trigger()
+        # self.verify_initial_trigger()
 
     def verify_initial_trigger(self):
         raise NotImplementedError("This method should be implemented by the subclass")
@@ -320,7 +327,6 @@ class AgnosticCoordinator(Node):
             self.agents_actions[agent] = []
 
             for action in tuples:
-                self.get_logger().info(action[0])
                 if agent in action:
                     self.agents_actions[agent].append(action)
 
@@ -396,6 +402,13 @@ class AgnosticCoordinator(Node):
 
 
         return True
+    
+    def analyze_missions(self):
+        for mission in self.missions:
+            if mission.status == MissionStatus.CREATED:
+                self.get_logger().info(f"Starting mission with team: {', '.join([str(robot) for robot in mission.team])}")
+                self.start_mission(mission)
+                mission.status = MissionStatus.ONGOING
 
     def run(self):
         while rclpy.ok():
@@ -404,3 +417,4 @@ class AgnosticCoordinator(Node):
                 self.register_agents()
             self.fix_missions()
             self.check_env()
+            self.analyze_missions()

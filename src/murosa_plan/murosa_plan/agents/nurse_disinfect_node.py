@@ -14,11 +14,20 @@ class Nurse(Agent):
     def __init__(self, className):
         super().__init__(className)
         self.counter = 10000
+        self.room = None
 
     def run(self):
         while rclpy.ok():
             # self.counter = self.counter + 1
             rclpy.spin_once(self, timeout_sec=0.001)
+            if self.room is None:
+                future = self.what_room()
+                rclpy.spin_until_future_complete(self, future)
+                response = future.result()
+                if response.observation != 'none':
+                    self.room = response.observation
+                    self.get_logger().info("I am in room: " + self.room)
+
             if self.counter == 10000:
                 self.counter = 0
                 seconds = 1
@@ -31,7 +40,7 @@ class Nurse(Agent):
                     self.act()
 
     def send_has_infected_room(self):
-        message = FIPAMessage(FIPAPerformative.INFORM.value, self.agentName, 'Coordinator', 'infectedRoom').encode()
+        message = FIPAMessage(FIPAPerformative.INFORM.value, self.agentName, 'Coordinator', 'InitialTrigger|' + self.room).encode()
         ros_msg = Message.Request()
         ros_msg.content = message
         return self.cli.call_async(ros_msg)
@@ -68,6 +77,13 @@ class Nurse(Agent):
                 return ActionResult.FAILURE
 
         return ActionResult.SUCCESS
+
+    def what_room(self):
+        self.action_request = Action.Request()
+        self.action_request.action = ','.join(
+            ('what_room', self.agentName)
+        )
+        return self.environment_client.call_async(self.action_request)
 
     def a_infected_room(self):
         self.action_request = Action.Request()

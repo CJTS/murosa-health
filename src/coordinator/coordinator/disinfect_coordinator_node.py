@@ -121,6 +121,23 @@ class Coordinator(AgnosticCoordinator):
         self.missions.append(mission)
 
         return mission
+    
+    def initial_trigger(self, msg):
+        self.crr_room = msg.split('|')[1]
+        self.get_logger().info(f"Initial trigger received for room: {self.crr_room}")
+        self.get_logger().info("Creating mission")
+        team = self.get_team()
+        if(team == None):
+            # self.get_logger().info("No team to start mission")
+            return None
+
+        start_context = self.get_start_context(team)
+
+        if(start_context == None):
+            # self.get_logger().info("Not possible to start mission")
+            return None
+        
+        self.create_mission(team, start_context)
 
     def verify_initial_trigger(self):
         for location, disinfected in self.state['disinfected'].items():

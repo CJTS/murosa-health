@@ -102,6 +102,8 @@ class Environment(Node):
             if self.state['cleaned'][actionTuple[2]]:
                 self.state['disinfected'][actionTuple[2]] = True
                 response.observation = 'success'
+        elif actionTuple[0] == 'what_room':
+            response.observation = self.state['loc'][actionTuple[1]]
                 
         return response
 
