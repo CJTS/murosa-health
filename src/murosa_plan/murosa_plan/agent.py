@@ -113,7 +113,6 @@ class Agent(Node):
         self.with_plan = True
 
     def listener_reset_callback(self, msg):
-        self.get_logger().info('Stopping mission')
         # Receive messagem from jason
         # self.get_logger().info('I heard: "%s"' % msg.data)
         decoded_msg = FIPAMessage.decode(msg.data)
@@ -121,12 +120,15 @@ class Agent(Node):
             # self.get_logger().info('And it is not for me')
             return
 
+        self.get_logger().info('Stopping mission')
+
         # self.get_logger().info('And it is for me')
         ## Perform action
         self.actions = []
         self.plan = []
         self.wating_response = []
         self.wating = False
+        self.with_plan = False
     
     def end_local_mission(self):
         self.get_logger().info('Mission Completed, resetting local state')
@@ -134,6 +136,7 @@ class Agent(Node):
         self.plan = []
         self.wating_response = []
         self.wating = False
+        self.with_plan = False
         msg = String()
         msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, self.agentName, 'Coordinator', 'Finished').encode()
         self.publisher_coordinator.publish(msg)
@@ -201,13 +204,17 @@ class Agent(Node):
         self.actions.append(msg.content.split(","))
 
     def act(self):
-        time.sleep(0.2)  # To avoid overloading the CPU
         if(len(self.plan) > 0):
             action = self.plan.pop(0)
             result = self.choose_action(action)
             if result == ActionResult.WAITING:
                 self.wating = True
                 self.plan.insert(0, action)
+            elif result == ActionResult.BATTERY_FAILURE:
+                """Send battery failure to Coordinator"""
+                self.notifyError(
+                    ','.join(('low_battery', self.agentName))
+                )
         elif(len(self.actions) > 0 and self.should_use_bdi):
             self.get_logger().info('Acting')
             action = self.actions.pop()

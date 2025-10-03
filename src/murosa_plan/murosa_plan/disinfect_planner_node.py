@@ -58,6 +58,7 @@ class Planner(Node):
             self.state.doors = state['doors']
             self.state.disinfected = state['disinfected']
             self.state.cleaned = state['cleaned']
+            self.state.low_battery = state['low_battery']
             return response
         elif messageTuple[0] == 'update_room_uncleaned': 
             self.state.cleaned[messageTuple[1]] = False

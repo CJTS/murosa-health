@@ -38,6 +38,12 @@ init_state.disinfected = {
     'room4': True,
     'icu': True
 }
+init_state.low_battery = {
+    'uvdrobot1': False,
+    'spotrobot1': False,
+    'uvdrobot2': False,
+    'spotrobot2': False
+}
 
 # ******************************************    Demo / Test Routine         ****************************************** #
 if __name__ == '__main__':

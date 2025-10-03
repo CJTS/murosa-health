@@ -84,6 +84,12 @@ class Coordinator(AgnosticCoordinator):
                 'room3': True,
                 'room4': True,
                 'icu': True
+            },
+            'low_battery': {
+                'uvdrobot1': False,
+                'spotrobot1': False,
+                'uvdrobot2': False,
+                'spotrobot2': False
             }
         }
     
@@ -230,8 +236,11 @@ class Coordinator(AgnosticCoordinator):
             door = error_desc[1]
             self.state['doors'][door] = False
             self.get_logger().info(f"Door {door} marked as closed")
+        elif error_desc[0] == 'low_battery':
+            robot = error_desc[1]
+            self.state['low_battery'][robot] = True
+            self.get_logger().info(f"Robot {robot} marked as low battery")
         self.update_planner_state(json.dumps(self.state))
-
 
 def main():
     rclpy.init()

@@ -164,7 +164,9 @@ class AgnosticCoordinator(Node):
                     return response
                 mission.status = MissionStatus.ERROR
                 mission.error = decoded_msg.content
-                self.agent_reset_publisher.publish(String(data=FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', decoded_msg.sender, 'Reset|').encode()))
+                for robot in mission.team:
+                    self.agent_reset_publisher.publish(String(data=FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', robot.robot, 'Reset|').encode()))
+
             if "InitialTrigger" in decoded_msg.content:
                 self.initial_trigger(decoded_msg.content)
                 

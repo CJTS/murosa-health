@@ -185,8 +185,8 @@ def generate_bdi(agents, actions, context, variables):
         # ================================
         #  ADD CHARGE PLANS
         # ================================
-            bdies[agent].append("""+low_battery_failure(Task): true <- .print("Charging"); +after_charging(Task); +low_battery; charge.""")
-            bdies[agent].append("""+success_charge: low_battery & after_charging(Task) <- .print("Finished charging"); -after_charging(Task); -low_battery; !Task.""")
+            bdies[agent].append("""+low_battery_failure(Task): true <- .print("Charging"); +after_charging(Task); +low_battery; a_charge.""")
+            bdies[agent].append("""+success_a_charge: low_battery & after_charging(Task) <- .print("Finished charging"); -after_charging(Task); -low_battery; !Task.""")
 
         return bdies
 

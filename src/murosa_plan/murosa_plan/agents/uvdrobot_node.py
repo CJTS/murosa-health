@@ -6,7 +6,7 @@ from interfaces.srv import Action
 class Uvdrobot(Agent):
     def __init__(self, className):
         super().__init__(className)
-        self.battery = 10000000000
+        self.battery = 3
 
     def choose_action(self, actionTuple):
         self.current_action = actionTuple[0]
@@ -36,9 +36,9 @@ class Uvdrobot(Agent):
             else:
                 self.get_logger().info('low_battery')
                 return ActionResult.BATTERY_FAILURE
-        elif actionTuple[0] == 'charge':
+        elif actionTuple[0] == 'a_charge':
             self.get_logger().info('Doing charge')
-            self.charge()
+            self.a_charge()
         
 
         if future != None:
@@ -80,7 +80,7 @@ class Uvdrobot(Agent):
             self.get_logger().info("spotrobot is waiting, send action message")
             self.acting_for_agent(spotrobot_, 'a_authorize_disinfect')
 
-    def charge(self):
+    def a_charge(self):
         self.battery += 10
 
 def main():

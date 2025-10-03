@@ -6,7 +6,7 @@ from interfaces.srv import Action
 class Spotrobot(Agent):
     def __init__(self, className):
         super().__init__(className)
-        self.battery = 1000000000
+        self.battery = 3
 
     # ACTIONS
     def choose_action(self, actionTuple):
@@ -71,9 +71,9 @@ class Spotrobot(Agent):
             else:
                 self.get_logger().info('low_battery')
                 return ActionResult.BATTERY_FAILURE
-        elif actionTuple[0] == 'charge':
-            self.get_logger().info('Doing charge')
-            self.charge()
+        elif actionTuple[0] == 'a_charge':
+            self.get_logger().info('Doing a_charge')
+            self.a_charge()
 
 
         if future != None:
@@ -143,7 +143,7 @@ class Spotrobot(Agent):
             self.get_logger().info("Nurse is waiting, send action message")
             self.acting_for_agent(uvdrobot_, 'a_authorize_disinfect')
 
-    def charge(self):
+    def a_charge(self):
         self.battery += 10
 
 def main():

@@ -46,9 +46,9 @@
     .print("Charging");
     +after_charging(Task);
     +low_battery;
-    charge.
+    a_charge.
 
-+success_charge: low_battery & after_charging(Task) <-
++success_a_charge: low_battery & after_charging(Task) <-
     .print("Finished charging");
     -after_charging(Task);
     -low_battery;
