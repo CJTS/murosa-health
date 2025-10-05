@@ -32,7 +32,7 @@ class Environment(Node):
                 'spotrobot2': icuRoom[0]
             },
             'doors': { 
-                'room1': False, 
+                'room1': True, 
                 'room2': True, 
                 'room3': True, 
                 'room4': True, 

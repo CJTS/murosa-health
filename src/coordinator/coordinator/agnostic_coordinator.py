@@ -14,7 +14,6 @@ class MissionStatus(Enum):
     CREATED = 1
     WAITING_TEAM = 2
     ONGOING = 3
-    PAUSED = 4
     ERROR = 5
     FINISHED = 6
 
@@ -139,11 +138,7 @@ class AgnosticCoordinator(Node):
     
     def finish_mission(self, finished_mission: Mission):
         self.get_logger().info("Mission Completed")
-        self.get_logger().info(", ".join([str(robot) for robot in finished_mission.team]))
         self.missions.remove(finished_mission)
-        self.get_logger().info(str(len(self.missions)))
-        for mission in self.missions:
-            self.get_logger().info(", ".join([str(robot) for robot in mission.team]))
         if(len(self.missions) == 0):
             self.end_simulation()
 

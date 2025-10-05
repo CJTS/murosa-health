@@ -44,6 +44,21 @@ init_state.low_battery = {
     'uvdrobot2': False,
     'spotrobot2': False
 }
+init_state.connected = {
+    'room1': ['intersection1'],
+    'room2': ['intersection1'],
+    'room3': ['intersection2'],
+    'room4': ['intersection2'],
+    'room5': ['intersection3'],
+    'room6': ['intersection3'],
+    'docking_station': ['intersection4'],
+    'icu': ['intersection4'],
+    'intersection1': ['room1', 'room2', 'intersection2'],
+    'intersection2': ['room3', 'room4', 'intersection1', 'intersection3'],
+    'intersection3': ['room5', 'room6', 'intersection2', 'intersection4'],
+    'intersection4': ['docking_station', 'icu', 'intersection3'],
+}
+
 
 # ******************************************    Demo / Test Routine         ****************************************** #
 if __name__ == '__main__':

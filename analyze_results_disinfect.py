@@ -79,19 +79,29 @@ def load_and_analyze_data(file):
 
 
 def total_actions(df):
+    print(str(df))
     print(str(df["Run Number"]))
     print(str(df["Total Actions"]))
-    plt.figure(figsize=(10,6))
-    plt.plot(df["Run Number"].values, df["Total Actions"].values, marker='o', linestyle='-', alpha=0.7)
+    actions = df.groupby(["Problem Rate", "Can Replan", "Have BDI"], as_index=False)['Total Actions']
+    print(str(actions))
+    print(str(actions.mean()))
 
-    plt.title("Total Actions per Iteration")
-    plt.xlabel("Run Number")
+    pivot = df.pivot_table(
+        index="Can Replan", 
+        columns="Have BDI", 
+        values="Total Actions",
+        aggfunc="mean"   # or "sum" depending on what makes sense
+    )
+
+    pivot.plot(kind="bar", figsize=(8,6))
+
+    plt.title("Total Actions by Can Replan and BDI")
+    plt.xlabel("Can Replan")
     plt.ylabel("Total Actions")
-    plt.grid(True, linestyle="--", alpha=0.5)
+    plt.grid(axis="y", linestyle="--", alpha=0.6)
+    plt.legend(title="Have BDI")
     plt.tight_layout()
     plt.show()
-
-
 # === MAIN ===
 
 def main():
@@ -99,7 +109,7 @@ def main():
     plt.rcParams['figure.figsize'] = [10, 6]
 
     missions = ["disinfect"]
-    problem_rates = [10]
+    problem_rates = [0, 25, 50, 75, 100]
     replan_values = [True, False]
     bdi_values = [True, False]
 
