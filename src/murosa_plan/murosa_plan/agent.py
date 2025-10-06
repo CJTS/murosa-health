@@ -205,6 +205,7 @@ class Agent(Node):
 
     def act(self):
         if(len(self.plan) > 0):
+            time.sleep(0.5)
             action = self.plan.pop(0)
             result = self.choose_action(action)
             if result == ActionResult.WAITING:
@@ -217,6 +218,7 @@ class Agent(Node):
                     ','.join(('low_battery', self.agentName))
                 )
         elif(len(self.actions) > 0 and self.should_use_bdi):
+            time.sleep(0.5)
             self.get_logger().info('Acting')
             action = self.actions.pop()
             result = self.choose_action(action)

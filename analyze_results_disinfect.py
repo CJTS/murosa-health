@@ -4,6 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from pathlib import Path
+import numpy as np
 
 def load_and_analyze_data(file):
     """Load simulation results and perform basic analysis"""
@@ -36,7 +37,8 @@ def failures(summary, plot_dir):
         y="# Failures",
         hue="Failures",
         col="Have BDI",
-        row="Can Replan"
+        row="Can Replan",
+        kind="line"
     )
 
     for ax in g.axes.flat:
@@ -55,22 +57,21 @@ def completion(summary, plot_dir):
         value_name="# Missions"
     )
 
-    print(summary_long)
-
     g = sns.relplot(
         data=summary_long,
         x="Problem Rate",
         y="# Missions",
         hue="Missions",
         col="Have BDI",
-        row="Can Replan"
+        row="Can Replan",
+        kind="line"
     )
 
     for ax in g.axes.flat:
         ax.set_xticks([0, 25, 50, 75, 100])
 
     # Tweak the supporting aspects of the plot
-    plt.savefig(plot_dir / "failures.png")
+    plt.savefig(plot_dir / "completion.png")
 
 def plans(summary, plot_dir):
     """Plot total plans made grouped by BDI and Replan"""
@@ -80,7 +81,8 @@ def plans(summary, plot_dir):
         x="Problem Rate",
         y="Total Plans Made",
         col="Have BDI",
-        row="Can Replan"
+        row="Can Replan",
+        kind="line"
     )
 
     for ax in g.axes.flat:
@@ -97,7 +99,8 @@ def actions(summary, plot_dir):
         x="Problem Rate",
         y="Total Actions",
         col="Have BDI",
-        row="Can Replan"
+        row="Can Replan",
+        kind="line"
     )
 
     for ax in g.axes.flat:
@@ -154,7 +157,9 @@ def main():
         print("No data found.")
         return
     
-    summary = df.groupby(["Problem Rate", "Have BDI", "Can Replan"], as_index=False).agg({
+    df_filtered = df[np.isclose(df["Runtime (s)"], 60)]
+    
+    summary = df_filtered.groupby(["Problem Rate", "Have BDI", "Can Replan"], as_index=False).agg({
         "Runtime (s)": "mean",
         "Batery Failures": "mean",
         "Dirty Failures": "mean",
@@ -162,6 +167,7 @@ def main():
         "Total Actions": "mean",
         "Total Plans Made": "mean",
         "Total Missions": "mean",
+        "Completed Missions": "mean",
         "Successful Termination": "mean",
     })
 
@@ -171,6 +177,7 @@ def main():
     plans(summary, plot_dir)
     runtime(summary, plot_dir)
     actions(summary, plot_dir)
+    completion(summary, plot_dir)
 
     print(f"\nPlots saved to {plot_dir}")
 
