@@ -20,30 +20,21 @@ def load_and_analyze_data(file):
     plot_dir.mkdir(exist_ok=True)
     return df, plot_dir
 
-
-def failures(df, plot_dir):
+def failures(summary, plot_dir):
     """Plot total plans made grouped by BDI and Replan"""
-
-    summary = df.groupby(["Problem Rate", "Have BDI", "Can Replan"], as_index=False).agg({
-        "Batery Failures": "mean",
-        "Dirty Failures": "mean",
-        "ICU Failures": "mean",
-    })
 
     summary_long = summary.melt(
         id_vars=["Problem Rate", "Have BDI", "Can Replan"],
-        value_vars=["Batery Failures", "Dirty Failures", "ICU Failures"],
+        value_vars=["Batery Failures", "Dirty Failures", "ICU Failures", ],
         var_name="Failures",
         value_name="# Failures"
     )
-
-    print(summary_long)
 
     g = sns.relplot(
         data=summary_long,
         x="Problem Rate",
         y="# Failures",
-        hue="Failures",      # this will separate the lines for Runtime and Battery Failures
+        hue="Failures",
         col="Have BDI",
         row="Can Replan"
     )
@@ -54,12 +45,35 @@ def failures(df, plot_dir):
     # Tweak the supporting aspects of the plot
     plt.savefig(plot_dir / "failures.png")
 
-def plans(df, plot_dir):
+def completion(summary, plot_dir):
     """Plot total plans made grouped by BDI and Replan"""
 
-    summary = df.groupby(["Problem Rate", "Have BDI", "Can Replan"], as_index=False).agg({
-        "Total Plans Made": "mean",
-    })
+    summary_long = summary.melt(
+        id_vars=["Problem Rate", "Have BDI", "Can Replan"],
+        value_vars=["Total Missions", "Completed Missions"],
+        var_name="Missions",
+        value_name="# Missions"
+    )
+
+    print(summary_long)
+
+    g = sns.relplot(
+        data=summary_long,
+        x="Problem Rate",
+        y="# Missions",
+        hue="Missions",
+        col="Have BDI",
+        row="Can Replan"
+    )
+
+    for ax in g.axes.flat:
+        ax.set_xticks([0, 25, 50, 75, 100])
+
+    # Tweak the supporting aspects of the plot
+    plt.savefig(plot_dir / "failures.png")
+
+def plans(summary, plot_dir):
+    """Plot total plans made grouped by BDI and Replan"""
 
     g = sns.relplot(
         data=summary,
@@ -75,12 +89,25 @@ def plans(df, plot_dir):
     # Tweak the supporting aspects of the plot
     plt.savefig(plot_dir / "plans.png")
 
-def runtime(df, plot_dir):
-    """Plot total plans made grouped by BDI and Replan"""
+def actions(summary, plot_dir):
+    """Plot total actions made grouped by BDI and Replan"""
 
-    summary = df.groupby(["Problem Rate", "Have BDI", "Can Replan"], as_index=False).agg({
-        "Runtime (s)": "mean",
-    })
+    g = sns.relplot(
+        data=summary,
+        x="Problem Rate",
+        y="Total Actions",
+        col="Have BDI",
+        row="Can Replan"
+    )
+
+    for ax in g.axes.flat:
+        ax.set_xticks([0, 25, 50, 75, 100])
+
+    # Tweak the supporting aspects of the plot
+    plt.savefig(plot_dir / "actions.png")
+
+def runtime(summary, plot_dir):
+    """Plot total plans made grouped by BDI and Replan"""
 
     g = sns.relplot(
         data=summary,
@@ -126,12 +153,24 @@ def main():
     if df.empty:
         print("No data found.")
         return
+    
+    summary = df.groupby(["Problem Rate", "Have BDI", "Can Replan"], as_index=False).agg({
+        "Runtime (s)": "mean",
+        "Batery Failures": "mean",
+        "Dirty Failures": "mean",
+        "ICU Failures": "mean",
+        "Total Actions": "mean",
+        "Total Plans Made": "mean",
+        "Total Missions": "mean",
+        "Successful Termination": "mean",
+    })
 
     print("Generating analysis plots...")
 
-    failures(df, plot_dir)
-    plans(df, plot_dir)
-    runtime(df, plot_dir)
+    failures(summary, plot_dir)
+    plans(summary, plot_dir)
+    runtime(summary, plot_dir)
+    actions(summary, plot_dir)
 
     print(f"\nPlots saved to {plot_dir}")
 

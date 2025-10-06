@@ -346,9 +346,9 @@ def analyze_health_log(mission, run_number, runtime, problem_rate, replan, bdi):
 def write_summary(results_list, mission, problem_rate, replan, bdi):
     summary_path = f"logsdisinfect/simulation_summary_{mission}_{problem_rate}_{replan}_{bdi}.csv"
     with open(summary_path, 'w') as f:
-        f.write("Run Number,Problem Rate,Can Replan,Have BDI,Runtime (s),Batery Failures,Dirty Failures,ICU Failures,Total Actions,Total Plans Made,Total Missions,Successful Termination\n")
+        f.write("Run Number,Problem Rate,Can Replan,Have BDI,Runtime (s),Batery Failures,Dirty Failures,ICU Failures,Total Actions,Total Plans Made,Total Missions,Completed Missions,Successful Termination\n")
         for result in results_list:
-            f.write(f"{result['run_number']},{result['problem_rate']},{result['replan']},{result['bdi']},{result['runtime']},{result['battery_failures']},{result['dirty_failures']},{result['icu_failures']},{result['total_actions']},{result['total_replans']},{result['total_missions']},{result['successful_termination']}\n")
+            f.write(f"{result['run_number']},{result['problem_rate']},{result['replan']},{result['bdi']},{result['runtime']},{result['battery_failures']},{result['dirty_failures']},{result['icu_failures']},{result['total_actions']},{result['total_replans']},{result['total_missions']},{result['completed_missions']},{result['successful_termination']}\n")
 
 def main():
     Path("logsdisinfect").mkdir(exist_ok=True)

@@ -11,25 +11,26 @@ class Environment(Node):
         super().__init__('Environment')
         self.client_futures = []
         self.door = False
-        numberList = [True, False]
+        cleanOptions = [True, False]
+        doorOptions = [False, True]
         nurse4Room = ['room4', 'icu']
         self.declare_parameter('problem_rate', rclpy.Parameter.Type.INTEGER)
         uncleaned_percentage = self.get_parameter('problem_rate').get_parameter_value().integer_value
-        uncleaned1 = random.choices(numberList, weights=(
+        uncleaned1 = random.choices(cleanOptions, weights=(
             100 - uncleaned_percentage, uncleaned_percentage), k=1)
-        uncleaned2 = random.choices(numberList, weights=(
+        uncleaned2 = random.choices(cleanOptions, weights=(
             100 - uncleaned_percentage, uncleaned_percentage), k=1)
-        uncleaned3 = random.choices(numberList, weights=(
+        uncleaned3 = random.choices(cleanOptions, weights=(
             100 - uncleaned_percentage, uncleaned_percentage), k=1)
-        uncleaned4 = random.choices(numberList, weights=(
+        uncleaned4 = random.choices(cleanOptions, weights=(
             100 - uncleaned_percentage, uncleaned_percentage), k=1)
-        door1 = random.choices(numberList, weights=(
+        door1 = random.choices(doorOptions, weights=(
             100 - uncleaned_percentage, uncleaned_percentage), k=1)
-        door2 = random.choices(numberList, weights=(
+        door2 = random.choices(doorOptions, weights=(
             100 - uncleaned_percentage, uncleaned_percentage), k=1)
-        door3 = random.choices(numberList, weights=(
+        door3 = random.choices(doorOptions, weights=(
             100 - uncleaned_percentage, uncleaned_percentage), k=1)
-        door4 = random.choices(numberList, weights=(
+        door4 = random.choices(doorOptions, weights=(
             100 - uncleaned_percentage, uncleaned_percentage), k=1)
         icuRoom = random.choices(nurse4Room, weights=(
             100 - uncleaned_percentage, uncleaned_percentage), k=1)
