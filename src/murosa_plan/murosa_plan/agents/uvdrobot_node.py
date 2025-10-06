@@ -3,7 +3,7 @@ from murosa_plan.agent import Agent
 from murosa_plan.ActionResults import ActionResult
 from interfaces.srv import Action
 
-class Uvdrobot(Agent):
+class UvdRobot(Agent):
     def __init__(self, className):
         super().__init__(className)
         self.battery = 3
@@ -85,7 +85,7 @@ class Uvdrobot(Agent):
 
 def main():
     rclpy.init()
-    robot = Uvdrobot('Uvdrobot')
+    robot = UvdRobot('UvdRobot')
     try:
         # rclpy.spin(robot)
         robot.run()

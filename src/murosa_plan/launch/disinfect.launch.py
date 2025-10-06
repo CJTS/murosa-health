@@ -35,30 +35,30 @@ def generate_launch_description():
                 'bdi': LaunchConfiguration('bdi'),
             }]
         ),
-        Node(
-            package='murosa_plan',
-            executable='nurse_disinfect',
-            name='nurse_disinfect2',
-            parameters=[{
-                'bdi': LaunchConfiguration('bdi'),
-            }]
-        ),
-        Node(
-            package='murosa_plan',
-            executable='nurse_disinfect',
-            name='nurse_disinfect3',
-            parameters=[{
-                'bdi': LaunchConfiguration('bdi'),
-            }]
-        ),
-        Node(
-            package='murosa_plan',
-            executable='nurse_disinfect',
-            name='nurse_disinfect4',
-            parameters=[{
-                'bdi': LaunchConfiguration('bdi'),
-            }]
-        ),
+        # Node(
+        #     package='murosa_plan',
+        #     executable='nurse_disinfect',
+        #     name='nurse_disinfect2',
+        #     parameters=[{
+        #         'bdi': LaunchConfiguration('bdi'),
+        #     }]
+        # ),
+        # Node(
+        #     package='murosa_plan',
+        #     executable='nurse_disinfect',
+        #     name='nurse_disinfect3',
+        #     parameters=[{
+        #         'bdi': LaunchConfiguration('bdi'),
+        #     }]
+        # ),
+        # Node(
+        #     package='murosa_plan',
+        #     executable='nurse_disinfect',
+        #     name='nurse_disinfect4',
+        #     parameters=[{
+        #         'bdi': LaunchConfiguration('bdi'),
+        #     }]
+        # ),
         Node(
             package='murosa_plan',
             executable='uvdrobot',
@@ -67,14 +67,14 @@ def generate_launch_description():
                 'bdi': LaunchConfiguration('bdi'),
             }]
         ),
-        Node(
-            package='murosa_plan',
-            executable='uvdrobot',
-            name='uvdrobot2',
-            parameters=[{
-                'bdi': LaunchConfiguration('bdi'),
-            }]
-        ),
+        # Node(
+        #     package='murosa_plan',
+        #     executable='uvdrobot',
+        #     name='uvdrobot2',
+        #     parameters=[{
+        #         'bdi': LaunchConfiguration('bdi'),
+        #     }]
+        # ),
         Node(
             package='murosa_plan',
             executable='spotrobot',
@@ -83,12 +83,12 @@ def generate_launch_description():
                 'bdi': LaunchConfiguration('bdi'),
             }]
         ),
-        Node(
-            package='murosa_plan',
-            executable='spotrobot',
-            name='spotrobot2',
-            parameters=[{
-                'bdi': LaunchConfiguration('bdi'),
-            }]
-        ),
+        # Node(
+        #     package='murosa_plan',
+        #     executable='spotrobot',
+        #     name='spotrobot2',
+        #     parameters=[{
+        #         'bdi': LaunchConfiguration('bdi'),
+        #     }]
+        # ),
     ])

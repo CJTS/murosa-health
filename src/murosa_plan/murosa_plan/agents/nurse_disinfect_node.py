@@ -47,7 +47,12 @@ class Nurse(Agent):
 
     def choose_action(self, actionTuple):
         future = None
-        if actionTuple[0] == 'a_authenticate_nurse':
+
+        if actionTuple[0] == 'a_approach_nurse':
+            self.get_logger().info('Doing a_approach_nurse')
+            self.a_approach_nurse(actionTuple[1], actionTuple[2])
+            return ActionResult.WAITING
+        elif actionTuple[0] == 'a_authenticate_nurse':
             self.get_logger().info('Doing a_authenticate_nurse')
             self.a_authenticate_nurse(
                 actionTuple[1], actionTuple[2]
@@ -99,6 +104,14 @@ class Nurse(Agent):
         else:
             self.get_logger().info("Robot is waiting, send action message")
             self.acting_for_agent(spotrobot, 'a_authorize_patrol')
+
+    def a_approach_nurse(self, spotrobot, nurse):
+        if all('a_approach_nurse' not in action for action in self.wating_response):
+            self.get_logger().info("Here first, waiting for robot")
+            self.ask_for_agent(spotrobot, 'a_approach_nurse')
+        else:
+            self.get_logger().info("Robot is waiting, send action message")
+            self.acting_for_agent(spotrobot, 'a_approach_nurse')
 
     def a_authenticate_nurse(self, spotrobot, nurse):
         if all('a_authenticate_nurse' not in action for action in self.wating_response):

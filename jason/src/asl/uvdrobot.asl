@@ -1,25 +1,26 @@
 // Stop mission
-+stop: start(NurseDisinfect, NurseDisinfectRoom, SpotRobot, UvdRobot) <- 
++stop: start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot) <- 
     -trigger_a_authorize_disinfect(UvdRobot, SpotRobot)[source(SpotRobot)];
     -milestone5[source(SpotRobot)];
     -milestone6;
     -milestone7;
     -success_a_disinfect_room(UvdRobot, NurseDisinfectRoom);
-    -start(NurseDisinfect, NurseDisinfectRoom, SpotRobot, UvdRobot).
+    -start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot);
+    -stop.
 
 // Start disinfect mission
-+start(NurseDisinfect, NurseDisinfectRoom, SpotRobot, UvdRobot): true <- 
-    +start(NurseDisinfect, NurseDisinfectRoom, SpotRobot, UvdRobot).
++start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot): true <- 
+    +start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot).
 
 // Mission actions
-+trigger_a_authorize_disinfect(UvdRobot, SpotRobot): start(NurseDisinfect, NurseDisinfectRoom, SpotRobot, UvdRobot) <- 
++trigger_a_authorize_disinfect(UvdRobot, SpotRobot): start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot) <- 
     !a_authorize_disinfect(UvdRobot, SpotRobot);
     -trigger_a_authorize_disinfect(UvdRobot, SpotRobot)[source(SpotRobot)].
 
 +!a_authorize_disinfect(UvdRobot, SpotRobot): not low_battery & milestone5 <- 
     a_authorize_disinfect(UvdRobot, SpotRobot).
 
-+success_a_authorize_disinfect(UvdRobot, SpotRobot): start(NurseDisinfect, NurseDisinfectRoom, SpotRobot, UvdRobot) & milestone5 <- 
++success_a_authorize_disinfect(UvdRobot, SpotRobot): start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot) & milestone5 <- 
     -milestone5[source(SpotRobot)];
     +milestone6; 
     !a_navto(UvdRobot, NurseDisinfectRoom).
@@ -27,7 +28,7 @@
 +!a_navto(UvdRobot, NurseDisinfectRoom): not low_battery & milestone6  <-
     a_navto(UvdRobot, NurseDisinfectRoom).
 
-+success_a_navto(UvdRobot, NurseDisinfectRoom): start(NurseDisinfect, NurseDisinfectRoom, SpotRobot, UvdRobot) & milestone6 <-
++success_a_navto(UvdRobot, NurseDisinfectRoom): start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot) & milestone6 <-
     -milestone6;
     +milestone7;
     !a_disinfect_room(UvdRobot, NurseDisinfectRoom).
@@ -37,7 +38,7 @@
 
 +success_a_disinfect_room(UvdRobot, NurseDisinfectRoom): milestone7 <- 
     -milestone7;
-    -start(NurseDisinfect, NurseDisinfectRoom, SpotRobot, UvdRobot);
+    -start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot);
     -success_a_disinfect_room(UvdRobot, NurseDisinfectRoom);
     end.
 

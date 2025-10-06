@@ -35,9 +35,9 @@ public class DynamicAgent extends AgArch {
                 MessageUnpacker<PrimitiveMsg<String>> unpacker = new MessageUnpacker<>(PrimitiveMsg.class);
                 PrimitiveMsg<String> msg = unpacker.unpackRosMessage(data);
                 FIPAMessage decodedMessage = FIPAMessage.decode(msg.data);
-				logger.info(msg.data);
              
                 if(decodedMessage.getReceiver().equals(getAgName())) {
+				    logger.info(msg.data);
                     String regex = "[|]";
                     String[] decodedContent = decodedMessage.getContent().split(regex);
 
@@ -79,7 +79,8 @@ public class DynamicAgent extends AgArch {
     };
 
     private void addPlanDynamically(String planStr) {
-        try {
+    System.err.println("Adding plan");
+    try {
             getTS().getAg().getPL().clear();
             String regex = "[/]";
             String[] plans = planStr.split(regex);

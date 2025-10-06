@@ -13,7 +13,7 @@ from typing import List
 class MissionStatus(Enum):
     CREATED = 1
     WAITING_TEAM = 2
-    ONGOING = 3
+    RUNNING = 3
     ERROR = 5
     FINISHED = 6
     CANCELED = 7
@@ -162,8 +162,7 @@ class AgnosticCoordinator(Node):
                     return response
                 mission.status = MissionStatus.ERROR
                 mission.error = decoded_msg.content
-                for robot in mission.team:
-                    self.agent_reset_publisher.publish(String(data=FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', robot.robot, 'Reset|').encode()))
+                self.stop_mission(mission)
 
             if "InitialTrigger" in decoded_msg.content:
                 self.initial_trigger(decoded_msg.content)
@@ -278,19 +277,16 @@ class AgnosticCoordinator(Node):
                 if param not in start:
                     start.append(param)
 
+        self.get_logger().info('Plan formatted for: %s ' % (','.join(start)))
         
         if self.should_use_bdi:
             bdies = generate_bdi(team, formated_plan, self.mission_context, self.variables)
-            self.get_logger().info('Rules received for: %s ' % (
-                ','.join(bdies.keys())
-            ))
             for agent, rules in bdies.items():
                 plans = [f"+!{self.mission_context}: true <- +{self.mission_context}."]
                 for rule in rules:
                     plans.append(rule)
                 msg = String()
                 msg.data = FIPAMessage(FIPAPerformative.INFORM.value, 'Coordinator', agent, 'Plan|' + '/'.join(plans)).encode()
-                self.get_logger().info('/'.join(plans))
                 self.agent_publisher.publish(msg)
 
             start_msg = "initial_trigger_" + formated_plan[0] + "."
@@ -354,6 +350,13 @@ class AgnosticCoordinator(Node):
             else:
                 self.end_simulation()
 
+    def stop_mission(self, mission: Mission):
+        for agent in mission.team:
+            self.get_logger().info(agent.robot)
+            msg = String()
+            msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent.robot, 'Stop|' + agent.robot).encode()
+            self.agent_publisher.publish(msg)
+
     def treat_error(self, error_desc):
         raise NotImplementedError("This method should be implemented by the subclass")
 
@@ -391,10 +394,10 @@ class AgnosticCoordinator(Node):
         for mission in self.missions:
             if mission.status == MissionStatus.CREATED:
                 self.start_mission(mission)
-                mission.status = MissionStatus.ONGOING
+                mission.status = MissionStatus.RUNNING
             elif mission.status == MissionStatus.ERROR:
                 self.fix_missions(mission)
-                mission.status = MissionStatus.ONGOING
+                mission.status = MissionStatus.RUNNING
             elif mission.status == MissionStatus.WAITING_TEAM:
                 # TODO check if a mission finished recently
                 team = self.get_team()
@@ -406,7 +409,7 @@ class AgnosticCoordinator(Node):
                 mission.team = team
                 mission.context = start_context
                 self.start_mission(mission)
-                mission.status = MissionStatus.ONGOING
+                mission.status = MissionStatus.RUNNING
 
     def run(self):
         while rclpy.ok():

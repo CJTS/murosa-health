@@ -19,8 +19,8 @@ class DisinfectRoomMission(Mission):
         super().__init__(team, context)
         self.priority = 0
         self.roles = [RobotRoles.SPOT, RobotRoles.UVD, RobotRoles.NURSE]
-        self.mission_context = "start(NurseDesinfect, NurseRoom, Spotrobot, Uvdrobot)"
-        self.variables = ["Spotrobot", "NurseRoom", "NurseDesinfect", "Uvdrobot"]
+        self.mission_context = "start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot)"
+        self.variables = ["SpotRobot", "NurseDisinfectRoom", "NurseDisinfect", "UvdRobot"]
         self.room = None
 
 class DisinfectICUMission(Mission):
@@ -28,8 +28,8 @@ class DisinfectICUMission(Mission):
         super().__init__(team, context)
         self.priority = 1
         self.roles = [RobotRoles.SPOT, RobotRoles.UVD, RobotRoles.NURSE]
-        self.mission_context = "start(Spotrobot, NurseRoom, NurseDesinfect, Uvdrobot)"
-        self.variables = ["Spotrobot", "NurseRoom", "NurseDesinfect", "Uvdrobot"]
+        self.mission_context = "start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot)"
+        self.variables = ["SpotRobot", "NurseDisinfectRoom", "NurseDisinfect", "UvdRobot"]
         self.room = None
 
 class Coordinator(AgnosticCoordinator):
@@ -51,8 +51,8 @@ class Coordinator(AgnosticCoordinator):
         self.ready_nurses = []
 
         # Needed for the BDI Parser
-        self.mission_context = "start(Spotrobot, NurseRoom, NurseDesinfect, Uvdrobot)"
-        self.variables =["Spotrobot", "NurseRoom", "NurseDesinfect", "Uvdrobot"]
+        self.mission_context = "start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot)"
+        self.variables =["SpotRobot", "NurseDisinfectRoom", "NurseDisinfect", "UvdRobot"]
 
         self.state = {
             'loc': { 
@@ -115,7 +115,7 @@ class Coordinator(AgnosticCoordinator):
         elif 'spotrobot' in decoded_msg.sender:
             id = str(len(self.spotrobot) + 1)
             self.spotrobot.append(decoded_msg.sender + id)
-            # self.get_logger().info("Current Spotrobots: " + ",".join(self.spotrobot) + " - " + id)
+            # self.get_logger().info("Current SpotRobots: " + ",".join(self.spotrobot) + " - " + id)
         elif 'nurse' in decoded_msg.sender:
             id = str(len(self.nurses) + 1)
             self.nurses.append(decoded_msg.sender + id)
@@ -143,12 +143,12 @@ class Coordinator(AgnosticCoordinator):
     
     def get_start_context(self, team: List[MissionRobot], room: str):
         mission =  (
-            team[2].robot, # Nurse
+            team[1].robot, # Nurse
             room, # Infected Location
-            team[1].robot, # spotrobot
+            team[2].robot, # spotrobot
             team[0].robot # uvdrobot
         )
-        self.get_logger().info(f"context: {team[2].robot} {room} {team[1].robot} {team[0].robot}")
+        self.get_logger().info(f"context: {team[1].robot} {room} {team[2].robot} {team[0].robot}")
         room = None
         return mission
     
@@ -199,7 +199,8 @@ class Coordinator(AgnosticCoordinator):
         self.create_mission(team, start_context, room)
 
     def get_team_from_context(self, context):
-        return [context[2], context[3], context[0]]
+        self.get_logger().info(f"Getting team from context: {context}")
+        return [context[0], context[3], context[2]]
     
     def free_agent(self, agent: str):
         if agent in self.occ_nurses:

@@ -205,7 +205,7 @@ class Agent(Node):
 
     def act(self):
         if(len(self.plan) > 0):
-            time.sleep(0.5)
+            time.sleep(1)
             action = self.plan.pop(0)
             result = self.choose_action(action)
             if result == ActionResult.WAITING:

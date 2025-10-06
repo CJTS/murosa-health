@@ -60,7 +60,7 @@ public class RosEnv extends Environment {
 						} catch (Exception ex) {
 						}
 					} else if (decodedContent[0].equals("End")) {
-						getEnvironmentInfraTier().getRuntimeServices().killAgent(decodedContent[1], "", 0);
+						// getEnvironmentInfraTier().getRuntimeServices().killAgent(decodedContent[1], "", 0);
 					}
 				} else if(decodedMessage.getPerformative().equals("inform")) {
 					if (decodedContent[0].equals("Belief")) {
@@ -112,7 +112,7 @@ public class RosEnv extends Environment {
 					}
 				} else if (decodedMessage.getPerformative().equals("request")) {
 					if (decodedContent[0].equals("End")) {
-						getEnvironmentInfraTier().getRuntimeServices().killAgent(decodedContent[1], "", 0);
+						// getEnvironmentInfraTier().getRuntimeServices().killAgent(decodedContent[1], "", 0);
 					}
 				}
 			}

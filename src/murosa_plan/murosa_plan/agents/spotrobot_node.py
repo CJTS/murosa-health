@@ -3,7 +3,7 @@ from murosa_plan.agent import Agent
 from murosa_plan.ActionResults import ActionResult
 from interfaces.srv import Action
 
-class Spotrobot(Agent):
+class SpotRobot(Agent):
     def __init__(self, className):
         super().__init__(className)
         self.battery = 3
@@ -31,8 +31,9 @@ class Spotrobot(Agent):
         elif actionTuple[0] == 'a_approach_nurse':
             if(self.battery > 2):
                 self.get_logger().info('Doing a_approach_nurse')
-                future = self.a_approach_nurse(actionTuple[1], actionTuple[2])
+                self.a_approach_nurse(actionTuple[1], actionTuple[2])
                 self.battery -= 1
+                return ActionResult.WAITING
             else:
                 self.get_logger().info('low_battery')
                 return ActionResult.BATTERY_FAILURE
@@ -43,7 +44,7 @@ class Spotrobot(Agent):
                 self.battery -= 1
                 return ActionResult.WAITING
             else:
-                self.get_logger().info('low_battery')
+                sef.get_logger().info('low_battery')
                 return ActionResult.BATTERY_FAILURE
         elif actionTuple[0] == 'a_authorize_patrol':
             if(self.battery > 2):
@@ -110,9 +111,12 @@ class Spotrobot(Agent):
         return self.environment_client.call_async(self.action_request)
 
     def a_approach_nurse(self, spotrobot, nurse):
-        self.action_request = Action.Request()
-        self.action_request.action = ','.join(('a_approach_nurse', spotrobot, nurse))
-        return self.environment_client.call_async(self.action_request)
+        if all('a_approach_nurse' not in action for action in self.wating_response):
+            self.get_logger().info("Here first, waiting for nurse")
+            self.ask_for_agent(nurse, 'a_approach_nurse')
+        else:
+            self.get_logger().info("Nurse is waiting, send action message")
+            self.acting_for_agent(nurse, 'a_approach_nurse')
 
     def a_authenticate_nurse(self, spotrobot, nurse):
         if all('a_authenticate_nurse' not in action for action in self.wating_response):
@@ -137,7 +141,7 @@ class Spotrobot(Agent):
     
     def a_authorize_disinfect(self, uvdrobot_,spotrobot_):
         if all('a_authorize_disinfect' not in action for action in self.wating_response):
-            self.get_logger().info("Here first, waiting for spotrobot")
+            self.get_logger().info("Here first, lwaiting for spotrobot")
             self.ask_for_agent(uvdrobot_, 'a_authorize_disinfect')
         else:
             self.get_logger().info("Nurse is waiting, send action message")
@@ -148,7 +152,7 @@ class Spotrobot(Agent):
 
 def main():
     rclpy.init()
-    robot = Spotrobot('Spotrobot')
+    robot = SpotRobot('SpotRobot')
     try:
         # rclpy.spin(robot)
         robot.run()

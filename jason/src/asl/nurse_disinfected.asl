@@ -1,32 +1,40 @@
-+stop: start(NurseDisinfect, NurseDisinfectRoom, SpotRobot, UvdRobot) <- 
-    -start(NurseDisinfect, NurseDisinfectRoom, SpotRobot, UvdRobot);
++stop: start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot) <- 
+    -start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot);
     -trigger_a_authenticate_nurse(SpotRobot, NurseDisinfect)[source(SpotRobot)];
     -milestone2[source(SpotRobot)];
     -trigger_a_authorize_patrol(SpotRobot, NurseDisinfect)[source(SpotRobot)];
     -milestone3[source(SpotRobot)];
-    -success_a_authorize_patrol(SpotRobot, NurseDisinfect)[source(percept)].
+    -success_a_authorize_patrol(SpotRobot, NurseDisinfect)[source(percept)];
+    -stop.
 
-+start(NurseDisinfect, NurseDisinfectRoom, SpotRobot, UvdRobot): true <- +start(NurseDisinfect, NurseDisinfectRoom, SpotRobot, UvdRobot).
++start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot): true <-
+    +start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot).
 
-+trigger_a_authenticate_nurse(SpotRobot, NurseDisinfect): start(NurseDisinfect, NurseDisinfectRoom, SpotRobot, UvdRobot) <-
-    !a_authenticate_nurse(SpotRobot, NurseDisinfect);
-    -trigger_a_authenticate_nurse(SpotRobot, NurseDisinfect)[source(SpotRobot)].
++trigger_a_approach_nurse(SpotRobot, NurseDisinfect): start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot) <-
+    !a_approach_nurse(SpotRobot, NurseDisinfect);
+    -trigger_a_approach_nurse(SpotRobot, NurseDisinfect)[source(SpotRobot)].
 
-+!a_authenticate_nurse(SpotRobot, NurseDisinfect): milestone2 <-
++!a_approach_nurse(SpotRobot, NurseDisinfect): not low_battery & milestone2 <-
+    a_approach_nurse(SpotRobot, NurseDisinfect).
+
++success_a_approach_nurse(SpotRobot, NurseDisinfect): start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot) & milestone2 <-
+    -milestone2[source(SpotRobot)];
+    +milestone3;
+    !a_authenticate_nurse(SpotRobot, NurseDisinfect).
+
++!a_authenticate_nurse(SpotRobot, NurseDisinfect): milestone3 <-
     a_authenticate_nurse(SpotRobot, NurseDisinfect).
 
-+success_a_authenticate_nurse(SpotRobot, NurseDisinfect): milestone2 <- 
-    -milestone2[source(SpotRobot)].
++success_a_authenticate_nurse(SpotRobot, NurseDisinfect): milestone3 <- 
+    -milestone3;
+    +milestone4;
+    !a_authorize_patrol(SpotRobot, NurseDisinfect).
 
-+trigger_a_authorize_patrol(SpotRobot, NurseDisinfect): start(NurseDisinfect, NurseDisinfectRoom, SpotRobot, UvdRobot) <-
-    !a_authorize_patrol(SpotRobot, NurseDisinfect);
-    -trigger_a_authorize_patrol(SpotRobot, NurseDisinfect)[source(SpotRobot)].
-
-+!a_authorize_patrol(SpotRobot, NurseDisinfect): milestone3 <-
++!a_authorize_patrol(SpotRobot, NurseDisinfect): milestone4 <-
     a_authorize_patrol(SpotRobot, NurseDisinfect).
 
-+success_a_authorize_patrol(SpotRobot, NurseDisinfect): milestone3 <- 
-    -milestone3[source(SpotRobot)];
-    -start(NurseDisinfect, NurseDisinfectRoom, SpotRobot, UvdRobot);
++success_a_authorize_patrol(SpotRobot, NurseDisinfect): milestone4 <- 
+    -milestone4;
+    -start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot);
     -success_a_authorize_patrol(SpotRobot, NurseDisinfect)[source(percept)];
     end.
