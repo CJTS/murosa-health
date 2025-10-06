@@ -157,7 +157,7 @@ def main():
         print("No data found.")
         return
     
-    df_filtered = df[np.isclose(df["Runtime (s)"], 60)]
+    df_filtered = df[np.isclose(df["Runtime (s)"], 40)]
     
     summary = df_filtered.groupby(["Problem Rate", "Have BDI", "Can Replan"], as_index=False).agg({
         "Runtime (s)": "mean",
