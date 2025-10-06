@@ -16,6 +16,7 @@ class MissionStatus(Enum):
     ONGOING = 3
     ERROR = 5
     FINISHED = 6
+    CANCELED = 7
 
 class MissionRobot():
     def __init__(self, robot):
@@ -375,6 +376,7 @@ class AgnosticCoordinator(Node):
             return False
         
         low_mission = low_priority_missions[0]
+        low_mission.status = MissionStatus.CANCELED
 
         for agent in low_mission.team:
             msg = String()
