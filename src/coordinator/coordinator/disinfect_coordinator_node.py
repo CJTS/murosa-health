@@ -1,5 +1,6 @@
 import rclpy
 import json
+import time
 from coordinator.agnostic_coordinator import AgnosticCoordinator, MissionRobot, Mission, MissionStatus
 from coordinator.helper import FIPAMessage,  action_string_to_tuple, action_tuple_to_string
 from std_msgs.msg import String
@@ -184,46 +185,18 @@ class Coordinator(AgnosticCoordinator):
         team = self.get_team()
 
         if(team == None):
-            self.get_logger().info("No team to start mission")
+            if room == 'icu':
+                self.get_logger().info("ERROR|icu_room")
+                self.stop_low_priority_mission()
+                time.sleep(1)
+                team = self.get_team()
+                start_context = self.get_start_context(team, room)
+                self.create_mission(team, start_context, room)
             self.create_empty_mission(room)
             return
 
         start_context = self.get_start_context(team, room)
-        
         self.create_mission(team, start_context, room)
-
-    # def verify_initial_trigger(self):
-    #     for location, disinfected in self.state['disinfected'].items():
-    #         # Verifica se a sala da enfermeira ainda não foi desinfetada
-    #         if not disinfected:
-    #             # Verifica se essa sala já não está em missão
-    #             if all(location not in mission.context for mission in self.missions):
-    #                 self.crr_room = location
-    #                 mission = self.start_mission()
-
-    #                 if mission == None and location == 'icu': 
-    #                     self.get_logger().info(f"ICU EMERGENCY HIGHER!!!!!!!")
-    #                     self.get_logger().info(f"STOP ANOTHER MISSION!")
-    #                     stop_result = self.stop_low_priority_mission()
-    #                     if stop_result:
-    #                         self.get_logger().info(f"Restarting!")
-    #                         self.crr_room = location
-    #                         self.start_mission()
-    #                     else: 
-    #                         self.get_logger().info(f"No mission to stop!")
-
-    #             # else:
-    #                 #self.get_logger().info(f"Room {location} already disinfected by {agent}, skipping mission.")
-    #                 # if agent in self.occ_nurses:
-    #                 #     for agent_context in self.current_team:
-    #                 #         self.free_agent(agent_context)
-    #                 #         self.get_logger().info(f"Freeing agent: {agent_context}")
-    #                     # if  (len(self.room_queue)) > 0:
-    #                     #     self.send_reset_request(self.current_team)
-                        
-    #                         # Verify if the mission is complete
-    #                 # if (len(self.room_queue)) == 0:
-    #                 #     self.verify_mission_complete(agent) 
 
     def get_team_from_context(self, context):
         return [context[2], context[3], context[0]]

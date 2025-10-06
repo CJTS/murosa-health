@@ -376,24 +376,12 @@ class AgnosticCoordinator(Node):
         
         low_mission = low_priority_missions[0]
 
-        self.get_logger().info("Missions vefore stopping low priority mission:")
-        self.get_logger().info(str(len(self.missions)))
-        for mission in self.missions:
-            self.get_logger().info(", ".join([str(robot) for robot in mission.team]))
-
-        self.get_logger().info(f"Stopping low priority mission with team: {', '.join([str(robot) for robot in low_mission.team])}")
-
         for agent in low_mission.team:
             msg = String()
             msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', 'Jason', 'Stop|' + agent.robot).encode()
             self.agent_publisher.publish(msg)
             self.free_agent(agent.robot)
         self.missions.remove(low_mission)
-
-        self.get_logger().info("Missions after stopping low priority mission:")
-        self.get_logger().info(str(len(self.missions)))
-        for mission in self.missions:
-            self.get_logger().info(", ".join([str(robot) for robot in mission.team]))
 
         return True
     

@@ -37,14 +37,15 @@ def failures(df, plot_dir):
         value_name="# Failures"
     )
 
+    print(summary_long)
+
     g = sns.relplot(
         data=summary_long,
         x="Problem Rate",
         y="# Failures",
         hue="Failures",      # this will separate the lines for Runtime and Battery Failures
         col="Have BDI",
-        row="Can Replan",
-        kind="line"
+        row="Can Replan"
     )
 
     for ax in g.axes.flat:

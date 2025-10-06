@@ -15,7 +15,21 @@ class Environment(Node):
         nurse4Room = ['room4', 'icu']
         self.declare_parameter('problem_rate', rclpy.Parameter.Type.INTEGER)
         uncleaned_percentage = self.get_parameter('problem_rate').get_parameter_value().integer_value
-        uncleaned = random.choices(numberList, weights=(
+        uncleaned1 = random.choices(numberList, weights=(
+            100 - uncleaned_percentage, uncleaned_percentage), k=1)
+        uncleaned2 = random.choices(numberList, weights=(
+            100 - uncleaned_percentage, uncleaned_percentage), k=1)
+        uncleaned3 = random.choices(numberList, weights=(
+            100 - uncleaned_percentage, uncleaned_percentage), k=1)
+        uncleaned4 = random.choices(numberList, weights=(
+            100 - uncleaned_percentage, uncleaned_percentage), k=1)
+        door1 = random.choices(numberList, weights=(
+            100 - uncleaned_percentage, uncleaned_percentage), k=1)
+        door2 = random.choices(numberList, weights=(
+            100 - uncleaned_percentage, uncleaned_percentage), k=1)
+        door3 = random.choices(numberList, weights=(
+            100 - uncleaned_percentage, uncleaned_percentage), k=1)
+        door4 = random.choices(numberList, weights=(
             100 - uncleaned_percentage, uncleaned_percentage), k=1)
         icuRoom = random.choices(nurse4Room, weights=(
             100 - uncleaned_percentage, uncleaned_percentage), k=1)
@@ -25,25 +39,25 @@ class Environment(Node):
                 'nurse_disinfected1': 'room1',
                 'nurse_disinfected2': 'room2', 
                 'nurse_disinfected3': 'room3',
-                'nurse_disinfected4': 'room4',
+                'nurse_disinfected4': icuRoom[0],
                 'uvdrobot1': 'room4', 
                 'spotrobot1': 'room4',
                 'uvdrobot2': 'room4', 
-                'spotrobot2': icuRoom[0]
+                'spotrobot2': 'room4'
             },
             'doors': { 
-                'room1': True, 
-                'room2': True, 
-                'room3': True, 
-                'room4': True, 
-                'icu': True
+                'room1': door1[0], 
+                'room2': door2[0], 
+                'room3': door3[0], 
+                'room4': door4[0], 
+                'icu': door4[0]
             },
             'cleaned': { 
-                'room1': uncleaned[0],
-                'room2': True,
-                'room3': True,
-                'room4': True,
-                'icu': True
+                'room1': uncleaned1[0],
+                'room2': uncleaned2[0],
+                'room3': uncleaned3[0],
+                'room4': uncleaned4[0],
+                'icu': uncleaned4[0]
             },
             'disinfected': {
                 'room1': True,

@@ -334,8 +334,8 @@ def analyze_health_log(mission, run_number, runtime, problem_rate, replan, bdi):
             results["total_actions"] = disinfect_log_content.count("Action finished")
             results["total_replans"] = disinfect_log_content.count("Creating plan for:")
             results["battery_failures"] = disinfect_log_content.count("low_battery")
-            results["dirty_failures"] = coordinator_log_content.count("Error found")
-            results["icu_failures"] = coordinator_log_content.count("Error found")
+            results["dirty_failures"] = coordinator_log_content.count("dirty_room")
+            results["icu_failures"] = coordinator_log_content.count("icu_room")
             results["total_missions"] = coordinator_log_content.count("Creating mission")
             results["completed_missions"] = coordinator_log_content.count("Mission Completed")
     except FileNotFoundError:
