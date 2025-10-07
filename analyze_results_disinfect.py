@@ -113,6 +113,7 @@ def plans_same_chart(summary, plot_dir):
 
     plt.xticks([0, 25, 50, 75, 100])
     plt.legend(title="Configuration")
+    plt.ylabel("Total Plans Created")
     plt.tight_layout()
     plt.savefig(plot_dir / "plans_same_chart.png")
     plt.close()

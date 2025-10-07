@@ -1,5 +1,5 @@
 # Requirements
-This project runs in WLS2 using a Ubuntu 22.04 OS. ROS2 is required (https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html). Java is also neede if using BDI Agents.
+This project runs in WLS2 using a Ubuntu 22.04 OS. ROS2 is required (https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html). Java is also needed if using BDI Agents.
 
 ## Build
 
