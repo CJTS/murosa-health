@@ -190,7 +190,8 @@ class Agent(Node):
         elif "Done" == decoded_msg.content.split("|")[0]:
             # Check if the action is in the actions or plans
             if len(self.actions) > 0 or any(decoded_msg.content.split("|")[1] in action for action in self.plan):
-                self.get_logger().info('Finished action ' + decoded_msg.content.split("|")[1])
+                self.get_logger().info('Action finished ' + decoded_msg.content.split("|")[1])
+
                 if self.should_use_bdi:
                     msg = String()
                     action = self.actions.pop()

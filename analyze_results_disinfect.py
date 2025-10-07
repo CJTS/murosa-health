@@ -112,13 +112,55 @@ def plans_same_chart(summary, plot_dir):
     )
 
     plt.xticks([0, 25, 50, 75, 100])
-    plt.title("Total Plans Made by Problem Rate")
-    plt.ylabel("Total Plans Made (mean)")
-    plt.xlabel("Problem Rate (%)")
     plt.legend(title="Configuration")
-
     plt.tight_layout()
     plt.savefig(plot_dir / "plans_same_chart.png")
+    plt.close()
+
+def actions_same_chart(summary, plot_dir):
+    """Plot Total Actions with 4 lines (BDI/Replan combinations) and different markers"""
+
+    # Combine Have BDI + Can Replan into a single label
+    summary["Config"] = summary.apply(
+        lambda row: getLabel(row['Can Replan'], row['Have BDI']),
+        axis=1
+    )
+
+    plt.figure(figsize=(10, 6))
+    sns.lineplot(
+        data=summary,
+        x="Problem Rate",
+        y="Total Actions",
+        hue="Config",      # different colors
+        style="Config",    # different markers
+        markers=True,
+        dashes=False       # solid lines instead of dashed
+    )
+
+    plt.xticks([0, 25, 50, 75, 100])
+
+    plt.tight_layout()
+    plt.savefig(plot_dir / "actions_same_chart.png")
+    plt.close()
+
+def runtime(summary, plot_dir):
+    """Plot Total Actions with 4 lines (BDI/Replan combinations) and different markers"""
+
+    # Combine Have BDI + Can Replan into a single label
+    summary["Config"] = summary.apply(
+        lambda row: getLabel(row['Can Replan'], row['Have BDI']),
+        axis=1
+    )
+
+    plt.figure(figsize=(10, 6))
+    sns.boxplot(
+        data=summary,
+        x="Config",
+        y="Runtime (s)",
+    )
+    plt.xlabel("")
+    plt.tight_layout()
+    plt.savefig(plot_dir / "runtime.png")
     plt.close()
 
 def actions(summary, plot_dir):
@@ -139,67 +181,16 @@ def actions(summary, plot_dir):
     # Tweak the supporting aspects of the plot
     plt.savefig(plot_dir / "actions.png")
 
-def runtime(summary, plot_dir):
-    """Plot total plans made grouped by BDI and Replan"""
-
-    g = sns.relplot(
-        data=summary,
-        x="Problem Rate",
-        y="Runtime (s)",
-        col="Have BDI",
-        row="Can Replan",
-        kind="line"
-    )
-
-    for ax in g.axes.flat:
-        ax.set_xticks([0, 25, 50, 75, 100])
-
-    # Tweak the supporting aspects of the plot
-    plt.savefig(plot_dir / "runtime.png")
-
-def failures_vs_completion(summary, plot_dir):
-    """Bar chart of failures with overlayed lines for each config"""
-
-    # Add Completion % and Total Failures
-    summary["Completion %"] = summary["Completed Missions"] / summary["Total Missions"] * 100
-    summary["Total Failures"] = summary[["Batery Failures", "Dirty Failures", "ICU Failures"]].sum(axis=1)
-
-    # Map Can Replan to descriptive labels
-    summary["Replan Label"] = summary["Can Replan"].map({True: "Plan Recovery", False: "Baseline"})
-
-    plt.figure(figsize=(10, 6))
-    sns.scatterplot(
-        data=summary,
-        x="Total Failures",
-        y="Completion %",
-        hue="Replan Label",   # Human-readable labels
-        style="Have BDI",     # optional: marker style for BDI
-        s=100
-    )
-
-    # Add regression lines per Replan Label
-    sns.lmplot(
-        data=summary,
-        x="Total Failures",
-        y="Completion %",
-        hue="Replan Label",
-        markers=["o","s"],
-        ci=None,
-        scatter=False
-    )
-
-    plt.xlabel("Total Failures")
-    plt.ylabel("Completion (%)")
-    plt.title("Effect of Failures on Completion: Baseline vs Plan Recovery")
-    plt.tight_layout()
-    plt.savefig(plot_dir / "failures_vs_completion.png")
-    plt.close()
-
 def completion_vs_problem_rate(summary, plot_dir):
     """
     Show how plan completion changes with Problem Rate,
     comparing Baseline vs Plan Recovery.
     """
+
+    summary["Config"] = summary.apply(
+        lambda row: getLabel(row['Can Replan'], row['Have BDI']),
+        axis=1
+    )
 
     # Calculate Completion %
     summary["Completion %"] = summary["Completed Missions"] / summary["Total Missions"] * 100
@@ -210,28 +201,17 @@ def completion_vs_problem_rate(summary, plot_dir):
     plt.figure(figsize=(10, 6))
 
     # Lineplot with markers
-    sns.lineplot(
+    sns.barplot(
         data=summary,
-        x="Problem Rate",
+        x="Config",
         y="Completion %",
-        hue="Replan Label",
-        style="Have BDI",  # optional: different marker for BDI
-        markers=True,
-        dashes=False,
-        palette="Set1",
-        linewidth=2
+        hue="Config",
     )
 
-    plt.xticks([0, 25, 50, 75, 100])
-    plt.xlabel("Problem Rate (%)")
-    plt.ylabel("Completion (%)")
-    plt.title("Plan Completion vs Problem Rate")
-    plt.grid(True)
-    plt.legend(title="Configuration")
+    plt.xlabel("")
     plt.tight_layout()
     plt.savefig(plot_dir / "completion_vs_problem_rate.png")
     plt.close()
-
 
 def getLabel(can_replan, bdi): 
     if can_replan and bdi:
@@ -290,14 +270,10 @@ def main():
 
     print("Generating analysis plots...")
 
-    failures(summary, plot_dir)
-    plans(summary, plot_dir)
     plans_same_chart(summary, plot_dir)
     runtime(summary, plot_dir)
-    actions(summary, plot_dir)
-    completion(summary, plot_dir)
-    failures_vs_completion(summary, plot_dir)
     completion_vs_problem_rate(summary, plot_dir)
+    actions_same_chart(summary, plot_dir)
 
     print(f"\nPlots saved to {plot_dir}")
 
