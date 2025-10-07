@@ -274,7 +274,7 @@ def cleanup_logs(logs):
         except Exception:
             pass
 
-def run_simulation_with_timeout(mission, run_number, processes, problem_rate, replan, bdi, timeout=40):
+def run_simulation_with_timeout(mission, run_number, processes, problem_rate, replan, bdi, timeout=60):
     start_time = time.time()
     try:
         # wait for coordinator to exit, else timeout
@@ -353,7 +353,7 @@ def write_summary(results_list, mission, problem_rate, replan, bdi):
 def main():
     Path("logsdisinfect").mkdir(exist_ok=True)
     run_number = 1
-    executions = 2
+    executions = 1
     missions = ["disinfect"]
     problem_rates = [0, 25, 50, 75, 100]
     replan_values = [True, False]
@@ -372,7 +372,7 @@ def main():
 
                             print(f"\nStarting simulation run {run_number}...")
                             processes, logs = start_services(mission, run_number, problem_rate, replan, bdi)
-                            completed, runtime = run_simulation_with_timeout(mission, run_number, processes, problem_rate, replan, bdi, timeout=40)
+                            completed, runtime = run_simulation_with_timeout(mission, run_number, processes, problem_rate, replan, bdi, timeout=60)
 
                             print(f"Simulation run {run_number} {'completed' if completed else 'terminated due to timeout'}. Stopping other services...")
                             cleanup_processes(processes, ros_domain_id=run_number)

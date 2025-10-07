@@ -204,7 +204,6 @@ class Coordinator(AgnosticCoordinator):
         room = decoded_msg.content.split('|')[1]
         self.state['loc'][decoded_msg.sender] = room
         self.state['disinfected'][room] = False
-        self.update_state = True
 
         self.get_logger().info(f"Initial trigger received for room: {room}")
         team = self.get_team(room)

@@ -66,7 +66,6 @@ class AgnosticCoordinator(Node):
         self.should_replan = self.get_parameter('replan').get_parameter_value().bool_value
         self.should_use_bdi = self.get_parameter('bdi').get_parameter_value().bool_value
         self.agents_actions = {}
-        self.update_state = False
 
         # Coordinator server
         self._action_server = self.create_service(
@@ -149,6 +148,7 @@ class AgnosticCoordinator(Node):
     def finish_mission(self, finished_mission: Mission):
         self.get_logger().info("Mission Completed")
         self.missions.remove(finished_mission)
+        self.get_logger().info(str(len(self.missions)))
         if(len(self.missions) == 0):
             self.end_simulation()
 
@@ -194,6 +194,7 @@ class AgnosticCoordinator(Node):
                 msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent.robot, 'Start|' + ','.join(mission.context)).encode()
                 self.agent_publisher.publish(msg)
         else:
+            self.update_planner_state(json.dumps(self.state))
             context_team = self.get_team_from_context(mission.context)
             future = self.send_need_plan_request(','.join(context_team))
             rclpy.spin_until_future_complete(self, future)
@@ -205,7 +206,6 @@ class AgnosticCoordinator(Node):
                 self.get_logger().info('No plan found, stopping mission')
                 self.missions.remove(mission)
                 return mission
-            self.get_logger().info(plan_response.observation)
             self.current_plan = plan_response.observation.split('/')
             mission.plan = self.current_plan
             self.split_plans(context_team)
@@ -262,7 +262,6 @@ class AgnosticCoordinator(Node):
 
     def fix_plan(self, mission: Mission):
         context = mission.context
-        self.get_logger().info(",".join(context))
         team = self.get_team_from_context(context)
 
         self.get_logger().info('Creating plan for: %s ' % (
@@ -354,7 +353,6 @@ class AgnosticCoordinator(Node):
     def stop_mission(self, mission: Mission):
         for agent in mission.team:
             if not agent.finished:
-                self.get_logger().info(agent.robot)
                 msg = String()
                 msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent.robot, 'Stop|' + agent.robot).encode()
                 self.agent_publisher.publish(msg)
@@ -395,6 +393,7 @@ class AgnosticCoordinator(Node):
     def analyze_missions(self):
         for mission in self.missions:
             if mission.status == MissionStatus.CREATED:
+                self.get_logger().info(str(self.state))
                 self.start_mission(mission)
                 mission.status = MissionStatus.RUNNING
             elif mission.status == MissionStatus.ERROR:
@@ -437,9 +436,6 @@ class AgnosticCoordinator(Node):
             rclpy.spin_once(self, timeout_sec=0.001)
             if self.should_use_bdi:
                 self.register_agents()
-            if self.update_state:
-                self.get_logger().info(str(self.state))
-                self.update_planner_state(json.dumps(self.state))
-                self.update_state = False
+            self.update_planner_state(json.dumps(self.state))
             self.analyze_missions()
             # self.check_env()

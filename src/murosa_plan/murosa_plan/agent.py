@@ -138,7 +138,7 @@ class Agent(Node):
         self.with_plan = False
     
     def end_local_mission(self):
-        self.get_logger().info('Mission Completed, resetting local state')
+        self.get_logger().info('Resetting local state')
         self.actions = []
         self.plan = []
         self.wating_response = []
@@ -216,12 +216,14 @@ class Agent(Node):
             result = self.choose_action(action)
             if result == ActionResult.WAITING:
                 self.wating = True
-                self.get_logger().info("Action finished")
+                self.plan.insert(0, action)
             elif result == ActionResult.BATTERY_FAILURE:
                 """Send battery failure to Coordinator"""
                 self.notifyError(
                     ','.join(('low_battery', self.agentName))
                 )
+            if result == ActionResult.SUCCESS:
+                self.get_logger().info("Action finished")
         elif(len(self.actions) > 0 and self.should_use_bdi):
             time.sleep(0.5)
             self.get_logger().info('Acting')
@@ -247,7 +249,6 @@ class Agent(Node):
         
         if len(self.plan) == 0 and self.with_plan:
             self.end_local_mission()
-            self.with_plan = False
 
     def notifyError(self, error):
         message = FIPAMessage(FIPAPerformative.INFORM.value, self.agentName, 'Coordinator', 'ERROR|' + error).encode()
@@ -257,6 +258,13 @@ class Agent(Node):
         rclpy.spin_until_future_complete(self, future)
         response = future.result()
         self.get_logger().info('%s' % (response.response))
+        if not self.should_use_bdi:
+            self.actions = []
+            self.plan = []
+            self.wating_response = []
+            self.wating = False
+            self.with_plan = False
+
 
     def run(self):
         while rclpy.ok():

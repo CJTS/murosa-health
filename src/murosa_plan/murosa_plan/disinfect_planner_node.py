@@ -45,7 +45,6 @@ class Planner(Node):
             responsePlan = []
 
             for action in plan:
-                self.get_logger().info(','.join(action))
                 responsePlan.append(','.join(action))
 
             response.observation = '/'.join(responsePlan)
