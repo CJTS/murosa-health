@@ -27,11 +27,9 @@ class Nurse(Agent):
                 if response.observation != 'none':
                     self.room = response.observation
                     self.get_logger().info("I am in room: " + self.room)
-
             if self.counter == 10000:
                 self.counter = 0
-                seconds = 1
-                time.sleep(seconds)
+                time.sleep(1)
                 future = self.a_infected_room()
                 rclpy.spin_until_future_complete(self, future)
                 self.send_has_infected_room()
@@ -89,7 +87,7 @@ class Nurse(Agent):
             ('what_room', self.agentName)
         )
         return self.environment_client.call_async(self.action_request)
-
+    
     def a_infected_room(self):
         self.action_request = Action.Request()
         self.action_request.action = ','.join(

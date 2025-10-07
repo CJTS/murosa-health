@@ -1,7 +1,7 @@
 import rclpy
 import json
 import time
-from coordinator.agnostic_coordinator import AgnosticCoordinator, MissionRobot, Mission, MissionStatus
+from coordinator.agnostic_coordinator import AgnosticCoordinator, MissionRobot, Mission, MissionStatus, RobotStatus
 from coordinator.helper import FIPAMessage,  action_string_to_tuple, action_tuple_to_string
 from std_msgs.msg import String
 from coordinator.FIPAPerformatives import FIPAPerformative
@@ -35,20 +35,11 @@ class DisinfectICUMission(Mission):
 class Coordinator(AgnosticCoordinator):
     def __init__(self):
         super().__init__('Disinfect Coordinator')
+
         #list of agents
-        self.nurses = []
-        self.spotrobot = []
-        self.uvdrobot = []
-
-        #list of agents that are currently occupied
-        self.occ_nurses = []
-        self.occ_spotrobots = []
-        self.occ_uvdrobots = []
-
-        #list of agents that are ready
-        self.ready_spotrobots = []
-        self.ready_uvdrobots = []
-        self.ready_nurses = []
+        self.nurses: List[MissionRobot] = []
+        self.spotrobot: List[MissionRobot] = []
+        self.uvdrobot: List[MissionRobot] = []
 
         # Needed for the BDI Parser
         self.mission_context = "start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot)"
@@ -66,7 +57,7 @@ class Coordinator(AgnosticCoordinator):
                 'spotrobot2': 'room4'
             },
             'doors': { 
-                'room1': False, 
+                'room1': True, 
                 'room2': True, 
                 'room3': True, 
                 'room4': True, 
@@ -96,30 +87,33 @@ class Coordinator(AgnosticCoordinator):
     
     def set_agent_ready(self, decoded_msg):
         if "uvdrobot" in decoded_msg.sender:
-            self.ready_uvdrobots.append(decoded_msg.sender)
-            # self.get_logger().info(f"ready uvd: {len(self.ready_uvdrobots)}")
+            robot = next((robot for robot in self.uvdrobot if robot.robot == decoded_msg.sender), None)
+            robot.status = RobotStatus.READY
         elif "spotrobot" in decoded_msg.sender:
-            self.ready_spotrobots.append(decoded_msg.sender)
-            # self.get_logger().info(f"ready spot: {len(self.ready_spotrobots)}")
+            robot = next((robot for robot in self.spotrobot if robot.robot == decoded_msg.sender), None)
+            robot.status = RobotStatus.READY
         elif "nurse" in decoded_msg.sender:
-            self.ready_nurses.append(decoded_msg.sender)
-            # self.get_logger().info(f"ready nurse: {len(self.ready_nurses)}")
+            robot = next((robot for robot in self.nurses if robot.robot == decoded_msg.sender), None)
+            robot.status = RobotStatus.READY
 
     def register_agent(self, decoded_msg):
         response = None
         agent_type = decoded_msg.sender
         if 'uvdrobot' in decoded_msg.sender:
             id = str(len(self.uvdrobot) + 1)
-            self.uvdrobot.append(decoded_msg.sender + id)
-            # self.get_logger().info("Current uvdrobots: " + ",".join(self.uvdrobot) + " - " + id)
+            robot = MissionRobot(decoded_msg.sender + id)
+            robot.role = RobotRoles.UVD
+            self.uvdrobot.append(robot)
         elif 'spotrobot' in decoded_msg.sender:
             id = str(len(self.spotrobot) + 1)
-            self.spotrobot.append(decoded_msg.sender + id)
-            # self.get_logger().info("Current SpotRobots: " + ",".join(self.spotrobot) + " - " + id)
+            robot = MissionRobot(decoded_msg.sender + id)
+            robot.role = RobotRoles.SPOT
+            self.spotrobot.append(robot)
         elif 'nurse' in decoded_msg.sender:
             id = str(len(self.nurses) + 1)
-            self.nurses.append(decoded_msg.sender + id)
-            # self.get_logger().info("Current nurses: " + ",".join(self.nurses) + " - " + id)
+            robot = MissionRobot(decoded_msg.sender + id)
+            robot.role = RobotRoles.NURSE
+            self.nurses.append(robot)
 
         response = decoded_msg.sender + id
         if self.should_use_bdi:
@@ -127,18 +121,46 @@ class Coordinator(AgnosticCoordinator):
 
         return response
     
-    def get_team(self) -> List[MissionRobot]:
-        free_uvdrobot = list(set(self.uvdrobot) - set(self.occ_uvdrobots))
-        free_spotrobot = list(set(self.spotrobot) - set(self.occ_spotrobots))
-        free_nurse = list(set(self.nurses) - set(self.occ_nurses))
+    def get_team(self, trigger) -> List[MissionRobot]:
+        free_uvdrobot = next((robot for robot in self.uvdrobot if robot.status == RobotStatus.READY), None)
+        free_spotrobot = next((robot for robot in self.spotrobot if robot.status == RobotStatus.READY), None)
         
-        if len(free_uvdrobot) > 0 and len(free_spotrobot) > 0 and len(free_nurse) > 0:
-            team = [MissionRobot(free_uvdrobot[0]), MissionRobot(free_spotrobot[0]), MissionRobot(free_nurse[0])]
-            self.occ_uvdrobots.append(free_uvdrobot[0])
-            self.occ_spotrobots.append(free_spotrobot[0])
-            self.occ_nurses.append(free_nurse[0])
-            return team
+        if free_uvdrobot is not None and free_spotrobot is not None:
+            nurse_name = next(
+                (agent for agent, location in self.state['loc'].items()
+                if location == trigger and agent.startswith("nurse")),
+                None  # default if not found
+            )
+            nurse = next((robot for robot in self.nurses if robot.robot == nurse_name), None)
 
+            team = [free_uvdrobot, free_spotrobot, nurse]
+
+            all_same_version = all(agent.plan_version == team[0].plan_version for agent in team)
+
+            if(all_same_version):
+                free_uvdrobot.status = RobotStatus.OCCUPIED
+                free_spotrobot.status = RobotStatus.OCCUPIED
+                nurse.status = RobotStatus.OCCUPIED
+                return team
+            else:
+                ref_bdi, outdated = self.sync_robots(team)
+
+                for outdated_agent in outdated:
+                    for agent, rules in ref_bdi.items():
+                        if(self.strip_numbers(agent) == self.strip_numbers(outdated_agent.robot)):
+                            plans = []
+                            for rule in rules:
+                                plans.append(rule)
+                            msg = String()
+                            msg.data = FIPAMessage(FIPAPerformative.INFORM.value, 'Coordinator', outdated_agent.robot, 'Plan|' + '/'.join(plans)).encode()
+                            self.agent_publisher.publish(msg)
+
+                time.sleep(1)
+
+                free_uvdrobot.status = RobotStatus.OCCUPIED
+                free_spotrobot.status = RobotStatus.OCCUPIED
+                nurse.status = RobotStatus.OCCUPIED
+                return team
         return None
     
     def get_start_context(self, team: List[MissionRobot], room: str):
@@ -176,20 +198,21 @@ class Coordinator(AgnosticCoordinator):
     
         return mission
     
-    def initial_trigger(self, msg):
-        room = msg.split('|')[1]
+    def initial_trigger(self, decoded_msg):
+        room = decoded_msg.content.split('|')[1]
+        self.state['loc'][decoded_msg.sender] = room
         self.state['disinfected'][room] = False
         self.update_state = True
 
         self.get_logger().info(f"Initial trigger received for room: {room}")
-        team = self.get_team()
+        team = self.get_team(room)
 
         if(team == None):
             if room == 'icu':
                 self.get_logger().info("ERROR|icu_room")
                 self.stop_low_priority_mission()
                 time.sleep(1)
-                team = self.get_team()
+                team = self.get_team(room)
                 start_context = self.get_start_context(team, room)
                 self.create_mission(team, start_context, room)
             self.create_empty_mission(room)
@@ -203,12 +226,11 @@ class Coordinator(AgnosticCoordinator):
         return [context[0], context[3], context[2]]
     
     def free_agent(self, agent: str):
-        if agent in self.occ_nurses:
-            self.occ_nurses.remove(agent)
-        elif agent in self.occ_uvdrobots:
-            self.occ_uvdrobots.remove(agent)
-        elif agent in self.occ_spotrobots:
-            self.occ_spotrobots.remove(agent)
+        for mission in self.missions:
+            for mission_robot in mission.team:
+                if mission_robot.robot == agent:
+                    mission_robot.status = RobotStatus.READY
+                    return
 
     def treat_error(self, error_desc):
         if error_desc[0] == 'dirty_room':

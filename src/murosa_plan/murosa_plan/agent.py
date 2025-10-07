@@ -210,7 +210,6 @@ class Agent(Node):
             result = self.choose_action(action)
             if result == ActionResult.WAITING:
                 self.wating = True
-                self.plan.insert(0, action)
                 self.get_logger().info("Action finished")
             elif result == ActionResult.BATTERY_FAILURE:
                 """Send battery failure to Coordinator"""
@@ -223,28 +222,20 @@ class Agent(Node):
             action = self.actions.pop()
             result = self.choose_action(action)
             if result == ActionResult.SUCCESS:
-                # self.get_logger().info("ActionResult.SUCCESS")
                 msg = String()
                 msg.data = FIPAMessage(FIPAPerformative.INFORM.value, self.agentName, 'Jason', 'Success|' + ",".join(action)).encode()
                 self.publisher.publish(msg)
-                # self.get_logger().info('Publishing: "%s"' % msg.data)
                 self.get_logger().info("Action finished")
             elif result == ActionResult.FAILURE:
-                # self.get_logger().info("ActionResult.FAILURE")
                 msg = String()
                 msg.data = FIPAMessage(FIPAPerformative.INFORM.value, self.agentName, 'Jason', 'Failure|' + ",".join(action)).encode()
                 self.publisher.publish(msg)
-                # self.get_logger().info('Publishing: "%s"' % msg.data)
             elif result == ActionResult.BATTERY_FAILURE:
-                # self.get_logger().info("ActionResult.BATTERY_FAILURE")
                 """Send battery failure to Jason"""
                 msg = String()
                 msg.data = FIPAMessage(FIPAPerformative.INFORM.value, self.agentName, 'Jason', 'BatteryFailure|'+ ",".join(action)).encode()
                 self.publisher.publish(msg)
-                # self.get_logger().info('Publishing: "%s"' % msg.data)
             elif result == ActionResult.WAITING:
-                self.get_logger().info("Action finished")
-                # self.get_logger().info("ActionResult.WAITING")
                 self.wating = True
                 self.actions.append(action)
         

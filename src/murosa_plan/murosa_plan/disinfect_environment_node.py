@@ -38,7 +38,7 @@ class Environment(Node):
         self.state = {
             'loc': { 
                 'nurse_disinfected1': 'room1',
-                'nurse_disinfected2': icuRoom[0], 
+                'nurse_disinfected2': 'room2', 
                 'nurse_disinfected3': 'room3',
                 'nurse_disinfected4': icuRoom[0],
                 'uvdrobot1': 'room4', 

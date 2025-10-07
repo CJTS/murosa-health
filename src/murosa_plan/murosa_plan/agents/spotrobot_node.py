@@ -44,7 +44,7 @@ class SpotRobot(Agent):
                 self.battery -= 1
                 return ActionResult.WAITING
             else:
-                sef.get_logger().info('low_battery')
+                self.get_logger().info('low_battery')
                 return ActionResult.BATTERY_FAILURE
         elif actionTuple[0] == 'a_authorize_patrol':
             if(self.battery > 2):

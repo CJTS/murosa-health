@@ -123,11 +123,11 @@ class Coordinator(AgnosticCoordinator):
                         break
                 # If all agents are free, remove the mission
                 if all_free:
-                    self.missions.remove(mission)
-                    for agent in mission:
+                    for agent in mission.team:
                         msg = String()
-                        msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, agent, 'Jason', 'End|' + agent).encode()
+                        msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, agent.robot, 'Jason', 'End|' + agent.robot).encode()
                         self.jason_publisher.publish(msg)
+                    self.missions.remove(mission)
                     self.get_logger().info("Mission Completed")
                     self.end_simulation()
 

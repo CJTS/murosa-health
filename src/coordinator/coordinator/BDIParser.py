@@ -172,11 +172,18 @@ def generate_bdi(agents, actions, context, variables):
         stop_lines.append(f"    -stop.")
         bdies[agent].insert(0, "\n".join(stop_lines))
 
-        # Add start mission rule
-        bdies[agent].insert(1, 
-            f"+{start_belief}: true <- \n"
-            f"    +{start_belief}."
-    )
+        # First action of the plan
+        first_action_name, first_params = extract_agent_name(actions[0])
+        mapped_first_params = map_params_to_variables(first_params, variables_map)
+        first_action_with_params = f"{first_action_name}({', '.join(mapped_first_params)})"
+
+        # If this agent is part of the first action, trigger it
+        if agent in first_params:
+            bdies[agent].insert(1, f"+{start_belief}: true <- +{start_belief}; !{first_action_with_params}.")
+        else:
+            bdies[agent].insert(1, f"+{start_belief}: true <- +{start_belief}; .")
+
+
 
     # ================================
     #  ADD CHARGE PLANS
@@ -187,25 +194,25 @@ def generate_bdi(agents, actions, context, variables):
     return bdies
 
 # Example usage
-# context = "start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot)"
-# variables = ["SpotRobot", "NurseDisinfectRoom", "NurseDisinfect", "UvdRobot"]
-# agents = ["spotrobot1", "uvdrobot2", "nurse_disinfected1"]
+context = "start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot)"
+variables = ["SpotRobot", "NurseDisinfectRoom", "NurseDisinfect", "UvdRobot"]
+agents = ["spotrobot1", "uvdrobot2", "nurse_disinfected1"]
 
-# actions = [
-#     "a_navto(spotrobot1,room1)",
-#     "a_open_door(spotrobot1,room1)",
-#     "a_approach_nurse(spotrobot1,nurse_disinfected1)",
-#     "a_authenticate_nurse(spotrobot1,nurse_disinfected1)",
-#     "a_clean_room(nurse_disinfected1,room1)",
-#     "a_authorize_patrol(spotrobot1,nurse_disinfected1)",
-#     "a_patrol_room(spotrobot1,room1)",
-#     "a_authorize_disinfect(uvdrobot2,spotrobot1)",
-#     "a_navto(uvdrobot2,room1)",
-#     "a_disinfect_room(uvdrobot2,room1)"
-# ]
+actions = [
+    "a_navto(spotrobot1,room1)",
+    "a_open_door(spotrobot1,room1)",
+    "a_approach_nurse(spotrobot1,nurse_disinfected1)",
+    "a_authenticate_nurse(spotrobot1,nurse_disinfected1)",
+    "a_clean_room(nurse_disinfected1,room1)",
+    "a_authorize_patrol(spotrobot1,nurse_disinfected1)",
+    "a_patrol_room(spotrobot1,room1)",
+    "a_authorize_disinfect(uvdrobot2,spotrobot1)",
+    "a_navto(uvdrobot2,room1)",
+    "a_disinfect_room(uvdrobot2,room1)"
+]
 
-# bdis = generate_bdi(agents, actions, context, variables)
-# for agente, regras in bdis.items():
-#     print(f"\n/* {agente} */")
-#     for regra in regras:
-#         print(regra)
+bdis = generate_bdi(agents, actions, context, variables)
+for agente, regras in bdis.items():
+    print(f"\n/* {agente} */")
+    for regra in regras:
+        print(regra)

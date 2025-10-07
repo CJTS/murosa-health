@@ -9,6 +9,7 @@ from coordinator.BDIParser import generate_bdi
 from coordinator.FIPAPerformatives import FIPAPerformative
 from enum import Enum
 from typing import List
+import re
 
 class MissionStatus(Enum):
     CREATED = 1
@@ -18,11 +19,19 @@ class MissionStatus(Enum):
     FINISHED = 6
     CANCELED = 7
 
+class RobotStatus(Enum):
+    CREATED = 1
+    READY = 2
+    OCCUPIED = 3
+
 class MissionRobot():
     def __init__(self, robot):
         self.robot = robot
         self.finished = False
         self.trigger = None
+        self.plan_version = 1
+        self.current_bdi = {}
+        self.status = RobotStatus.CREATED
     
     def __str__(self):
         return self.robot
@@ -127,7 +136,7 @@ class AgnosticCoordinator(Node):
                 self.get_logger().info(f"Marked {agent} as finished in mission.")
                 break
 
-    def free_agent(self, mission: Mission, agent: str):
+    def free_agent(self, agent: str):
         raise NotImplementedError("This method should be implemented by the subclass")
 
     def verify_mission_complete(self, mission: Mission):
@@ -138,7 +147,6 @@ class AgnosticCoordinator(Node):
         return False
     
     def finish_mission(self, finished_mission: Mission):
-        self.get_logger().info("Mission Completed")
         self.missions.remove(finished_mission)
         if(len(self.missions) == 0):
             self.end_simulation()
@@ -165,7 +173,7 @@ class AgnosticCoordinator(Node):
                 self.stop_mission(mission)
 
             if "InitialTrigger" in decoded_msg.content:
-                self.initial_trigger(decoded_msg.content)
+                self.initial_trigger(decoded_msg)
                 
         return response
     
@@ -204,7 +212,7 @@ class AgnosticCoordinator(Node):
 
         return mission
     
-    def get_team(self) -> List[MissionRobot]:
+    def get_team(self, trigger) -> List[MissionRobot]:
         raise NotImplementedError("This method should be implemented by the subclass")
 
     def get_start_context(self, team):
@@ -282,26 +290,23 @@ class AgnosticCoordinator(Node):
         if self.should_use_bdi:
             bdies = generate_bdi(team, formated_plan, self.mission_context, self.variables)
             for agent, rules in bdies.items():
-                plans = [f"+!{self.mission_context}: true <- +{self.mission_context}."]
+                plans = []
                 for rule in rules:
                     plans.append(rule)
                 msg = String()
                 msg.data = FIPAMessage(FIPAPerformative.INFORM.value, 'Coordinator', agent, 'Plan|' + '/'.join(plans)).encode()
                 self.agent_publisher.publish(msg)
-
-            start_msg = "initial_trigger_" + formated_plan[0] + "."
+            
+            time.sleep(1)
 
             for agent in team:
                 msg = String()
                 msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent, 'Start|' + ','.join(start)).encode()
                 self.agent_publisher.publish(msg)
 
-            splitted_action = self.current_plan[0].split(',')
-        
-            for initial_agents in splitted_action[1:len(splitted_action)]:
-                msg = String()
-                msg.data = FIPAMessage(FIPAPerformative.INFORM.value, 'Coordinator', initial_agents, 'Belief|' + start_msg).encode()
-                self.agent_publisher.publish(msg)
+            for robot in mission.team:
+                robot.plan_version = robot.plan_version + 1
+                robot.current_bdi = bdies
         else:
             mission.plan = self.current_plan
             self.split_plans(team)
@@ -340,22 +345,18 @@ class AgnosticCoordinator(Node):
         error_msg = error.split("|")
         error_desc = error_msg[1].split(",")
         self.treat_error(error_desc)
-        if error_desc[0] in self.known_errors:
-            self.get_logger().info('Restarting')
-            time.sleep(1)
-            self.restart_mission(mission)
+        if self.should_replan:
+            self.fix_plan(mission)
         else:
-            if self.should_replan:
-                self.fix_plan(mission)
-            else:
-                self.end_simulation()
+            self.end_simulation()
 
     def stop_mission(self, mission: Mission):
         for agent in mission.team:
-            self.get_logger().info(agent.robot)
-            msg = String()
-            msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent.robot, 'Stop|' + agent.robot).encode()
-            self.agent_publisher.publish(msg)
+            if not agent.finished:
+                self.get_logger().info(agent.robot)
+                msg = String()
+                msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent.robot, 'Stop|' + agent.robot).encode()
+                self.agent_publisher.publish(msg)
 
     def treat_error(self, error_desc):
         raise NotImplementedError("This method should be implemented by the subclass")
@@ -400,7 +401,7 @@ class AgnosticCoordinator(Node):
                 mission.status = MissionStatus.RUNNING
             elif mission.status == MissionStatus.WAITING_TEAM:
                 # TODO check if a mission finished recently
-                team = self.get_team()
+                team = self.get_team(mission.trigger)
                 if team == None:
                     continue
                 self.get_logger().info("Team found to start mission")
@@ -410,6 +411,25 @@ class AgnosticCoordinator(Node):
                 mission.context = start_context
                 self.start_mission(mission)
                 mission.status = MissionStatus.RUNNING
+
+    def sync_robots(self, robots: list[MissionRobot]):
+        if not robots:
+            return None, []
+
+        # Find the highest plan_version
+        max_version = max(r.plan_version for r in robots)
+
+        # Get the reference BDI from one robot with the max_version
+        reference_bdi = next(r.current_bdi for r in robots if r.plan_version == max_version)
+
+        # Collect all robots that are out of date
+        outdated = [r for r in robots if r.plan_version < max_version]
+
+        return reference_bdi, outdated
+    
+    def strip_numbers(self, name: str) -> str:
+        return re.sub(r'\d+$', '', name)
+
 
     def run(self):
         while rclpy.ok():
