@@ -75,6 +75,13 @@ class Agent(Node):
         self.agentName = response.response
         self.get_logger().info('response.response %s' % (response.response))
         self.get_logger().info('My name is %s' % (self.agentName))
+        if not self.should_use_bdi:
+            self.send_ready()
+
+    def send_ready(self):
+        msg = String()
+        msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, self.agentName, 'Coordinator', 'Ready').encode()
+        self.publisher_coordinator.publish(msg)
 
     def registration(self):
         # Create FIPA message
@@ -140,7 +147,6 @@ class Agent(Node):
         msg = String()
         msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, self.agentName, 'Coordinator', 'Finished').encode()
         self.publisher_coordinator.publish(msg)
-
 
     def is_for_me(self, msg):
         return msg.receiver == self.agentName

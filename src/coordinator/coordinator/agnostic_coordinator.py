@@ -147,6 +147,7 @@ class AgnosticCoordinator(Node):
         return False
     
     def finish_mission(self, finished_mission: Mission):
+        self.get_logger().info("Mission Completed")
         self.missions.remove(finished_mission)
         if(len(self.missions) == 0):
             self.end_simulation()

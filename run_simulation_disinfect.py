@@ -353,7 +353,7 @@ def write_summary(results_list, mission, problem_rate, replan, bdi):
 def main():
     Path("logsdisinfect").mkdir(exist_ok=True)
     run_number = 1
-    executions = 30
+    executions = 2
     missions = ["disinfect"]
     problem_rates = [0, 25, 50, 75, 100]
     replan_values = [True, False]

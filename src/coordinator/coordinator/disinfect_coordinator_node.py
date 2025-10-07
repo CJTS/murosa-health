@@ -124,6 +124,8 @@ class Coordinator(AgnosticCoordinator):
     def get_team(self, trigger) -> List[MissionRobot]:
         free_uvdrobot = next((robot for robot in self.uvdrobot if robot.status == RobotStatus.READY), None)
         free_spotrobot = next((robot for robot in self.spotrobot if robot.status == RobotStatus.READY), None)
+
+        time.sleep(1)
         
         if free_uvdrobot is not None and free_spotrobot is not None:
             nurse_name = next(
@@ -213,6 +215,9 @@ class Coordinator(AgnosticCoordinator):
                 self.stop_low_priority_mission()
                 time.sleep(1)
                 team = self.get_team(room)
+                if(team == None):
+                    self.get_logger().info("Cant make team")
+                    return
                 start_context = self.get_start_context(team, room)
                 self.create_mission(team, start_context, room)
             self.create_empty_mission(room)

@@ -31,5 +31,5 @@ Then source the build, set the ENV variables REPLAN and PROBLEM_RATE, run the co
 ### Desinfect
 BDI not implemented and needed.
 
-```BDI=True REPLAN=True ros2 launch coordinator disinfect.launch.py```
-```BDI=True PROBLEM_RATE=100 ros2 launch murosa_plan disinfect.launch.py```
+```BDI=False REPLAN=False ros2 launch coordinator disinfect.launch.py```
+```BDI=False PROBLEM_RATE=0 ros2 launch murosa_plan disinfect.launch.py```
