@@ -36,7 +36,7 @@ setup(
             'nurse_disinfect = murosa_plan.agents.nurse_disinfect_node:main',
             'spotrobot = murosa_plan.agents.spotrobot_node:main',
             'uvdrobot = murosa_plan.agents.uvdrobot_node:main',
-
+            'navigator = murosa_plan.agents.navigator_node:main',
         ],
     },
 )

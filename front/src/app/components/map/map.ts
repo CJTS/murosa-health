@@ -17,6 +17,7 @@ export class Map implements AfterViewInit {
     { x: 160, y: 10, width: 50, height: 50, label: 'lab' },
     { x: 210, y: 10, width: 50, height: 50, label: 'ds' },
     { x: 260, y: 10, width: 140, height: 140, label: 'icu' },
+
     { x: 10, y: 100, width: 50, height: 50, label: 'room4' },
     { x: 60, y: 100, width: 50, height: 50, label: 'room5' },
     { x: 110, y: 100, width: 50, height: 50, label: 'room6' },

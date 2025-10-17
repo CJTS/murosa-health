@@ -29,6 +29,11 @@ def generate_launch_description():
         ),
         Node(
             package='murosa_plan',
+            executable='navigator',
+            name='navigator'
+        ),
+        Node(
+            package='murosa_plan',
             executable='nurse_disinfect',
             name='nurse_disinfect1',
             parameters=[{
