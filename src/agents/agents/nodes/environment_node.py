@@ -40,24 +40,30 @@ class Environment(Node):
 
         self.state = {
             'loc': { 
-                'nurse_disinfected1': 'room1',
-                'nurse_disinfected2': 'room2', 
-                'nurse_disinfected3': 'room3',
-                'nurse_disinfected4': icuRoom[0],
-                'uvdrobot1': 'room4', 
-                'spotrobot1': 'room4',
-                'uvdrobot2': 'room4', 
-                'spotrobot2': 'room4'
+                'nurse1': 'room1',
+                'nurse2': 'room2', 
+                'nurse3': 'room3',
+                'nurse4': icuRoom[0],
+                'uvd1': 'ds', 
+                'spot1': 'ds',
+                'uvd2': 'ds', 
+                'spot2': 'ds',
+                'collector1': 'ds', 
+                'collector2': 'ds', 
+                'arm1': 'lab'
             },
             'pos': { 
-                'nurse_disinfected1': (0,0),
-                'nurse_disinfected2': (0,0), 
-                'nurse_disinfected3': (0,0),
-                'nurse_disinfected4': (0,0),
-                'uvdrobot1': (0,0), 
-                'spotrobot1': (0,0),
-                'uvdrobot2': (0,0), 
-                'spotrobot2': (0,0)
+                'nurse1': (0,0),
+                'nurse2': (0,0), 
+                'nurse3': (0,0),
+                'nurse4': (0,0),
+                'uvd1': (0,0), 
+                'spot1': (0,0),
+                'uvd2': (0,0), 
+                'spot2': (0,0), 
+                'collector1': (0,0), 
+                'collector2': (0,0), 
+                'arm1': (0,0)
             },
             'doors': { 
                 'room1': door1[0], 
@@ -73,11 +79,22 @@ class Environment(Node):
                 'room4': uncleaned4[0],
                 'icu': uncleaned4[0]
             },
+            'samples': {
+                'room1': False,
+                'room2': False,
+                'room3': False,
+                'room4': False,
+                'room5': False,
+                'room6': False,
+                'icu': False
+            },
             'disinfected': {
                 'room1': True,
                 'room2': True,
                 'room3': True,
                 'room4': True,
+                'room5': True,
+                'room6': True,
                 'icu': True
             }
         }
@@ -133,7 +150,7 @@ class Environment(Node):
             rclpy.spin_once(self, timeout_sec=0.001)
             msg = String()
             msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Env', 'Front', json.dumps(self.state)).encode()
-            self.publisher_coordinator.publish(msg)
+            self.publisher.publish(msg)
 
 def main():
     rclpy.init()

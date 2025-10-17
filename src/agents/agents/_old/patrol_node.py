@@ -20,7 +20,7 @@ class Patrol(Agent):
             else:
                 self.get_logger().info('low_battery')
                 self.notifyError(
-                    ','.join(('low_battery', self.agentName))
+                    ','.join(('low_battery', self.get_name()))
                 )
                 return ActionResult.FAILURE
         elif actionTuple[0] == 'charge':

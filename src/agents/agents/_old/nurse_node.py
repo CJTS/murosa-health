@@ -30,7 +30,7 @@ class Nurse(Agent):
                     self.act()
 
     def send_has_sample_message(self):
-        message = FIPAMessage(FIPAPerformative.INFORM.value, self.agentName, 'Coordinator', 'HasSample').encode()
+        message = FIPAMessage(FIPAPerformative.INFORM.value, self.get_name(), 'Coordinator', 'HasSample').encode()
         ros_msg = Message.Request()
         ros_msg.content = message
         return self.cli.call_async(ros_msg)
@@ -66,7 +66,7 @@ class Nurse(Agent):
     def a_create_sample(self):
         self.action_request = Action.Request()
         self.action_request.action = ','.join(
-            ('a_create_sample', self.agentName)
+            ('a_create_sample', self.get_name())
         )
         return self.environment_client.call_async(self.action_request)
 

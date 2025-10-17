@@ -1,6 +1,6 @@
 // Stop mission
-+stop: start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot) <- 
-    -start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot);
++stop: start(SpotRobot, NurseRoom, Nurse, UvdRobot) <- 
+    -start(SpotRobot, NurseRoom, Nurse, UvdRobot);
     -milestone1;
     -milestone1;
     -milestone2;
@@ -11,48 +11,48 @@
     -stop.
 
 // Start disinfect mission
-+start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot): true <-
-    +start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot);
-    !a_navto(SpotRobot, NurseDisinfectRoom).
++start(SpotRobot, NurseRoom, Nurse, UvdRobot): true <-
+    +start(SpotRobot, NurseRoom, Nurse, UvdRobot);
+    !a_navto(SpotRobot, NurseRoom).
 
 // Mission actions
-+!a_navto(SpotRobot, NurseDisinfectRoom): not low_battery & start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot) <-
-    a_navto(SpotRobot, NurseDisinfectRoom).
++!a_navto(SpotRobot, NurseRoom): not low_battery & start(SpotRobot, NurseRoom, Nurse, UvdRobot) <-
+    a_navto(SpotRobot, NurseRoom).
 
-+success_a_navto(SpotRobot, NurseDisinfectRoom): start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot) <-
++success_a_navto(SpotRobot, NurseRoom): start(SpotRobot, NurseRoom, Nurse, UvdRobot) <-
     +milestone1;
-    .send(NurseDisinfect, tell, milestone1);
-    .send(NurseDisinfect, tell, trigger_a_approach_nurse(SpotRobot, NurseDisinfect));
-    !a_approach_nurse(SpotRobot, NurseDisinfect).
+    .send(Nurse, tell, milestone1);
+    .send(Nurse, tell, trigger_a_approach_nurse(SpotRobot, Nurse));
+    !a_approach_nurse(SpotRobot, Nurse).
 
-+!a_approach_nurse(SpotRobot, NurseDisinfect): not low_battery & milestone1 <-
-    a_approach_nurse(SpotRobot, NurseDisinfect).
++!a_approach_nurse(SpotRobot, Nurse): not low_battery & milestone1 <-
+    a_approach_nurse(SpotRobot, Nurse).
 
-+success_a_approach_nurse(SpotRobot, NurseDisinfect): start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot) & milestone1 <-
++success_a_approach_nurse(SpotRobot, Nurse): start(SpotRobot, NurseRoom, Nurse, UvdRobot) & milestone1 <-
     -milestone1;
     +milestone2;
-    !a_authenticate_nurse(SpotRobot, NurseDisinfect).
+    !a_authenticate_nurse(SpotRobot, Nurse).
 
-+!a_authenticate_nurse(SpotRobot, NurseDisinfect): not low_battery & milestone2 <-
-    a_authenticate_nurse(SpotRobot, NurseDisinfect).
++!a_authenticate_nurse(SpotRobot, Nurse): not low_battery & milestone2 <-
+    a_authenticate_nurse(SpotRobot, Nurse).
 
-+success_a_authenticate_nurse(SpotRobot, NurseDisinfect): start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot) & milestone2 <-
++success_a_authenticate_nurse(SpotRobot, Nurse): start(SpotRobot, NurseRoom, Nurse, UvdRobot) & milestone2 <-
     -milestone2;
     +milestone3;
-    !a_authorize_patrol(SpotRobot, NurseDisinfect).
+    !a_authorize_patrol(SpotRobot, Nurse).
 
-+!a_authorize_patrol(SpotRobot, NurseDisinfect): not low_battery & milestone3 <-
-    a_authorize_patrol(SpotRobot, NurseDisinfect).
++!a_authorize_patrol(SpotRobot, Nurse): not low_battery & milestone3 <-
+    a_authorize_patrol(SpotRobot, Nurse).
 
-+success_a_authorize_patrol(SpotRobot, NurseDisinfect): start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot) & milestone3 <-
++success_a_authorize_patrol(SpotRobot, Nurse): start(SpotRobot, NurseRoom, Nurse, UvdRobot) & milestone3 <-
     -milestone3;
     +milestone4;
-    !a_patrol_room(SpotRobot, NurseDisinfectRoom).
+    !a_patrol_room(SpotRobot, NurseRoom).
 
-+!a_patrol_room(SpotRobot, NurseDisinfectRoom): not low_battery & milestone4 <-
-    a_patrol_room(SpotRobot, NurseDisinfectRoom).
++!a_patrol_room(SpotRobot, NurseRoom): not low_battery & milestone4 <-
+    a_patrol_room(SpotRobot, NurseRoom).
 
-+success_a_patrol_room(SpotRobot, NurseDisinfectRoom): start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot) & milestone4 <-
++success_a_patrol_room(SpotRobot, NurseRoom): start(SpotRobot, NurseRoom, Nurse, UvdRobot) & milestone4 <-
     -milestone4;
     +milestone5;
     .send(UvdRobot, tell, milestone5);
@@ -62,9 +62,9 @@
 +!a_authorize_disinfect(UvdRobot, SpotRobot): not low_battery & milestone5 <-
     a_authorize_disinfect(UvdRobot, SpotRobot).
 
-+success_a_authorize_disinfect(UvdRobot, SpotRobot): start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot) & milestone5 <-
++success_a_authorize_disinfect(UvdRobot, SpotRobot): start(SpotRobot, NurseRoom, Nurse, UvdRobot) & milestone5 <-
     -milestone5; 
-    -start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot);
+    -start(SpotRobot, NurseRoom, Nurse, UvdRobot);
     -success_a_authorize_disinfect(UvdRobot, SpotRobot);
     end.
 

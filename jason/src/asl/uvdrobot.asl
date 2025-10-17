@@ -1,45 +1,45 @@
 // Stop mission
-+stop: start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot) <- 
++stop: start(SpotRobot, NurseRoom, Nurse, UvdRobot) <- 
     -trigger_a_authorize_disinfect(UvdRobot, SpotRobot)[source(SpotRobot)];
     -milestone5[source(SpotRobot)];
     -milestone6;
     -milestone7;
-    -success_a_disinfect_room(UvdRobot, NurseDisinfectRoom);
-    -start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot);
+    -success_a_disinfect_room(UvdRobot, NurseRoom);
+    -start(SpotRobot, NurseRoom, Nurse, UvdRobot);
     -stop.
 
 // Start disinfect mission
-+start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot): true <- 
-    +start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot).
++start(SpotRobot, NurseRoom, Nurse, UvdRobot): true <- 
+    +start(SpotRobot, NurseRoom, Nurse, UvdRobot).
 
 // Mission actions
-+trigger_a_authorize_disinfect(UvdRobot, SpotRobot): start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot) <- 
++trigger_a_authorize_disinfect(UvdRobot, SpotRobot): start(SpotRobot, NurseRoom, Nurse, UvdRobot) <- 
     !a_authorize_disinfect(UvdRobot, SpotRobot);
     -trigger_a_authorize_disinfect(UvdRobot, SpotRobot)[source(SpotRobot)].
 
 +!a_authorize_disinfect(UvdRobot, SpotRobot): not low_battery & milestone5 <- 
     a_authorize_disinfect(UvdRobot, SpotRobot).
 
-+success_a_authorize_disinfect(UvdRobot, SpotRobot): start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot) & milestone5 <- 
++success_a_authorize_disinfect(UvdRobot, SpotRobot): start(SpotRobot, NurseRoom, Nurse, UvdRobot) & milestone5 <- 
     -milestone5[source(SpotRobot)];
     +milestone6; 
-    !a_navto(UvdRobot, NurseDisinfectRoom).
+    !a_navto(UvdRobot, NurseRoom).
 
-+!a_navto(UvdRobot, NurseDisinfectRoom): not low_battery & milestone6  <-
-    a_navto(UvdRobot, NurseDisinfectRoom).
++!a_navto(UvdRobot, NurseRoom): not low_battery & milestone6  <-
+    a_navto(UvdRobot, NurseRoom).
 
-+success_a_navto(UvdRobot, NurseDisinfectRoom): start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot) & milestone6 <-
++success_a_navto(UvdRobot, NurseRoom): start(SpotRobot, NurseRoom, Nurse, UvdRobot) & milestone6 <-
     -milestone6;
     +milestone7;
-    !a_disinfect_room(UvdRobot, NurseDisinfectRoom).
+    !a_disinfect_room(UvdRobot, NurseRoom).
 
-+!a_disinfect_room(UvdRobot, NurseDisinfectRoom): not low_battery & milestone7 <-
-    a_disinfect_room(UvdRobot, NurseDisinfectRoom).
++!a_disinfect_room(UvdRobot, NurseRoom): not low_battery & milestone7 <-
+    a_disinfect_room(UvdRobot, NurseRoom).
 
-+success_a_disinfect_room(UvdRobot, NurseDisinfectRoom): milestone7 <- 
++success_a_disinfect_room(UvdRobot, NurseRoom): milestone7 <- 
     -milestone7;
-    -start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot);
-    -success_a_disinfect_room(UvdRobot, NurseDisinfectRoom);
+    -start(SpotRobot, NurseRoom, Nurse, UvdRobot);
+    -success_a_disinfect_room(UvdRobot, NurseRoom);
     end.
 
 // Charge action

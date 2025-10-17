@@ -10,31 +10,9 @@ from agents.helpers.FIPAPerformatives import FIPAPerformative
 class Nurse(Agent):
     def __init__(self, className):
         super().__init__(className)
-        self.counter = 10000
-
-    def run(self):
-        while rclpy.ok():
-            # self.counter = self.counter + 1
-            rclpy.spin_once(self, timeout_sec=0.001)
-            if self.current_room is None:
-                future = self.what_room()
-                rclpy.spin_until_future_complete(self, future)
-                response = future.result()
-                if response.observation != 'none':
-                    self.current_room = response.observation
-                    self.get_logger().info("I am in room: " + self.current_room)
-            if self.counter == 10000:
-                self.counter = 0
-                time.sleep(1)
-                future = self.a_infected_room()
-                rclpy.spin_until_future_complete(self, future)
-                self.send_has_infected_room()
-            else:
-                if not self.wating:
-                    self.act()
 
     def send_has_infected_room(self):
-        message = FIPAMessage(FIPAPerformative.INFORM.value, self.agentName, 'Coordinator', 'InitialTrigger|' + self.current_room).encode()
+        message = FIPAMessage(FIPAPerformative.INFORM.value, self.get_name(), 'Coordinator', 'InitialTrigger|' + self.current_room).encode()
         ros_msg = Message.Request()
         ros_msg.content = message
         return self.cli.call_async(ros_msg)
@@ -89,18 +67,11 @@ class Nurse(Agent):
                 return ActionResult.FAILURE
 
         return ActionResult.SUCCESS
-
-    def what_room(self):
-        self.action_request = Action.Request()
-        self.action_request.action = ','.join(
-            ('what_room', self.agentName)
-        )
-        return self.environment_client.call_async(self.action_request)
     
     def a_infected_room(self):
         self.action_request = Action.Request()
         self.action_request.action = ','.join(
-            ('a_infected_room', self.agentName)
+            ('a_infected_room', self.get_name())
         )
         return self.environment_client.call_async(self.action_request)
     
@@ -137,7 +108,7 @@ class Nurse(Agent):
     def a_create_sample(self):
         self.action_request = Action.Request()
         self.action_request.action = ','.join(
-            ('a_create_sample', self.agentName)
+            ('a_create_sample', self.get_name())
         )
         return self.environment_client.call_async(self.action_request)
 

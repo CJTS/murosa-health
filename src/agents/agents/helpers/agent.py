@@ -62,9 +62,6 @@ class Agent(Node):
         if self.should_use_bdi:
             self.publisher = self.create_publisher(String, '/agent/jason/result', 10)
 
-        # Publisher para falar o resultado da ação para o coordenador
-        self.publisher_coordinator = self.create_publisher(String, '/agent/coordinator/result', 10)
-
         self.end_simulation_subscription = self.create_subscription(
             Bool, '/coordinator/shutdown_signal', self.end_simulation_callback, 10
         )
@@ -81,27 +78,41 @@ class Agent(Node):
 
     def initialize(self):
         # Send message to coordinator to be inserted in agent pools
-        future = self.registration()
+        future = self.send_registration_request()
         rclpy.spin_until_future_complete(self, future)
         response = future.result()
-        self.agentName = response.response
-        self.get_logger().info('response.response %s' % (response.response))
-        self.get_logger().info('My name is %s' % (self.agentName))
-        if not self.should_use_bdi:
-            self.send_ready()
+        self.get_logger().info('Registrarion result:  %s' % (response.response))
+        if response.response == 'success' and not self.should_use_bdi:
+            # If using BDI, it after it is initialized, it will notify the coordinator that it is ready, if not, the notification is necessary
+            future = self.send_ready_request()
+            rclpy.spin_until_future_complete(self, future)
+            response = future.result()
+            self.get_logger().info('Readyness result:  %s' % (response.response))
 
-    def send_ready(self):
-        msg = String()
-        msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, self.agentName, 'Coordinator', 'Ready').encode()
-        self.publisher_coordinator.publish(msg)
-
-    def registration(self):
+    def send_registration_request(self):
         # Create FIPA message
-        message = FIPAMessage(FIPAPerformative.REQUEST.value, self.className, 'Coordinator', 'Register').encode()
+        message = FIPAMessage(FIPAPerformative.REQUEST.value, self.get_name(), 'Coordinator', 'Register').encode()
         ros_msg = Message.Request()
         ros_msg.content = message
         return self.cli.call_async(ros_msg)
 
+    def send_ready_request(self):
+        # Sends message that it is ready to start performing missions
+        message = FIPAMessage(FIPAPerformative.INFORM.value, self.get_name(), 'Coordinator', 'Ready').encode()
+        ros_msg = Message.Request()
+        ros_msg.content = message
+        return self.cli.call_async(ros_msg)
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     def listener_callback(self, msg):
         # Receive messagem from jason
         # self.get_logger().info('I heard: "%s"' % msg.data)
@@ -157,32 +168,32 @@ class Agent(Node):
         self.wating = False
         self.with_plan = False
         msg = String()
-        msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, self.agentName, 'Coordinator', 'Finished').encode()
+        msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, self.get_name(), 'Coordinator', 'Finished').encode()
         self.publisher_coordinator.publish(msg)
 
     def is_for_me(self, msg):
-        return msg.receiver == self.agentName
+        return msg.receiver == self.get_name()
         
     def end_simulation_callback(self, msg):
         if msg.data:
             self.get_logger().info("Recebido sinal de desligamento do coordenador, finalizando...")
             if self.should_use_bdi:
                 msg = String()
-                msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, self.agentName, 'Jason', 'End|' + self.agentName).encode()
+                msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, self.get_name(), 'Jason', 'End|' + self.get_name()).encode()
                 self.publisher.publish(msg)
             raise SystemExit
 
     def ask_for_agent(self, agent, action):
         msg = String()
-        msg.data = FIPAMessage(FIPAPerformative.QUERY.value, self.agentName, agent, 'Ready|' + action).encode()
+        msg.data = FIPAMessage(FIPAPerformative.QUERY.value, self.get_name(), agent, 'Ready|' + action).encode()
         self.agents_publisher.publish(msg)
-        self.wating_response.append((self.agentName, action))
+        self.wating_response.append((self.get_name(), action))
 
     def acting_for_agent(self, agent, action):
         msg = String()
-        msg.data = FIPAMessage(FIPAPerformative.QUERY.value, self.agentName, agent, 'Done|' + action).encode()
+        msg.data = FIPAMessage(FIPAPerformative.QUERY.value, self.get_name(), agent, 'Done|' + action).encode()
         self.agents_publisher.publish(msg)
-        self.wating_response.append((self.agentName, action))
+        self.wating_response.append((self.get_name(), action))
 
     def respond_agent(self, msg):
         # self.get_logger().info('I heard: "%s"' % msg.data)
@@ -207,7 +218,7 @@ class Agent(Node):
                 if self.should_use_bdi:
                     msg = String()
                     action = self.actions.pop()
-                    msg.data = FIPAMessage(FIPAPerformative.INFORM.value, self.agentName, 'Jason', 'Success|' + ",".join(action)).encode()
+                    msg.data = FIPAMessage(FIPAPerformative.INFORM.value, self.get_name(), 'Jason', 'Success|' + ",".join(action)).encode()
                     self.publisher.publish(msg)
                 else:
                     action = self.plan.pop(0)
@@ -234,7 +245,7 @@ class Agent(Node):
                 elif result == ActionResult.BATTERY_FAILURE:
                     """Send battery failure to Coordinator"""
                     self.notifyError(
-                        ','.join(('low_battery', self.agentName))
+                        ','.join(('low_battery', self.get_name()))
                     )
                 elif result == ActionResult.SUCCESS:
                     self.get_logger().info("Action finished")
@@ -245,17 +256,17 @@ class Agent(Node):
                 result = self.choose_action(action)
                 if result == ActionResult.SUCCESS:
                     msg = String()
-                    msg.data = FIPAMessage(FIPAPerformative.INFORM.value, self.agentName, 'Jason', 'Success|' + ",".join(action)).encode()
+                    msg.data = FIPAMessage(FIPAPerformative.INFORM.value, self.get_name(), 'Jason', 'Success|' + ",".join(action)).encode()
                     self.publisher.publish(msg)
                     self.get_logger().info("Action finished")
                 elif result == ActionResult.FAILURE:
                     msg = String()
-                    msg.data = FIPAMessage(FIPAPerformative.INFORM.value, self.agentName, 'Jason', 'Failure|' + ",".join(action)).encode()
+                    msg.data = FIPAMessage(FIPAPerformative.INFORM.value, self.get_name(), 'Jason', 'Failure|' + ",".join(action)).encode()
                     self.publisher.publish(msg)
                 elif result == ActionResult.BATTERY_FAILURE:
                     """Send battery failure to Jason"""
                     msg = String()
-                    msg.data = FIPAMessage(FIPAPerformative.INFORM.value, self.agentName, 'Jason', 'BatteryFailure|'+ ",".join(action)).encode()
+                    msg.data = FIPAMessage(FIPAPerformative.INFORM.value, self.get_name(), 'Jason', 'BatteryFailure|'+ ",".join(action)).encode()
                     self.publisher.publish(msg)
                 elif result == ActionResult.WAITING:
                     self.wating = True
@@ -279,7 +290,7 @@ class Agent(Node):
         self.get_logger().info(response.observation)
 
     def notifyError(self, error):
-        message = FIPAMessage(FIPAPerformative.INFORM.value, self.agentName, 'Coordinator', 'ERROR|' + error).encode()
+        message = FIPAMessage(FIPAPerformative.INFORM.value, self.get_name(), 'Coordinator', 'ERROR|' + error).encode()
         ros_msg = Message.Request()
         ros_msg.content = message
         future = self.cli.call_async(ros_msg)
@@ -293,9 +304,23 @@ class Agent(Node):
             self.wating = False
             self.with_plan = False
 
+    def what_room(self):
+        self.action_request = Action.Request()
+        self.action_request.action = ','.join(
+            ('what_room', self.get_name())
+        )
+        return self.environment_client.call_async(self.action_request)
 
     def run(self):
         while rclpy.ok():
             rclpy.spin_once(self, timeout_sec=0.001)
-            if not self.wating:
-                self.act()
+            if self.current_room is None:
+                future = self.what_room()
+                rclpy.spin_until_future_complete(self, future)
+                response = future.result()
+                if response.observation != 'none':
+                    self.current_room = response.observation
+                    self.get_logger().info("I am in room: " + self.current_room)
+            else:
+                if not self.wating:
+                    self.act()

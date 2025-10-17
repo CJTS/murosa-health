@@ -194,8 +194,8 @@ def generate_bdi(agents, actions, context, variables):
     return bdies
 
 # Example usage
-context = "start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot)"
-variables = ["SpotRobot", "NurseDisinfectRoom", "NurseDisinfect", "UvdRobot"]
+context = "start(SpotRobot, NurseRoom, Nurse, UvdRobot)"
+variables = ["SpotRobot", "NurseRoom", "Nurse", "UvdRobot"]
 agents = ["spotrobot1", "uvdrobot2", "nurse_disinfected1"]
 
 actions = [

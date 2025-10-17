@@ -14,14 +14,16 @@ class RobotRoles(Enum):
     SPOT = 1
     UVD = 2
     NURSE = 3
+    COLLECTOR = 4
+    ARM = 5
 
 class DisinfectRoomMission(Mission):
     def __init__(self, team: List[MissionRobot], context):
         super().__init__(team, context)
         self.priority = 0
         self.roles = [RobotRoles.SPOT, RobotRoles.UVD, RobotRoles.NURSE]
-        self.mission_context = "start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot)"
-        self.variables = ["SpotRobot", "NurseDisinfectRoom", "NurseDisinfect", "UvdRobot"]
+        self.mission_context = "start(SpotRobot, NurseRoom, Nurse, UvdRobot)"
+        self.variables = ["SpotRobot", "NurseRoom", "Nurse", "UvdRobot"]
         self.room = None
 
 class DisinfectICUMission(Mission):
@@ -29,33 +31,36 @@ class DisinfectICUMission(Mission):
         super().__init__(team, context)
         self.priority = 1
         self.roles = [RobotRoles.SPOT, RobotRoles.UVD, RobotRoles.NURSE]
-        self.mission_context = "start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot)"
-        self.variables = ["SpotRobot", "NurseDisinfectRoom", "NurseDisinfect", "UvdRobot"]
+        self.mission_context = "start(SpotRobot, NurseRoom, Nurse, UvdRobot)"
+        self.variables = ["SpotRobot", "NurseRoom", "Nurse", "UvdRobot"]
+        self.room = None
+
+class CollectSampleMission(Mission):
+    def __init__(self, team: List[MissionRobot], context):
+        super().__init__(team, context)
+        self.priority = 1
+        self.roles = [RobotRoles.COLLECTOR, RobotRoles.ARM, RobotRoles.NURSE]
+        self.mission_context = "start(Nurse, NurseRoom, Collector, ArmRoom, Arm)"
+        self.variables = ["Nurse", "NurseRoom", "Collector", "ArmRoom", "Arm"]
         self.room = None
 
 class Coordinator(AgnosticCoordinator):
     def __init__(self):
+        """
+        1.1. Initialize specific coordinator variables (state)
+        """
         super().__init__('Disinfect Coordinator')
-
-        #list of agents
-        self.nurses: List[MissionRobot] = []
-        self.spotrobot: List[MissionRobot] = []
-        self.uvdrobot: List[MissionRobot] = []
-
-        # Needed for the BDI Parser
-        self.mission_context = "start(SpotRobot, NurseDisinfectRoom, NurseDisinfect, UvdRobot)"
-        self.variables =["SpotRobot", "NurseDisinfectRoom", "NurseDisinfect", "UvdRobot"]
 
         self.state = {
             'loc': { 
-                'nurse_disinfected1': 'room1',
-                'nurse_disinfected2': 'room2', 
-                'nurse_disinfected3': 'room3',
-                'nurse_disinfected4': 'room4',
-                'uvdrobot1': 'room4', 
-                'spotrobot1': 'room4',
-                'uvdrobot2': 'room4', 
-                'spotrobot2': 'room4'
+                'nurse1': 'room1',
+                'nurse2': 'room2', 
+                'nurse3': 'room3',
+                'nurse4': 'room4',
+                'uvd1': 'room4', 
+                'spot1': 'room4',
+                'uvd2': 'room4', 
+                'spot2': 'room4'
             },
             'doors': { 
                 'room1': True, 
@@ -71,56 +76,58 @@ class Coordinator(AgnosticCoordinator):
                 'room4': True,
                 'icu': True
             },
+            'samples': {
+                'room1': False,
+                'room2': False,
+                'room3': False,
+                'room4': False,
+                'room5': False,
+                'room6': False,
+                'icu': False
+            },
             'disinfected': {
                 'room1': True,
                 'room2': True,
                 'room3': True,
                 'room4': True,
+                'room5': True,
+                'room6': True,
                 'icu': True
             },
             'low_battery': {
-                'uvdrobot1': False,
-                'spotrobot1': False,
-                'uvdrobot2': False,
-                'spotrobot2': False
+                'uvd1': False,
+                'spot1': False,
+                'uvd2': False,
+                'spot2': False
             }
         }
-    
-    def set_agent_ready(self, decoded_msg):
-        if "uvdrobot" in decoded_msg.sender:
-            robot = next((robot for robot in self.uvdrobot if robot.robot == decoded_msg.sender), None)
-            robot.status = RobotStatus.READY
-        elif "spotrobot" in decoded_msg.sender:
-            robot = next((robot for robot in self.spotrobot if robot.robot == decoded_msg.sender), None)
-            robot.status = RobotStatus.READY
-        elif "nurse" in decoded_msg.sender:
-            robot = next((robot for robot in self.nurses if robot.robot == decoded_msg.sender), None)
-            robot.status = RobotStatus.READY
-
+        
     def register_agent(self, decoded_msg):
-        response = None
-        agent_type = decoded_msg.sender
-        if 'uvdrobot' in decoded_msg.sender:
-            id = str(len(self.uvdrobot) + 1)
-            robot = MissionRobot(decoded_msg.sender + id)
+        """3. Register agents by creating the MissionRobot with its respective specific RobotRole"""
+        agent_name = decoded_msg.sender
+        robot = MissionRobot(agent_name)
+
+        if 'uvd' in agent_name:
             robot.role = RobotRoles.UVD
-            self.uvdrobot.append(robot)
-        elif 'spotrobot' in decoded_msg.sender:
-            id = str(len(self.spotrobot) + 1)
-            robot = MissionRobot(decoded_msg.sender + id)
+        elif 'spot' in agent_name:
             robot.role = RobotRoles.SPOT
-            self.spotrobot.append(robot)
-        elif 'nurse' in decoded_msg.sender:
-            id = str(len(self.nurses) + 1)
-            robot = MissionRobot(decoded_msg.sender + id)
-            robot.role = RobotRoles.NURSE
-            self.nurses.append(robot)
+        elif 'nurse' in agent_name:
+            robot.role = RobotRoles.NURSE  
+        elif 'collector' in agent_name:
+            robot.role = RobotRoles.COLLECTOR  
+        elif 'arm' in agent_name:
+            robot.role = RobotRoles.ARM           
+            
+        self.robots.append(robot)
 
-        response = decoded_msg.sender + id
         if self.should_use_bdi:
-            self.register_queue.append((response, agent_type))
+            # TALVEZ DE ERRO DE PARADA
+            msg = String()
+            msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', 'Jason', 'Create|' + ','.join(agent_name)).encode()
+            self.jason_publisher.publish(msg)
 
-        return response
+        return 'success'
+
     
     def get_team(self, trigger) -> List[MissionRobot]:
         free_uvdrobot = next((robot for robot in self.uvdrobot if robot.status == RobotStatus.READY), None)
