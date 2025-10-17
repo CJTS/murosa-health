@@ -3,7 +3,10 @@ import json
 import random
 from rclpy.node import Node
 from interfaces.srv import Action
-from std_msgs.msg import Bool
+from std_msgs.msg import String, Bool
+from murosa_plan.murosa_plan.helpers.helper import FIPAMessage
+from murosa_plan.murosa_plan.helpers.FIPAPerformatives import FIPAPerformative
+
 
 class Environment(Node):
 
@@ -46,6 +49,16 @@ class Environment(Node):
                 'uvdrobot2': 'room4', 
                 'spotrobot2': 'room4'
             },
+            'pos': { 
+                'nurse_disinfected1': (0,0),
+                'nurse_disinfected2': (0,0), 
+                'nurse_disinfected3': (0,0),
+                'nurse_disinfected4': (0,0),
+                'uvdrobot1': (0,0), 
+                'spotrobot1': (0,0),
+                'uvdrobot2': (0,0), 
+                'spotrobot2': (0,0)
+            },
             'doors': { 
                 'room1': door1[0], 
                 'room2': door2[0], 
@@ -79,6 +92,7 @@ class Environment(Node):
         self.end_simulation_subscription = self.create_subscription(
             Bool, '/coordinator/shutdown_signal', self.end_simulation_callback, 10
         )
+        self.publisher = self.create_publisher(String, '/env/front/state', 10)
 
         self.get_logger().info('Environment server started')
         
@@ -116,13 +130,16 @@ class Environment(Node):
 
     def run(self):
         while rclpy.ok():
-            i = 0
+            rclpy.spin_once(self, timeout_sec=0.001)
+            msg = String()
+            msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Env', 'Front', json.dumps(self.state)).encode()
+            self.publisher_coordinator.publish(msg)
 
 def main():
     rclpy.init()
     environment = Environment()
-    try:
-        rclpy.spin(environment)
+    try:       
+        environment.run()
     except SystemExit:
         rclpy.logging.get_logger("Quitting").info('Done')
     environment.destroy_node()

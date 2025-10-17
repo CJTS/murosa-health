@@ -5,7 +5,7 @@ from murosa_plan.ActionResults import ActionResult
 from murosa_plan.helper import FIPAMessage
 from interfaces.srv import Action, Message
 
-class Robot(Agent):
+class Collector(Agent):
     def __init__(self, className):
         super().__init__(className)
 
@@ -113,13 +113,13 @@ class Robot(Agent):
 
 def main():
     rclpy.init()
-    robot = Robot('Robot')
+    collector = Collector('Collector')
     try:
-        # rclpy.spin(robot)
-        robot.run()
+        # rclpy.spin(collector)
+        collector.run()
     except SystemExit:
         rclpy.logging.get_logger("Quitting").info('Done')
-    robot.destroy_node()
+    collector.destroy_node()
     rclpy.shutdown()
 
 if __name__ == '__main__':

@@ -1,9 +1,9 @@
 import rclpy
-from murosa_plan.agent import Agent
+from murosa_plan.murosa_plan.helpers.agent import Agent
 from murosa_plan.ActionResults import ActionResult
 from interfaces.srv import Action
 
-class UvdRobot(Agent):
+class Uvd(Agent):
     def __init__(self, className):
         super().__init__(className)
         self.battery = 3
@@ -85,13 +85,12 @@ class UvdRobot(Agent):
 
 def main():
     rclpy.init()
-    robot = UvdRobot('UvdRobot')
+    uvd = Uvd('Uvd')
     try:
-        # rclpy.spin(robot)
-        robot.run()
+        uvd.run()
     except SystemExit:
         rclpy.logging.get_logger("Quitting").info('Done')
-    robot.destroy_node()
+    uvd.destroy_node()
     rclpy.shutdown()
 
 if __name__ == '__main__':

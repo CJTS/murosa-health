@@ -1,11 +1,11 @@
 import rclpy
 import time
 from random import randrange
-from murosa_plan.agent import Agent
-from murosa_plan.helper import FIPAMessage
+from murosa_plan.murosa_plan.helpers.agent import Agent
+from murosa_plan.murosa_plan.helpers.helper import FIPAMessage
 from interfaces.srv import Message
-from murosa_plan.FIPAPerformatives import FIPAPerformative
-from murosa_plan.ActionResults import ActionResult
+from murosa_plan.murosa_plan.helpers.FIPAPerformatives import FIPAPerformative
+from murosa_plan.murosa_plan.helpers.ActionResults import ActionResult
 from std_msgs.msg import String, Bool
 
 from interfaces.srv import Action
@@ -67,6 +67,19 @@ class Nurse(Agent):
         elif actionTuple[0] == 'a_clean_room':
             self.get_logger().info('Doing a_clean_room')
             future = self.a_clean_room(actionTuple[1], actionTuple[2])
+        elif actionTuple[0] == 'a_authenticate_nurse':
+            self.get_logger().info('Doing a_authenticate_nurse')
+            self.a_authenticate_nurse(
+                actionTuple[1], actionTuple[2]
+            )
+            return ActionResult.WAITING
+        elif actionTuple[0] == 'a_open_door':
+            self.get_logger().info('Doing a_open_door')
+            future = self.a_open_door(actionTuple[1], actionTuple[2])
+        elif actionTuple[0] == 'a_deposit':
+            self.get_logger().info('Doing a_deposit')
+            self.a_deposit(actionTuple[1], actionTuple[2])
+            return ActionResult.WAITING
 
         if future != None:
             self.get_logger().info("Waiting for response")
@@ -110,14 +123,6 @@ class Nurse(Agent):
             self.get_logger().info("Robot is waiting, send action message")
             self.acting_for_agent(spotrobot, 'a_approach_nurse')
 
-    def a_authenticate_nurse(self, spotrobot, nurse):
-        if all('a_authenticate_nurse' not in action for action in self.wating_response):
-            self.get_logger().info("Here first, waiting for robot")
-            self.ask_for_agent(spotrobot, 'a_authenticate_nurse')
-        else:
-            self.get_logger().info("Robot is waiting, send action message")
-            self.acting_for_agent(spotrobot, 'a_authenticate_nurse')
-
     def a_open_door(self, nurse, room):
         self.action_request = Action.Request()
         self.action_request.action = ','.join(
@@ -131,6 +136,39 @@ class Nurse(Agent):
             ('a_clean_room', nurse, room)
         )
         return self.environment_client.call_async(self.action_request)
+    
+    def a_create_sample(self):
+        self.action_request = Action.Request()
+        self.action_request.action = ','.join(
+            ('a_create_sample', self.agentName)
+        )
+        return self.environment_client.call_async(self.action_request)
+
+    def a_authenticate_nurse(self, robot, nurse):
+        self.get_logger().info("a_authenticate_nurse")
+        if all('a_authenticate_nurse' not in action for action in self.wating_response):
+            self.get_logger().info("Here first, waiting for robot")
+            self.ask_for_agent(robot, 'a_authenticate_nurse')
+        else:
+            self.get_logger().info("Robot is waiting, send action message")
+            self.acting_for_agent(robot, 'a_authenticate_nurse')
+
+    def a_open_door(self, nurse, room):
+        self.action_request = Action.Request()
+        self.action_request.action = ','.join(
+            ('a_open_door', nurse, room)
+        )
+        return self.environment_client.call_async(self.action_request)
+
+    def a_deposit(self, nurse, robot):
+        self.get_logger().info("a_deposit")
+        if all('a_deposit' not in action for action in self.wating_response):
+            self.get_logger().info("Here first, waiting for robot")
+            self.ask_for_agent(robot, 'a_deposit')
+        else:
+            self.get_logger().info("Robot is waiting, send action message")
+            self.acting_for_agent(robot, 'a_deposit')
+
 
 def main():
     rclpy.init()

@@ -2,10 +2,10 @@ import rclpy
 import time
 from rclpy.node import Node
 from interfaces.srv import Message, Action
-from murosa_plan.FIPAPerformatives import FIPAPerformative
-from murosa_plan.helper import FIPAMessage, action_string_to_tuple
+from murosa_plan.murosa_plan.helpers.FIPAPerformatives import FIPAPerformative
+from murosa_plan.murosa_plan.helpers.helper import FIPAMessage, action_string_to_tuple
 from std_msgs.msg import String, Bool
-from murosa_plan.ActionResults import ActionResult
+from murosa_plan.murosa_plan.helpers.ActionResults import ActionResult
 
 class Agent(Node):
     def __init__(self, className):

@@ -1,9 +1,9 @@
 import rclpy
-from murosa_plan.agent import Agent
+from murosa_plan.murosa_plan.helpers.agent import Agent
 from murosa_plan.ActionResults import ActionResult
 from interfaces.srv import Action
 
-class SpotRobot(Agent):
+class Spot(Agent):
     def __init__(self, className):
         super().__init__(className)
         self.battery = 3
@@ -149,13 +149,12 @@ class SpotRobot(Agent):
 
 def main():
     rclpy.init()
-    robot = SpotRobot('SpotRobot')
+    spot = Spot('Spot')
     try:
-        # rclpy.spin(robot)
-        robot.run()
+        spot.run()
     except SystemExit:
         rclpy.logging.get_logger("Quitting").info('Done')
-    robot.destroy_node()
+    spot.destroy_node()
     rclpy.shutdown()
 
 if __name__ == '__main__':
