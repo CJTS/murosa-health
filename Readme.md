@@ -1,5 +1,11 @@
 # Requirements
-This project runs in a Ubuntu 22.04 OS. ROS2 is required (https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html). Java is also needed if using BDI Agents.
+This project runs in a Ubuntu 22.04 OS. ROS2 (Humble) is required (https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debs.html). Java is also needed if using BDI Agents.
+
+## ROS Bridge
+
+```
+sudo apt install ros-humble-rosbridge-server
+```
 
 ## Build
 To build the ros2 packages run the following command

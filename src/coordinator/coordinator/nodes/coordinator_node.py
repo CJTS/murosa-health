@@ -53,14 +53,17 @@ class Coordinator(AgnosticCoordinator):
 
         self.state = {
             'loc': { 
-                'nurse1': 'room1',
-                'nurse2': 'room2', 
-                'nurse3': 'room3',
-                'nurse4': 'room4',
-                'uvd1': 'room4', 
-                'spot1': 'room4',
-                'uvd2': 'room4', 
-                'spot2': 'room4'
+                'nurse1': 'nr',
+                'nurse2': 'nr', 
+                'nurse3': 'nr',
+                'nurse4': 'nr',
+                'uvd1': 'ds', 
+                'spot1': 'ds',
+                'uvd2': 'ds', 
+                'spot2': 'ds',
+                'collector1': 'ds', 
+                'collector2': 'ds', 
+                'arm1': 'lab'
             },
             'doors': { 
                 'room1': True, 
@@ -120,80 +123,109 @@ class Coordinator(AgnosticCoordinator):
             
         self.robots.append(robot)
 
-        if self.should_use_bdi:
-            # TALVEZ DE ERRO DE PARADA
-            msg = String()
-            msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', 'Jason', 'Create|' + ','.join(agent_name)).encode()
-            self.jason_publisher.publish(msg)
-
         return 'success'
 
-    
-    def get_team(self, trigger) -> List[MissionRobot]:
-        free_uvdrobot = next((robot for robot in self.uvdrobot if robot.status == RobotStatus.READY), None)
-        free_spotrobot = next((robot for robot in self.spotrobot if robot.status == RobotStatus.READY), None)
+    def initial_trigger(self, decoded_msg):
+        """
+        4. At some time, the Coordinator will receive the initial triger
+        It will create a new mission for it.
+        """
 
-        time.sleep(1)
+        message = decoded_msg.content.split('|')[1]
         
-        if free_uvdrobot is not None and free_spotrobot is not None:
-            nurse_name = next(
-                (agent for agent, location in self.state['loc'].items()
-                if location == trigger and agent.startswith("nurse")),
-                None  # default if not found
-            )
-            nurse = next((robot for robot in self.nurses if robot.robot == nurse_name), None)
+        mission_type = message.split(',')[0]
+        room = message.split(',')[1]
 
-            team = [free_uvdrobot, free_spotrobot, nurse]
-
-            all_same_version = all(agent.plan_version == team[0].plan_version for agent in team)
-
-            if(all_same_version):
-                free_uvdrobot.status = RobotStatus.OCCUPIED
-                free_spotrobot.status = RobotStatus.OCCUPIED
-                nurse.status = RobotStatus.OCCUPIED
-                return team
-            else:
-                ref_bdi, outdated = self.sync_robots(team)
-
-                for outdated_agent in outdated:
-                    for agent, rules in ref_bdi.items():
-                        if(self.strip_numbers(agent) == self.strip_numbers(outdated_agent.robot)):
-                            plans = []
-                            for rule in rules:
-                                plans.append(rule)
-                            msg = String()
-                            msg.data = FIPAMessage(FIPAPerformative.INFORM.value, 'Coordinator', outdated_agent.robot, 'Plan|' + '/'.join(plans)).encode()
-                            self.agent_publisher.publish(msg)
-
-                time.sleep(1)
-
-                free_uvdrobot.status = RobotStatus.OCCUPIED
-                free_spotrobot.status = RobotStatus.OCCUPIED
-                nurse.status = RobotStatus.OCCUPIED
-                return team
-        return None
-    
-    def get_start_context(self, team: List[MissionRobot], room: str):
-        mission =  (
-            team[1].robot, # Nurse
-            room, # Infected Location
-            team[2].robot, # spotrobot
-            team[0].robot # uvdrobot
-        )
-        self.get_logger().info(f"context: {team[1].robot} {room} {team[2].robot} {team[0].robot}")
-        room = None
-        return mission
-    
-    def create_mission(self, team: List[MissionRobot], start_context, room):
-        self.get_logger().info(f"Creating mission with team")
-        if room == 'icu':
-            mission = DisinfectICUMission(team, start_context)
+        mission = self.create_mission(mission_type, room)
+        team = self.get_team(mission)
+        
+        if(team is not None):
+            mission.team = team
+            mission.context = self.get_start_context(mission_type, team, room)
         else:
-            mission = DisinfectRoomMission(team, start_context)
-        mission.trigger = room
+            mission.status = MissionStatus.WAITING_TEAM
+            
+        if(mission_type == 'Disinfect'):
+            self.state['loc'][decoded_msg.sender] = room
+            self.state['disinfected'][room] = False
+        elif (mission_type == 'Sample'):
+            self.state['samples'][room] = True
+            
         self.missions.append(mission)
+       
+    def create_mission(self, mission_type, trigger):
+        self.get_logger().info(f"Creating mission with team")
+        
+        if(mission_type == 'Disinfect' and trigger == 'icu'):
+            mission = DisinfectICUMission([], {})
+        elif(mission_type == 'Disinfect' and not trigger == 'icu'):
+            mission = DisinfectRoomMission([], {})
+        elif (mission_type == 'Sample'):
+            mission = CollectSampleMission([], {})
 
+        mission.trigger = trigger
         return mission
+    
+    def get_start_context(self, mission_type, team: List[MissionRobot], room: str):
+        if(mission_type == 'Disinfect'):
+            context = (
+                team[2].robot, # Nurse
+                room, # Infected Location
+                team[0].robot, # spotrobot
+                team[1].robot # uvdrobot
+            )
+        elif (mission_type == 'Sample'):
+            context =  (
+                team[2].robot, # Nurse
+                room, # Nurse location
+                team[0].robot, # Robot
+                self.state['loc'][team[1].robot], # Arm Location
+                team[1].robot # Arm
+            )
+        self.get_logger().info(f"context: {str(context)}")
+        return context
+ 
+    # def get_team(self, mission: Mission) -> List[MissionRobot]:
+    #     free_uvdrobot = next((robot for robot in self.uvdrobot if robot.status == RobotStatus.READY), None)
+    #     free_spotrobot = next((robot for robot in self.spotrobot if robot.status == RobotStatus.READY), None)
+        
+    #     if free_uvdrobot is not None and free_spotrobot is not None:
+    #         nurse_name = next(
+    #             (agent for agent, location in self.state['loc'].items()
+    #             if location == trigger and agent.startswith("nurse")),
+    #             None  # default if not found
+    #         )
+    #         nurse = next((robot for robot in self.nurses if robot.robot == nurse_name), None)
+
+    #         team = [free_uvdrobot, free_spotrobot, nurse]
+
+    #         all_same_version = all(agent.plan_version == team[0].plan_version for agent in team)
+
+    #         if(all_same_version):
+    #             free_uvdrobot.status = RobotStatus.OCCUPIED
+    #             free_spotrobot.status = RobotStatus.OCCUPIED
+    #             nurse.status = RobotStatus.OCCUPIED
+    #             return team
+    #         else:
+    #             ref_bdi, outdated = self.sync_robots(team)
+
+    #             for outdated_agent in outdated:
+    #                 for agent, rules in ref_bdi.items():
+    #                     if(self.strip_numbers(agent) == self.strip_numbers(outdated_agent.robot)):
+    #                         plans = []
+    #                         for rule in rules:
+    #                             plans.append(rule)
+    #                         msg = String()
+    #                         msg.data = FIPAMessage(FIPAPerformative.INFORM.value, 'Coordinator', outdated_agent.robot, 'Plan|' + '/'.join(plans)).encode()
+    #                         self.agent_publisher.publish(msg)
+
+    #             time.sleep(1)
+
+    #             free_uvdrobot.status = RobotStatus.OCCUPIED
+    #             free_spotrobot.status = RobotStatus.OCCUPIED
+    #             nurse.status = RobotStatus.OCCUPIED
+    #             return team
+    #     return None
     
     def create_empty_mission(self, room):
         self.get_logger().info(f"Creating mission without team")
@@ -207,36 +239,7 @@ class Coordinator(AgnosticCoordinator):
         self.missions.append(mission)
     
         return mission
-    
-    def initial_trigger(self, decoded_msg):
-        room = decoded_msg.content.split('|')[1]
-        self.state['loc'][decoded_msg.sender] = room
-        self.state['disinfected'][room] = False
-
-        self.get_logger().info(f"Initial trigger received for room: {room}")
-        team = self.get_team(room)
-
-        if(team == None):
-            if room == 'icu':
-                self.get_logger().info("ERROR|icu_room")
-                self.stop_low_priority_mission()
-                time.sleep(1)
-                team = self.get_team(room)
-                if(team == None):
-                    self.get_logger().info("Cant make team")
-                    return
-                start_context = self.get_start_context(team, room)
-                self.create_mission(team, start_context, room)
-            self.create_empty_mission(room)
-            return
-
-        start_context = self.get_start_context(team, room)
-        self.create_mission(team, start_context, room)
-
-    def get_team_from_context(self, context):
-        self.get_logger().info(f"Getting team from context: {context}")
-        return [context[0], context[3], context[2]]
-    
+           
     def free_agent(self, agent: str):
         for mission in self.missions:
             for mission_robot in mission.team:

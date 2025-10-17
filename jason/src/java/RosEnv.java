@@ -40,29 +40,7 @@ public class RosEnv extends Environment {
 
 				clearPercepts();
 
-				if(decodedMessage.getPerformative().equals("request")) {
-					if (decodedContent[0].equals("Create")) {
-						Collection<String> collection = new ArrayList<>();
-						collection.add("DynamicAgent");
-						String createRegex = "[,]";
-						String[] decodedCreateContent = decodedContent[1].split(createRegex);
-
-						try {
-							getEnvironmentInfraTier().getRuntimeServices().createAgent(
-									decodedCreateContent[0],     // agent name
-									decodedCreateContent[1] + ".asl",       // AgentSpeak source
-									null,            // default agent class
-									collection,            // default architecture class
-									null,            // bbpars
-									null,            // settings
-									null);           // father
-							getEnvironmentInfraTier().getRuntimeServices().startAgent(decodedCreateContent[0]);
-						} catch (Exception ex) {
-						}
-					} else if (decodedContent[0].equals("End")) {
-						getEnvironmentInfraTier().getRuntimeServices().killAgent(decodedContent[1], "", 0);
-					}
-				} else if(decodedMessage.getPerformative().equals("inform")) {
+				if(decodedMessage.getPerformative().equals("inform")) {
 					if (decodedContent[0].equals("Belief")) {
 						addPercept(Literal.parseLiteral(decodedContent[1]));
 					} else if (decodedContent[0].equals("Action")) {
@@ -111,7 +89,25 @@ public class RosEnv extends Environment {
 						addPercept(decodedMessage.getSender(), Literal.parseLiteral("low_battery_failure(" + formatFunction(agents) + "))"));
 					}
 				} else if (decodedMessage.getPerformative().equals("request")) {
-					if (decodedContent[0].equals("End")) {
+					if (decodedContent[0].equals("Create")) {
+						Collection<String> collection = new ArrayList<>();
+						collection.add("DynamicAgent");
+						String createRegex = "[,]";
+						String[] decodedCreateContent = decodedContent[1].split(createRegex);
+
+						try {
+							getEnvironmentInfraTier().getRuntimeServices().createAgent(
+									decodedCreateContent[0],     // agent name
+									decodedCreateContent[1] + ".asl",       // AgentSpeak source
+									null,            // default agent class
+									collection,            // default architecture class
+									null,            // bbpars
+									null,            // settings
+									null);           // father
+							getEnvironmentInfraTier().getRuntimeServices().startAgent(decodedCreateContent[0]);
+						} catch (Exception ex) {
+						}
+					} else if (decodedContent[0].equals("End")) {
 						getEnvironmentInfraTier().getRuntimeServices().killAgent(decodedContent[1], "", 0);
 					}
 				}

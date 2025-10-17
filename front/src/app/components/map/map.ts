@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, effect, ElementRef, input, ViewChild } from '@angular/core';
 
 @Component({
   selector: 'app-map',
@@ -9,6 +9,9 @@ import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
 export class Map implements AfterViewInit {
   @ViewChild('hospitalCanvas', { static: false }) hospitalCanvas!: ElementRef<HTMLCanvasElement>;
   private ctx!: CanvasRenderingContext2D;
+  agents: string[] = [];
+
+  state = input<any>();
 
   rooms = [
     { x: 10, y: 10, width: 50, height: 50, label: 'room1' },
@@ -32,6 +35,20 @@ export class Map implements AfterViewInit {
     { x: 235, y: 80 },
   ];
 
+  constructor() {
+    effect(() => {
+      if (this.state() && this.state()?.pos) {
+        this.agents = Object.keys(this.state()?.pos);
+      }
+
+      if (this.ctx) {
+        this.ctx.reset();
+        this.drawLayout();
+        this.drawAgents();
+      }
+    });
+  }
+
   ngAfterViewInit(): void {
     const canvas = this.hospitalCanvas.nativeElement;
     this.ctx = canvas.getContext('2d') as CanvasRenderingContext2D;
@@ -48,10 +65,18 @@ export class Map implements AfterViewInit {
 
     // === QUARTOS PACIENTES (R) ===
     this.rooms.forEach((room) => {
+      if (this.state()?.samples && this.state()?.samples[room.label]) {
+        ctx.fillStyle = 'blue';
+      } else {
+        ctx.fillStyle = '#000';
+      }
+
       ctx.strokeRect(room.x, room.y, room.width, room.height);
       ctx.font = '14px Arial';
       ctx.fillText(room.label, room.x + 3, room.y + 15);
     });
+
+    ctx.fillStyle = '#000';
 
     // === Caminhos (Path Segments) ===
     ctx.setLineDash([4, 2]);
@@ -82,7 +107,6 @@ export class Map implements AfterViewInit {
       ctx.stroke();
     });
 
-
     // === Legenda ===
     ctx.fillStyle = '#000';
     ctx.strokeRect(410, 10, 170, 125);
@@ -109,5 +133,31 @@ export class Map implements AfterViewInit {
     ctx.fillText('icu = Intensive Care Unit', 417, 85);
     ctx.fillText('nr = Nurses Room', 417, 105);
     ctx.fillText('ds = Docking Station', 417, 125);
+  }
+
+  drawAgents(): void {
+    const ctx = this.ctx;
+
+    this.agents.forEach((agentName) => {
+      const agent = this.state()?.pos[agentName];
+
+      if (agentName.includes('arm')) {
+        ctx.fillStyle = 'red';
+      } else if (agentName.includes('collector')) {
+        ctx.fillStyle = 'blue';
+      } else if (agentName.includes('spot')) {
+        ctx.fillStyle = 'yellow';
+      } else if (agentName.includes('uvd')) {
+        ctx.fillStyle = 'green';
+      } else if (agentName.includes('nurse')) {
+        ctx.fillStyle = 'black';
+      }
+
+      ctx.beginPath();
+      ctx.arc(agent[0], agent[1], 5, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    ctx.fillStyle = '#000';
   }
 }

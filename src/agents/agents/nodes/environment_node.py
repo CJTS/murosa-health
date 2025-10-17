@@ -5,15 +5,15 @@ import random
 from rclpy.node import Node
 from std_msgs.msg import String, Bool
 
-from interfaces.srv import Action
+from interfaces.srv import Action, Message
 from agents.helpers.helper import FIPAMessage
 from agents.helpers.FIPAPerformatives import FIPAPerformative
 
 class Environment(Node):
     def __init__(self):
         super().__init__('Environment')
-        self.client_futures = []
-        self.door = False
+        self.counter = 5000
+        
         cleanOptions = [True, False]
         doorOptions = [False, True]
         nurse4Room = ['room4', 'icu']
@@ -53,17 +53,17 @@ class Environment(Node):
                 'arm1': 'lab'
             },
             'pos': { 
-                'nurse1': (0,0),
-                'nurse2': (0,0), 
-                'nurse3': (0,0),
-                'nurse4': (0,0),
-                'uvd1': (0,0), 
-                'spot1': (0,0),
-                'uvd2': (0,0), 
-                'spot2': (0,0), 
-                'collector1': (0,0), 
-                'collector2': (0,0), 
-                'arm1': (0,0)
+                'nurse1': (185, 110),
+                'nurse2': (185, 110), 
+                'nurse3': (185, 110),
+                'nurse4': (185, 110),
+                'uvd1': (235, 50), 
+                'spot1': (235, 50),
+                'uvd2': (235, 50), 
+                'spot2': (235, 50), 
+                'collector1': (235, 50), 
+                'collector2': (235, 50), 
+                'arm1': (185, 50)
             },
             'doors': { 
                 'room1': door1[0], 
@@ -100,7 +100,7 @@ class Environment(Node):
         }
         self.start_server()
 
-        
+
     def start_server(self):
         self.get_logger().info('Starting Environment server')
         self.environment_server = self.create_service(
@@ -110,6 +110,9 @@ class Environment(Node):
             Bool, '/coordinator/shutdown_signal', self.end_simulation_callback, 10
         )
         self.publisher = self.create_publisher(String, '/env/front/state', 10)
+        self.cli = self.create_client(Message, 'coordinator')
+        while not self.cli.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('service not available, waiting again...')
 
         self.get_logger().info('Environment server started')
         
@@ -144,10 +147,27 @@ class Environment(Node):
             response.observation = self.state['loc'][actionTuple[1]]
                 
         return response
+    
+    def sample_initial_trigger(self, room):
+        message = FIPAMessage(FIPAPerformative.INFORM.value, 'Env', 'Coordinator', 'InitialTrigger|Sample,' + room).encode()
+        ros_msg = Message.Request()
+        ros_msg.content = message
+        return self.cli.call_async(ros_msg)
 
     def run(self):
         while rclpy.ok():
             rclpy.spin_once(self, timeout_sec=0.001)
+            
+            self.counter = self.counter + 1
+            if self.counter == 10000:
+                rooms_list = ["room1", "room2", "room3", "room4", "room5", "room6", "icu"]
+                random_room = random.choice(rooms_list)
+                self.state['samples'][random_room] = True
+                future = self.sample_initial_trigger(random_room)
+                rclpy.spin_until_future_complete(self, future)
+                response = future.result()
+                self.get_logger().info('Initial Trigger:  %s' % (response.response))
+            
             msg = String()
             msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Env', 'Front', json.dumps(self.state)).encode()
             self.publisher.publish(msg)

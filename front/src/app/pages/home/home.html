@@ -8,13 +8,21 @@
     </mat-card-header>
     <mat-card-actions>
       <div class="map-container">
-        <app-map></app-map>
+        <app-map [state]="state"></app-map>
       </div>
     </mat-card-actions>
   </mat-card>
 </div>
 <div class="tabs-container">
   <mat-tab-group mat-stretch-tabs="false" mat-align-tabs="start">
-    <mat-tab label="Agents">Agents</mat-tab>
+    <mat-tab label="Agents">
+      <ul>
+        @for (agentName of agents; track agentName) {
+        <li>{{ agentName }} ({{ state?.pos[agentName] }})</li>
+        } @empty {
+        <li>No items found.</li>
+        }
+      </ul>
+    </mat-tab>
   </mat-tab-group>
 </div>

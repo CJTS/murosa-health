@@ -45,6 +45,7 @@ class Agent(Node):
 
         # Subscriber para falar com o Jason (Ação)
         if self.should_use_bdi:
+            self.jason_publisher = self.create_publisher(String, '/agent/jason/result', 10)
             self.subscription_jason = self.create_subscription(
                 String, '/jason/agent/action', self.listener_callback, 10
             )
@@ -81,13 +82,16 @@ class Agent(Node):
         future = self.send_registration_request()
         rclpy.spin_until_future_complete(self, future)
         response = future.result()
-        self.get_logger().info('Registrarion result:  %s' % (response.response))
-        if response.response == 'success' and not self.should_use_bdi:
-            # If using BDI, it after it is initialized, it will notify the coordinator that it is ready, if not, the notification is necessary
-            future = self.send_ready_request()
-            rclpy.spin_until_future_complete(self, future)
-            response = future.result()
-            self.get_logger().info('Readyness result:  %s' % (response.response))
+        if response.response == 'success':
+            if self.should_use_bdi:
+                # If using BDI, it after it is initialized, it will notify the coordinator that it is ready
+                msg = String()
+                msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', 'Jason', 'Create|' + ','.join(agent_name)).encode()
+                self.jason_publisher.publish(msg)
+            else:
+                # If not using BDI, the notification is required
+                future = self.send_ready_request()
+                rclpy.spin_until_future_complete(self, future)
 
     def send_registration_request(self):
         # Create FIPA message
@@ -320,7 +324,6 @@ class Agent(Node):
                 response = future.result()
                 if response.observation != 'none':
                     self.current_room = response.observation
-                    self.get_logger().info("I am in room: " + self.current_room)
             else:
                 if not self.wating:
                     self.act()
