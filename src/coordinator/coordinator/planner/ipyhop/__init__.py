@@ -10,13 +10,13 @@ Derived from:
     Copyright (c) 2021, University of Maryland
 """
 
-from murosa_plan.ipyhop.mc_executor import MonteCarloExecutor
-from murosa_plan.ipyhop.state import State
-from murosa_plan.ipyhop.mulitgoal import MultiGoal
-from murosa_plan.ipyhop.methods import Methods, mgm_split_multigoal
-from murosa_plan.ipyhop.actions import Actions
-from murosa_plan.ipyhop.planner import IPyHOP
-from murosa_plan.ipyhop.plotter import planar_plot
+from coordinator.planner.ipyhop.mc_executor import MonteCarloExecutor
+from coordinator.planner.ipyhop.state import State
+from coordinator.planner.ipyhop.mulitgoal import MultiGoal
+from coordinator.planner.ipyhop.methods import Methods, mgm_split_multigoal
+from coordinator.planner.ipyhop.actions import Actions
+from coordinator.planner.ipyhop.planner import IPyHOP
+from coordinator.planner.ipyhop.plotter import planar_plot
 # from ipyhop.failure_handler import post_failure_tasks
 
 """

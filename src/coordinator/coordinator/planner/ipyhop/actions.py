@@ -6,7 +6,7 @@ File Description: File used for definition of Actions Class.
 # ******************************************    Libraries to be imported    ****************************************** #
 from __future__ import print_function, division
 from typing import List, Callable, Union, Any, Dict
-from murosa_plan.ipyhop.state import State
+from coordinator.planner.ipyhop.state import State
 
 
 # ******************************************    Class Declaration Start     ****************************************** #

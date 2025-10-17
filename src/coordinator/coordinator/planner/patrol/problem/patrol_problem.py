@@ -3,7 +3,7 @@
 File Description: Hospital mod problem file. Initial state and task list for the planning problem is defined here.
 """
 # ******************************************    Libraries to be imported    ****************************************** #
-from murosa_plan.ipyhop import State
+from coordinator.planner.ipyhop import State
 # ******************************************        Problem Definition      ****************************************** #
 init_state = State('init_state')
 init_state.loc = { 'patrol1': 'wp_control', 'patrol2': 'wp_control', 'patrol3': 'wp_control' }

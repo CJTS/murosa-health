@@ -1,12 +1,14 @@
 import json
 import rclpy
+
 from rclpy.node import Node
 from interfaces.srv import Action
-from murosa_plan.disinfect.domain.disinfect_methods import methods
-from murosa_plan.disinfect.domain.disinfect_actions import actions
-from murosa_plan.disinfect.problem.disinfect_problem import init_state
-from murosa_plan.ipyhop import IPyHOP
 from std_msgs.msg import Bool
+
+from coordinator.planner.disinfect.domain.disinfect_methods import methods
+from coordinator.planner.disinfect.domain.disinfect_actions import actions
+from coordinator.planner.disinfect.problem.disinfect_problem import init_state
+from coordinator.planner.ipyhop import IPyHOP
 
 class Planner(Node):
     def __init__(self):

@@ -7,10 +7,10 @@ File Description: File used for definition of IPyHOP Class.
 from __future__ import print_function, division
 from itertools import count
 from typing import List, Tuple, Union, Optional
-from murosa_plan.ipyhop.methods import Methods
-from murosa_plan.ipyhop.actions import Actions
-from murosa_plan.ipyhop.state import State
-from murosa_plan.ipyhop.mulitgoal import MultiGoal
+from coordinator.planner.ipyhop.methods import Methods
+from coordinator.planner.ipyhop.actions import Actions
+from coordinator.planner.ipyhop.state import State
+from coordinator.planner.ipyhop.mulitgoal import MultiGoal
 from networkx import DiGraph, dfs_preorder_nodes, descendants, is_tree
 from copy import deepcopy
 

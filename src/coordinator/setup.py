@@ -24,7 +24,7 @@ setup(
     entry_points={
         'console_scripts': [
             'coordinator = coordinator.nodes.coordinator_node:main',
-            'planner = murosa_plan.nodes.planner_node:main',
+            'planner = coordinator.nodes.planner_node:main',
         ],
     },
 )

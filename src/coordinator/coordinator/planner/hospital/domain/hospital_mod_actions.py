@@ -3,7 +3,7 @@
 File Description: Hospital actions file. All the actions for Hospital planning domain are defined here.
 """
 # ******************************************    Libraries to be imported    ****************************************** #
-from murosa_plan.ipyhop import Actions
+from coordinator.planner.ipyhop import Actions
 
 # ******************************************        Action Definitions      ****************************************** #
 actions = Actions()

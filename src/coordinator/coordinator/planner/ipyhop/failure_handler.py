@@ -8,7 +8,6 @@ This is an old file. Kept here only for future reference. Do not use this.
 from networkx import DiGraph
 from typing import List, Tuple, Union
 
-
 # ****************************************        Function Declaration        **************************************** #
 def post_failure_tasks(graph: DiGraph, fail_node: Union[int, Tuple]) -> List:
     """
