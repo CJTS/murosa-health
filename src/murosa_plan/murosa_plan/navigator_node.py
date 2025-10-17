@@ -58,8 +58,7 @@ class Navigator(Node):
     
     def receive_message(self, request, response):
         actionTuple = tuple(request.action.split(','))
-        response.observation = 'success'
-        
+        response.observation = ','.join(self.astar(actionTuple[0], actionTuple[1]))
         return response
 
     def heuristic(self, a, b):

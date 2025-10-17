@@ -5,3 +5,4 @@ class ActionResult(Enum):
     FAILURE = 1
     WAITING = 2
     BATTERY_FAILURE = 3
+    MOVING = 4

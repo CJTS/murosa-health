@@ -18,6 +18,9 @@ class Agent(Node):
         self.declare_parameter('bdi', rclpy.Parameter.Type.BOOL)
         self.should_use_bdi = self.get_parameter('bdi').get_parameter_value().bool_value
         self.with_plan = False
+        self.moving = False
+        self.current_room = None
+        self.goal_room = None
 
         # Coordinator Client
         self.cli = self.create_client(Message, 'coordinator')
@@ -30,6 +33,13 @@ class Agent(Node):
         )
         while not self.environment_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('environment service not available, waiting again...')
+            
+        # Navigator Client
+        self.navigator_client = self.create_client(
+            Action, 'navigator_server'
+        )
+        while not self.navigator_client.wait_for_service(timeout_sec=1.0):
+            self.get_logger().info('navigator service not available, waiting again...')
 
         # Subscriber para falar com o Jason (Ação)
         if self.should_use_bdi:
@@ -211,45 +221,60 @@ class Agent(Node):
         self.actions.append(msg.content.split(","))
 
     def act(self):
-        if(len(self.plan) > 0):
-            time.sleep(1)
-            action = self.plan.pop(0)
-            result = self.choose_action(action)
-            if result == ActionResult.WAITING:
-                self.wating = True
-                self.plan.insert(0, action)
-            elif result == ActionResult.BATTERY_FAILURE:
-                """Send battery failure to Coordinator"""
-                self.notifyError(
-                    ','.join(('low_battery', self.agentName))
-                )
-            if result == ActionResult.SUCCESS:
-                self.get_logger().info("Action finished")
-        elif(len(self.actions) > 0 and self.should_use_bdi):
-            time.sleep(0.5)
-            self.get_logger().info('Acting')
-            action = self.actions.pop()
-            result = self.choose_action(action)
-            if result == ActionResult.SUCCESS:
-                msg = String()
-                msg.data = FIPAMessage(FIPAPerformative.INFORM.value, self.agentName, 'Jason', 'Success|' + ",".join(action)).encode()
-                self.publisher.publish(msg)
-                self.get_logger().info("Action finished")
-            elif result == ActionResult.FAILURE:
-                msg = String()
-                msg.data = FIPAMessage(FIPAPerformative.INFORM.value, self.agentName, 'Jason', 'Failure|' + ",".join(action)).encode()
-                self.publisher.publish(msg)
-            elif result == ActionResult.BATTERY_FAILURE:
-                """Send battery failure to Jason"""
-                msg = String()
-                msg.data = FIPAMessage(FIPAPerformative.INFORM.value, self.agentName, 'Jason', 'BatteryFailure|'+ ",".join(action)).encode()
-                self.publisher.publish(msg)
-            elif result == ActionResult.WAITING:
-                self.wating = True
-                self.actions.append(action)
-        
-        if len(self.plan) == 0 and self.with_plan:
-            self.end_local_mission()
+        if not self.moving:
+            if(len(self.plan) > 0):
+                time.sleep(1)
+                action = self.plan.pop(0)
+                result = self.choose_action(action)
+                if result == ActionResult.WAITING:
+                    self.wating = True
+                    self.plan.insert(0, action)
+                elif result == ActionResult.BATTERY_FAILURE:
+                    """Send battery failure to Coordinator"""
+                    self.notifyError(
+                        ','.join(('low_battery', self.agentName))
+                    )
+                elif result == ActionResult.SUCCESS:
+                    self.get_logger().info("Action finished")
+            elif(len(self.actions) > 0 and self.should_use_bdi):
+                time.sleep(0.5)
+                self.get_logger().info('Acting')
+                action = self.actions.pop()
+                result = self.choose_action(action)
+                if result == ActionResult.SUCCESS:
+                    msg = String()
+                    msg.data = FIPAMessage(FIPAPerformative.INFORM.value, self.agentName, 'Jason', 'Success|' + ",".join(action)).encode()
+                    self.publisher.publish(msg)
+                    self.get_logger().info("Action finished")
+                elif result == ActionResult.FAILURE:
+                    msg = String()
+                    msg.data = FIPAMessage(FIPAPerformative.INFORM.value, self.agentName, 'Jason', 'Failure|' + ",".join(action)).encode()
+                    self.publisher.publish(msg)
+                elif result == ActionResult.BATTERY_FAILURE:
+                    """Send battery failure to Jason"""
+                    msg = String()
+                    msg.data = FIPAMessage(FIPAPerformative.INFORM.value, self.agentName, 'Jason', 'BatteryFailure|'+ ",".join(action)).encode()
+                    self.publisher.publish(msg)
+                elif result == ActionResult.WAITING:
+                    self.wating = True
+                    self.actions.append(action)
+            
+            if len(self.plan) == 0 and self.with_plan:
+                self.end_local_mission()
+        else:
+            self.move()
+            
+    def a_navto(self, robot, room):
+        self.goal_room = room
+        self.moving = True
+            
+    def move(self):
+        self.action_request = Action.Request()
+        self.action_request.action = ','.join(('path', self.current_room, self.goal_room))
+        future = self.navigator_client.call_async(self.action_request)
+        rclpy.spin_until_future_complete(self, future)
+        response = future.result()
+        self.get_logger().info(response.observation)
 
     def notifyError(self, error):
         message = FIPAMessage(FIPAPerformative.INFORM.value, self.agentName, 'Coordinator', 'ERROR|' + error).encode()
