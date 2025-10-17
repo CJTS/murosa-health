@@ -66,5 +66,5 @@ BDI=False REPLAN=True ros2 launch coordinator health.launch.py
 Then, start the env and agent nodes.
 
 ```
-BDI=False PROBLEM_RATE=0 ros2 launch murosa_plan health.launch.py
+BDI=False PROBLEM_RATE=0 ros2 launch agents health.launch.py
 ```

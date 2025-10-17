@@ -2,7 +2,7 @@ import os
 from glob import glob
 from setuptools import setup
 
-package_name = 'murosa_plan'
+package_name = 'agents'
 
 setup(
     name=package_name,
@@ -23,13 +23,13 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'arm = murosa_plan.nodes.arm_node:main',
-            'collector = murosa_plan.nodes.collector_node:main',
-            'environment = murosa_plan.nodes.environment_node:main',
-            'navigator = murosa_plan.nodes.navigator_node:main',
-            'nurse = murosa_plan.nodes.nurse_node:main',
-            'spot = murosa_plan.nodes.spot_node:main',
-            'uvd = murosa_plan.nodes.uvd_node:main',
+            'arm = agents.nodes.arm_node:main',
+            'collector = agents.nodes.collector_node:main',
+            'environment = agents.nodes.environment_node:main',
+            'navigator = agents.nodes.navigator_node:main',
+            'nurse = agents.nodes.nurse_node:main',
+            'spot = agents.nodes.spot_node:main',
+            'uvd = agents.nodes.uvd_node:main',
         ],
     },
 )

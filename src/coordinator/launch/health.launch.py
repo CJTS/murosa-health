@@ -23,4 +23,9 @@ def generate_launch_description():
                 'bdi': LaunchConfiguration('bdi'),
             }]
         ),
+        Node(
+            package='coordinator',
+            executable='planner',
+            name='planner'
+        ),
     ])

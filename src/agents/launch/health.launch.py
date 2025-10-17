@@ -15,7 +15,7 @@ def generate_launch_description():
         problem_rate_launch_arg,
         bdi_launch_arg,
         Node(
-            package='murosa_plan',
+            package='agents',
             executable='environment',
             name=['environment'],
             parameters=[{
@@ -23,17 +23,12 @@ def generate_launch_description():
             }]
         ),
         Node(
-            package='murosa_plan',
-            executable='planner',
-            name='planner'
-        ),
-        Node(
-            package='murosa_plan',
+            package='agents',
             executable='navigator',
             name='navigator'
         ),
         Node(
-            package='murosa_plan',
+            package='agents',
             executable='nurse',
             name='nurse1',
             parameters=[{
@@ -41,7 +36,7 @@ def generate_launch_description():
             }]
         ),
         Node(
-            package='murosa_plan',
+            package='agents',
             executable='nurse',
             name='nurse2',
             parameters=[{
@@ -49,7 +44,7 @@ def generate_launch_description():
             }]
         ),
         Node(
-            package='murosa_plan',
+            package='agents',
             executable='nurse',
             name='nurse3',
             parameters=[{
@@ -57,7 +52,7 @@ def generate_launch_description():
             }]
         ),
         Node(
-            package='murosa_plan',
+            package='agents',
             executable='nurse',
             name='nurse4',
             parameters=[{
@@ -65,7 +60,7 @@ def generate_launch_description():
             }]
         ),
         Node(
-            package='murosa_plan',
+            package='agents',
             executable='uvd',
             name='uvd1',
             parameters=[{
@@ -73,7 +68,7 @@ def generate_launch_description():
             }]
         ),
         Node(
-            package='murosa_plan',
+            package='agents',
             executable='uvd',
             name='uvd2',
             parameters=[{
@@ -81,7 +76,7 @@ def generate_launch_description():
             }]
         ),
         Node(
-            package='murosa_plan',
+            package='agents',
             executable='spot',
             name='spot1',
             parameters=[{
@@ -89,7 +84,7 @@ def generate_launch_description():
             }]
         ),
         Node(
-            package='murosa_plan',
+            package='agents',
             executable='spot',
             name='spot2',
             parameters=[{
@@ -97,7 +92,7 @@ def generate_launch_description():
             }]
         ),
         Node(
-            package='murosa_plan',
+            package='agents',
             executable='collector',
             name='collector1',
             parameters=[{
@@ -105,7 +100,7 @@ def generate_launch_description():
             }]
         ),
         Node(
-            package='murosa_plan',
+            package='agents',
             executable='collector',
             name='collector2',
             parameters=[{
@@ -113,7 +108,7 @@ def generate_launch_description():
             }]
         ),
         Node(
-            package='murosa_plan',
+            package='agents',
             executable='arm',
             name='arm1',
             parameters=[{

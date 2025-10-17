@@ -1,8 +1,7 @@
 import rclpy
-from murosa_plan.agent import Agent
-from murosa_plan.ActionResults import ActionResult
 
-from interfaces.srv import Action
+from agents.helpers.agent import Agent
+from agents.helpers.ActionResults import ActionResult
 
 class Arm(Agent):
     def __init__(self, className):

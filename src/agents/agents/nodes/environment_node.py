@@ -1,15 +1,15 @@
 import rclpy
 import json
 import random
-from rclpy.node import Node
-from interfaces.srv import Action
-from std_msgs.msg import String, Bool
-from murosa_plan.murosa_plan.helpers.helper import FIPAMessage
-from murosa_plan.murosa_plan.helpers.FIPAPerformatives import FIPAPerformative
 
+from rclpy.node import Node
+from std_msgs.msg import String, Bool
+
+from interfaces.srv import Action
+from agents.helpers.helper import FIPAMessage
+from agents.helpers.FIPAPerformatives import FIPAPerformative
 
 class Environment(Node):
-
     def __init__(self):
         super().__init__('Environment')
         self.client_futures = []

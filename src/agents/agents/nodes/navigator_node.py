@@ -1,11 +1,11 @@
 import heapq
 import math
 import rclpy
-from rclpy.node import Node
-from interfaces.srv import Action
-
 import heapq
 import math
+
+from rclpy.node import Node
+from interfaces.srv import Action
 
 class Navigator(Node):
     def __init__(self):

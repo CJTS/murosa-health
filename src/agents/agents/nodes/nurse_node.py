@@ -1,14 +1,11 @@
 import rclpy
 import time
-from random import randrange
-from murosa_plan.murosa_plan.helpers.agent import Agent
-from murosa_plan.murosa_plan.helpers.helper import FIPAMessage
-from interfaces.srv import Message
-from murosa_plan.murosa_plan.helpers.FIPAPerformatives import FIPAPerformative
-from murosa_plan.murosa_plan.helpers.ActionResults import ActionResult
-from std_msgs.msg import String, Bool
 
-from interfaces.srv import Action
+from interfaces.srv import Message, Action
+from agents.helpers.agent import Agent
+from agents.helpers.helper import FIPAMessage
+from agents.helpers.ActionResults import ActionResult
+from agents.helpers.FIPAPerformatives import FIPAPerformative
 
 class Nurse(Agent):
     def __init__(self, className):

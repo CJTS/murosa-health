@@ -75,7 +75,7 @@ def start_services(mission, run_number, problem_rate, replan, bdi):
     print(f"Starting {mission} service...")
     logs[f"{mission}.log"] = _open_log(f"{mission}.log")
     processes[mission] = subprocess.Popen(
-        ["ros2", "launch", "murosa_plan", mission + ".launch.py"],
+        ["ros2", "launch", "agents", mission + ".launch.py"],
         **popen_kwargs
     )
 
@@ -229,7 +229,7 @@ def cleanup_ros2_nodes(exclude_pid=None, ros_domain_id=None):
             # decide if this looks like a ROS2 process to kill
             cmdline = proc.info.get("cmdline") or []
             cmdstr = " ".join(cmdline).lower()
-            looks_like_ros = any(x in cmdstr for x in ("ros2", "roslaunch", "launch", "murosa_plan", "coordinator", "rosbridge"))
+            looks_like_ros = any(x in cmdstr for x in ("ros2", "roslaunch", "launch", "agents", "coordinator", "rosbridge"))
             # also consider Python processes that load rclpy (best-effort)
             if not looks_like_ros:
                 # check open files / cmdline heuristics
