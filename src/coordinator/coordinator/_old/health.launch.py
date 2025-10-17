@@ -16,8 +16,8 @@ def generate_launch_description():
         bdi_launch_arg,
         Node(
             package='coordinator',
-            executable='disinfect_coordinator',
-            name='disinfect_coordinator',
+            executable='coordinator',
+            name='coordinator',
             parameters=[{
                 'replan': LaunchConfiguration('replan'),
                 'bdi': LaunchConfiguration('bdi'),

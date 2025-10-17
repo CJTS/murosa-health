@@ -28,7 +28,6 @@ setup(
             'environment = murosa_plan.nodes.environment_node:main',
             'navigator = murosa_plan.nodes.navigator_node:main',
             'nurse = murosa_plan.nodes.nurse_node:main',
-            'planner = murosa_plan.nodes.planner_node:main',
             'spot = murosa_plan.nodes.spot_node:main',
             'uvd = murosa_plan.nodes.uvd_node:main',
         ],

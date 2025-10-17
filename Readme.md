@@ -20,16 +20,6 @@ Then source the build, set the ENV variables REPLAN and PROBLEM_RATE, run the co
 ```source /opt/ros/humble/setup.bash```
 ```source install/local_setup.bash```
 
-### Health
-```ros2 launch coordinator health.launch.py```
-```ros2 launch murosa_plan health.launch.py```
-
-### Patrol
-```ros2 launch coordinator patrol.launch.py```
-```ros2 launch murosa_plan patrol.launch.py```
-
-### Desinfect
-BDI not implemented and needed.
-
-```BDI=False REPLAN=True ros2 launch coordinator disinfect.launch.py```
-```BDI=False PROBLEM_RATE=0 ros2 launch murosa_plan disinfect.launch.py```
+### Healthcare case
+```BDI=False REPLAN=True ros2 launch coordinator health.launch.py```
+```BDI=False PROBLEM_RATE=0 ros2 launch murosa_plan health.launch.py```

@@ -23,9 +23,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'coordinator = coordinator.coordinator_node:main',
-            'patrol_coordinator = coordinator.patrol_coordinator_node:main',
-            'disinfect_coordinator = coordinator.disinfect_coordinator_node:main',
+            'coordinator = coordinator.nodes.coordinator_node:main',
+            'planner = murosa_plan.nodes.planner_node:main',
         ],
     },
 )
