@@ -23,6 +23,9 @@ class Agent(Node):
         self.moving = False
         self.current_room = None
         self.goal_room = None
+        self.path = None
+        self.vx = None
+        self.vy = None
 
         # Coordinator Client
         self.cli = self.create_client(Message, 'coordinator')
@@ -286,12 +289,54 @@ class Agent(Node):
         self.moving = True
 
     def move(self):
-        self.action_request = Action.Request()
-        self.action_request.action = ','.join(('path', self.current_room, self.goal_room))
-        future = self.navigator_client.call_async(self.action_request)
-        rclpy.spin_until_future_complete(self, future)
-        response = future.result()
-        self.get_logger().info(response.observation)
+        if(self.path == None and self.vx == None and self.vy == None):
+            self.action_request = Action.Request()
+            self.action_request.action = ','.join(('path', self.current_room, self.goal_room))
+            future = self.navigator_client.call_async(self.action_request)
+            rclpy.spin_until_future_complete(self, future)
+            response = future.result()
+            self.get_logger().info(response.observation)
+            self.path = response.observation.split(',')
+        elif self.vx == None and self.vy == None:
+            if len(self.path) < 2:
+                self.path = None
+                self.vx = None
+                self.vy = None
+                self.next_room = None
+                self.moving = False
+
+            self.action_request = Action.Request()
+            self.next_room = self.path.pop(1)
+            self.action_request.action = ','.join(('velocity', self.current_room, self.next_room))
+            future = self.navigator_client.call_async(self.action_request)
+            rclpy.spin_until_future_complete(self, future)
+            response = future.result()
+
+            vx, vy = response.observation.split(',')
+            self.vx = float(vx)
+            self.vy = float(vy)
+        else:
+            self.action_request = Action.Request()
+            self.action_request.action = ','.join(('move', self.get_name(), str(self.vx), str(self.vy)))
+            future = self.environment_client.call_async(self.action_request)
+            rclpy.spin_until_future_complete(self, future)
+            response = future.result()
+            pos = response.observation.split(',')
+
+            self.action_request = Action.Request()
+            self.action_request.action = ','.join(('reached', pos[0], pos[1], self.next_room))
+            future = self.navigator_client.call_async(self.action_request)
+            rclpy.spin_until_future_complete(self, future)
+            response = future.result()
+            if(response.observation == "True"):
+                self.vx = None
+                self.vy = None
+                self.current_room = self.next_room
+                self.action_request = Action.Request()
+                self.action_request.action = ','.join(('a_navto', self.get_name(), self.current_room))
+                future = self.environment_client.call_async(self.action_request)
+                rclpy.spin_until_future_complete(self, future)
+
 
     def notifyError(self, error):
         message = FIPAMessage(FIPAPerformative.INFORM.value, self.get_name(), 'Coordinator', 'ERROR|' + error).encode()

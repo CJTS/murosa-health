@@ -13,7 +13,6 @@ class Environment(Node):
     def __init__(self):
         super().__init__('Environment')
         self.counter = 5000
-        
         cleanOptions = [True, False]
         doorOptions = [False, True]
         nurse4Room = ['room4', 'icu']
@@ -39,40 +38,40 @@ class Environment(Node):
             100 - uncleaned_percentage, uncleaned_percentage), k=1)
 
         self.state = {
-            'loc': { 
-                'nurse1': 'room1',
-                'nurse2': 'room2', 
-                'nurse3': 'room3',
-                'nurse4': icuRoom[0],
-                'uvd1': 'ds', 
+            'loc': {
+                'nurse1': 'nr',
+                'nurse2': 'nr',
+                'nurse3': 'nr',
+                'nurse4': 'nr',
+                'uvd1': 'ds',
                 'spot1': 'ds',
-                'uvd2': 'ds', 
+                'uvd2': 'ds',
                 'spot2': 'ds',
-                'collector1': 'ds', 
-                'collector2': 'ds', 
+                'collector1': 'ds',
+                'collector2': 'ds',
                 'arm1': 'lab'
             },
-            'pos': { 
-                'nurse1': (185, 110),
-                'nurse2': (185, 110), 
-                'nurse3': (185, 110),
-                'nurse4': (185, 110),
-                'uvd1': (235, 50), 
+            'pos': {
+                'nurse1': (185, 125),
+                'nurse2': (185, 125),
+                'nurse3': (185, 125),
+                'nurse4': (185, 125),
+                'uvd1': (235, 50),
                 'spot1': (235, 50),
-                'uvd2': (235, 50), 
-                'spot2': (235, 50), 
-                'collector1': (235, 50), 
-                'collector2': (235, 50), 
+                'uvd2': (235, 50),
+                'spot2': (235, 50),
+                'collector1': (235, 50),
+                'collector2': (235, 50),
                 'arm1': (185, 50)
             },
-            'doors': { 
-                'room1': door1[0], 
-                'room2': door2[0], 
-                'room3': door3[0], 
-                'room4': door4[0], 
+            'doors': {
+                'room1': door1[0],
+                'room2': door2[0],
+                'room3': door3[0],
+                'room4': door4[0],
                 'icu': door4[0]
             },
-            'cleaned': { 
+            'cleaned': {
                 'room1': uncleaned1[0],
                 'room2': uncleaned2[0],
                 'room3': uncleaned3[0],
@@ -115,7 +114,7 @@ class Environment(Node):
             self.get_logger().info('service not available, waiting again...')
 
         self.get_logger().info('Environment server started')
-        
+
     def end_simulation_callback(self, msg):
         if msg.data:
             self.get_logger().info("Recebido sinal de desligamento do coordenador, finalizando...")
@@ -127,6 +126,9 @@ class Environment(Node):
 
         if actionTuple[0] == 'a_open_door':
             self.state['doors'][actionTuple[2]] = True
+            response.observation = 'success'
+        elif actionTuple[0] == 'a_navto':
+            self.state['loc'][actionTuple[1]] = actionTuple[2]
             response.observation = 'success'
         elif actionTuple[0] == 'monitor':
             response.observation = json.dumps(self.state)
@@ -145,9 +147,15 @@ class Environment(Node):
                 response.observation = 'success'
         elif actionTuple[0] == 'what_room':
             response.observation = self.state['loc'][actionTuple[1]]
-                
+        elif actionTuple[0] == 'move':
+            self.state['pos'][actionTuple[1]] = (
+                self.state['pos'][actionTuple[1]][0] + float(actionTuple[2]),
+                self.state['pos'][actionTuple[1]][1] + float(actionTuple[3])
+            )
+            response.observation = ','.join([str(self.state['pos'][actionTuple[1]][0]), str(self.state['pos'][actionTuple[1]][1])])
+
         return response
-    
+
     def sample_initial_trigger(self, room):
         message = FIPAMessage(FIPAPerformative.INFORM.value, 'Env', 'Coordinator', 'InitialTrigger|Sample,' + room).encode()
         ros_msg = Message.Request()
@@ -157,7 +165,6 @@ class Environment(Node):
     def run(self):
         while rclpy.ok():
             rclpy.spin_once(self, timeout_sec=0.001)
-            
             self.counter = self.counter + 1
             if self.counter == 10000:
                 rooms_list = ["room1", "room2", "room3", "room4", "room5", "room6", "icu"]
@@ -167,7 +174,7 @@ class Environment(Node):
                 rclpy.spin_until_future_complete(self, future)
                 response = future.result()
                 self.get_logger().info('Initial Trigger:  %s' % (random_room))
-            
+
             msg = String()
             msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Env', 'Front', json.dumps(self.state)).encode()
             self.publisher.publish(msg)
@@ -175,7 +182,7 @@ class Environment(Node):
 def main():
     rclpy.init()
     environment = Environment()
-    try:       
+    try:
         environment.run()
     except SystemExit:
         rclpy.logging.get_logger("Quitting").info('Done')

@@ -26,10 +26,10 @@ class Navigator(Node):
             "ds": (235, 50),
             "icu": (285, 80),
 
-            "room4": (35, 110),
-            "room5": (85, 110),
-            "room6": (135, 110),
-            "nr": (185, 110),
+            "room4": (35, 125),
+            "room5": (85, 125),
+            "room6": (135, 125),
+            "nr": (185, 125),
         }
 
         # === Conexões (grafo)
@@ -55,10 +55,21 @@ class Navigator(Node):
             Action, 'navigator_server', self.receive_message
         )
         self.get_logger().info('Navigator server started')
-    
+
     def receive_message(self, request, response):
         actionTuple = tuple(request.action.split(','))
-        response.observation = ','.join(self.astar(actionTuple[0], actionTuple[1]))
+        if actionTuple[0] == 'path':
+            self.get_logger().info(str(request.action))
+            response.observation = ','.join(self.astar(actionTuple[1], actionTuple[2]))
+            self.get_logger().info(str(response.observation))
+        elif actionTuple[0] == 'velocity':
+            self.get_logger().info(str(request.action))
+            vx, vy = self.compute_velocity(actionTuple[1], actionTuple[2])
+            response.observation = ','.join([str(vx), str(vy)])
+            self.get_logger().info(str(response.observation))
+        elif actionTuple[0] == 'reached':
+            reached = self.has_reached_node((float(actionTuple[1]), float(actionTuple[2])), actionTuple[3])
+            response.observation = str(reached)
         return response
 
     def heuristic(self, a, b):
@@ -92,11 +103,7 @@ class Navigator(Node):
                     heapq.heappush(open_set, (f_score[neighbor], neighbor))
         return []
 
-    def compute_velocity(self, current_node, path, speed=1.0):
-        if len(path) < 2:
-            return (0.0, 0.0)
-
-        next_node = path[1]
+    def compute_velocity(self, current_node, next_node, speed=0.05):
         x1, y1 = self.nodes[current_node]
         x2, y2 = self.nodes[next_node]
         dx, dy = x2 - x1, y2 - y1
@@ -104,6 +111,19 @@ class Navigator(Node):
         if dist == 0:
             return (0.0, 0.0)
         return (dx/dist * speed, dy/dist * speed)
+
+    def has_reached_node(self, current_pos, target_node, tolerance=1.0):
+        """
+        current_pos: (x, y) robot’s current position
+        target_node: string key of the node we are heading to
+        nodes: dict of node_name -> (x, y)
+        tolerance: distance threshold in same units as map
+        """
+        xt, yt = self.nodes[target_node]
+        x, y = current_pos
+        dist = math.dist((x, y), (xt, yt))
+        return dist <= tolerance
+
 
 def main():
     rclpy.init()

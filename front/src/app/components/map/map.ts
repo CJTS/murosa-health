@@ -150,7 +150,7 @@ export class Map implements AfterViewInit {
       } else if (agentName.includes('uvd')) {
         ctx.fillStyle = 'green';
       } else if (agentName.includes('nurse')) {
-        ctx.fillStyle = 'black';
+        ctx.fillStyle = 'purple';
       }
 
       ctx.beginPath();

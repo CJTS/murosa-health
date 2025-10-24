@@ -20,7 +20,11 @@ class Nurse(Agent):
     def choose_action(self, actionTuple):
         future = None
 
-        if actionTuple[0] == 'a_approach_nurse':
+        if actionTuple[0] == 'a_navto':
+            self.get_logger().info('Doing a_navto')
+            self.a_navto(actionTuple[1], actionTuple[2])
+            return ActionResult.MOVING
+        elif actionTuple[0] == 'a_approach_nurse':
             self.get_logger().info('Doing a_approach_nurse')
             self.a_approach_nurse(actionTuple[1], actionTuple[2])
             return ActionResult.WAITING
@@ -67,14 +71,14 @@ class Nurse(Agent):
                 return ActionResult.FAILURE
 
         return ActionResult.SUCCESS
-    
+
     def a_infected_room(self):
         self.action_request = Action.Request()
         self.action_request.action = ','.join(
             ('a_infected_room', self.get_name())
         )
         return self.environment_client.call_async(self.action_request)
-    
+
     def a_authorize_patrol(self, spotrobot, nurse):
         if all('a_authorize_patrol' not in action for action in self.wating_response):
             self.get_logger().info("Here first, waiting for robot")
@@ -97,14 +101,14 @@ class Nurse(Agent):
             ('a_open_door', nurse, room)
         )
         return self.environment_client.call_async(self.action_request)
-    
+
     def a_clean_room(self, nurse, room):
         self.action_request = Action.Request()
         self.action_request.action = ','.join(
             ('a_clean_room', nurse, room)
         )
         return self.environment_client.call_async(self.action_request)
-    
+
     def a_create_sample(self):
         self.action_request = Action.Request()
         self.action_request.action = ','.join(
