@@ -30,9 +30,7 @@ class Nurse(Agent):
             return ActionResult.WAITING
         elif actionTuple[0] == 'a_authenticate_nurse':
             self.get_logger().info('Doing a_authenticate_nurse')
-            self.a_authenticate_nurse(
-                actionTuple[1], actionTuple[2]
-            )
+            self.a_authenticate_nurse(actionTuple[1], actionTuple[2])
             return ActionResult.WAITING
         elif actionTuple[0] == 'a_authorize_patrol':
             self.get_logger().info('Doing a_authorize_patrol')
@@ -59,6 +57,9 @@ class Nurse(Agent):
             self.get_logger().info('Doing a_deposit')
             self.a_deposit(actionTuple[1], actionTuple[2])
             return ActionResult.WAITING
+        elif actionTuple[0] == 'a_collect_sample':
+            self.get_logger().info('Doing a_collect_sample')
+            future = self.a_collect_sample(actionTuple[1], actionTuple[2])
 
         if future != None:
             self.get_logger().info("Waiting for response")
@@ -99,6 +100,13 @@ class Nurse(Agent):
         self.action_request = Action.Request()
         self.action_request.action = ','.join(
             ('a_open_door', nurse, room)
+        )
+        return self.environment_client.call_async(self.action_request)
+
+    def a_collect_sample(self, nurse, room):
+        self.action_request = Action.Request()
+        self.action_request.action = ','.join(
+            ('a_collect_sample', nurse, room)
         )
         return self.environment_client.call_async(self.action_request)
 

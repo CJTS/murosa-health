@@ -99,7 +99,6 @@ class Environment(Node):
         }
         self.start_server()
 
-
     def start_server(self):
         self.get_logger().info('Starting Environment server')
         self.environment_server = self.create_service(
@@ -147,6 +146,8 @@ class Environment(Node):
                 response.observation = 'success'
         elif actionTuple[0] == 'what_room':
             response.observation = self.state['loc'][actionTuple[1]]
+        elif actionTuple[0] == 'a_collect_sample':
+            self.state['disinfected'][actionTuple[2]] = False
         elif actionTuple[0] == 'move':
             self.state['pos'][actionTuple[1]] = (
                 self.state['pos'][actionTuple[1]][0] + float(actionTuple[2]),

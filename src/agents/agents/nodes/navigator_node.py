@@ -5,6 +5,7 @@ import heapq
 import math
 
 from rclpy.node import Node
+from std_msgs.msg import Bool
 from interfaces.srv import Action
 
 class Navigator(Node):
@@ -51,10 +52,18 @@ class Navigator(Node):
             "ds": ["int5"],
         }
 
+        self.end_simulation_subscription = self.create_subscription(
+            Bool, '/coordinator/shutdown_signal', self.end_simulation_callback, 10
+        )
         self.navigator_server = self.create_service(
             Action, 'navigator_server', self.receive_message
         )
         self.get_logger().info('Navigator server started')
+
+    def end_simulation_callback(self, msg):
+        if msg.data:
+            self.get_logger().info("Recebido sinal de desligamento do coordenador, finalizando...")
+            raise SystemExit
 
     def receive_message(self, request, response):
         actionTuple = tuple(request.action.split(','))
@@ -103,7 +112,7 @@ class Navigator(Node):
                     heapq.heappush(open_set, (f_score[neighbor], neighbor))
         return []
 
-    def compute_velocity(self, current_node, next_node, speed=0.05):
+    def compute_velocity(self, current_node, next_node, speed=0.2):
         x1, y1 = self.nodes[current_node]
         x2, y2 = self.nodes[next_node]
         dx, dy = x2 - x1, y2 - y1
