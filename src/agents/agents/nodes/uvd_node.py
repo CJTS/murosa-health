@@ -15,8 +15,9 @@ class Uvd(Agent):
         if actionTuple[0] == 'a_navto':
             if(self.battery > 2):
                 self.get_logger().info('Doing a_navto')
-                future = self.a_navto(actionTuple[1], actionTuple[2])
+                self.a_navto(actionTuple[1], actionTuple[2])
                 self.battery -= 1
+                return ActionResult.MOVING
             else:
                 self.get_logger().info('low_battery')
                 return ActionResult.BATTERY_FAILURE
@@ -40,7 +41,7 @@ class Uvd(Agent):
         elif actionTuple[0] == 'a_charge':
             self.get_logger().info('Doing charge')
             self.a_charge()
-        
+
 
         if future != None:
             self.get_logger().info("Waiting for response")
@@ -63,16 +64,11 @@ class Uvd(Agent):
 
         return ActionResult.SUCCESS
 
-    def a_navto(self, uvdrobot, room):
-        self.action_request = Action.Request()
-        self.action_request.action = ','.join(('a_navto', uvdrobot, room))
-        return self.environment_client.call_async(self.action_request)
-    
     def a_disinfect_room(self, uvdrobot, room):
         self.action_request = Action.Request()
         self.action_request.action = ','.join(('a_disinfect_room', uvdrobot, room))
         return self.environment_client.call_async(self.action_request)
-    
+
     def a_authorize_disinfect(self, uvdrobot_,spotrobot_):
         if all('a_authorize_disinfect' not in action for action in self.wating_response):
             self.get_logger().info("Here first, waiting for spotrobot")

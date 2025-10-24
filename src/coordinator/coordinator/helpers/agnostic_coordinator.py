@@ -206,7 +206,7 @@ class AgnosticCoordinator(Node):
                 mission.status = MissionStatus.RUNNING
             elif mission.status == MissionStatus.WAITING_TEAM:
                 # TODO check if a mission finished recently
-                team = self.get_team(mission.trigger)
+                team = self.get_team(mission)
                 if team == None:
                     continue
                 self.get_logger().info("Team found to start mission")
@@ -337,7 +337,7 @@ class AgnosticCoordinator(Node):
                     start.append(param)
 
         self.get_logger().info('Plan formatted for: %s ' % (','.join(start)))
-        
+
         if self.should_use_bdi:
             bdies = generate_bdi(team, formated_plan, self.mission_context, self.variables)
             for agent, rules in bdies.items():
@@ -347,8 +347,6 @@ class AgnosticCoordinator(Node):
                 msg = String()
                 msg.data = FIPAMessage(FIPAPerformative.INFORM.value, 'Coordinator', agent, 'Plan|' + '/'.join(plans)).encode()
                 self.agent_publisher.publish(msg)
-            
-            time.sleep(1)
 
             for agent in team:
                 msg = String()
@@ -404,10 +402,10 @@ class AgnosticCoordinator(Node):
 
     def stop_low_priority_mission(self):
         low_priority_missions = [mission for mission in self.missions if mission.priority == 0]
-        
+
         if len(low_priority_missions) == 0:
             return False
-        
+
         low_mission = low_priority_missions[0]
         low_mission.status = MissionStatus.CANCELED
 

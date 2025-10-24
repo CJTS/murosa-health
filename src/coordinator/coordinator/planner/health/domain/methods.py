@@ -12,10 +12,10 @@ def pickup_and_deliver_sample(state, nurse_, room_, robot_, arm_):
     if state.sample[room_] == True:
         return [
             ('m_collect_sample', nurse_, room_),
-            # ('m_approach_nurse', robot_, nurse_),
-            # ('m_pick_sample', robot_, nurse_),
-            # ('m_approach_arm', robot_, arm_, nurse_),
-            # ('m_unload_sample', robot_, arm_)
+            ('m_approach_nurse', robot_, nurse_),
+            ('m_pick_sample', robot_, nurse_),
+            ('m_approach_arm', robot_, arm_, nurse_),
+            ('m_unload_sample', robot_, arm_)
         ]
 methods.declare_task_methods('m_pickup_and_deliver_sample', [pickup_and_deliver_sample])
 
@@ -24,7 +24,7 @@ def collect_sample(state, nurse_, room_):
 methods.declare_task_methods('m_collect_sample', [collect_sample])
 
 def approach_nurse(state, robot_, nurse_):
-    if state.doors[state.loc[nurse_]] :
+    if state.doors[state.loc[nurse_]]:
         return [('a_navto', robot_, state.loc[nurse_]), ('a_approach_nurse', robot_, nurse_), ('a_authenticate_nurse', robot_, nurse_)]
     else:
         return [('a_open_door', nurse_, state.loc[nurse_]), ('a_navto', robot_, state.loc[nurse_]), ('a_approach_nurse', robot_, nurse_), ('a_authenticate_nurse', robot_, nurse_)]
@@ -57,24 +57,24 @@ def patrol_and_disinfect(state, spotrobot_,uvdrobot_, nurse_):
         ]
 methods.declare_task_methods('m_patrol_and_disinfect',[patrol_and_disinfect])
 
-def approach_nurse(state, spotrobot_,nurse_):
-    actions = []
+# def approach_nurse(state, spotrobot_,nurse_):
+#     actions = []
 
-    if state.low_battery[spotrobot_]:
-        actions.append(('a_charge', spotrobot_))
+#     if state.low_battery[spotrobot_]:
+#         actions.append(('a_charge', spotrobot_))
 
-    actions = actions + [('a_navto', spotrobot_, state.loc[nurse_])]
+#     actions = actions + [('a_navto', spotrobot_, state.loc[nurse_])]
 
-    if not state.doors[state.loc[nurse_]]:
-        actions = actions + [('a_open_door', spotrobot_, state.loc[nurse_])]
+#     if not state.doors[state.loc[nurse_]]:
+#         actions = actions + [('a_open_door', spotrobot_, state.loc[nurse_])]
 
-    actions = actions + [
-        ('a_approach_nurse', spotrobot_, nurse_),
-        ('a_authenticate_nurse', spotrobot_, nurse_)
-    ]
+#     actions = actions + [
+#         ('a_approach_nurse', spotrobot_, nurse_),
+#         ('a_authenticate_nurse', spotrobot_, nurse_)
+#     ]
 
-    return actions
-methods.declare_task_methods('m_approach_nurse', [approach_nurse])
+#     return actions
+# methods.declare_task_methods('m_approach_nurse', [approach_nurse])
 
 def patrol_room(state, spotrobot_, nurse_): 
     actions = []

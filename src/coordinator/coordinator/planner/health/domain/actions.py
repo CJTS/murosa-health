@@ -9,8 +9,8 @@ from coordinator.planner.ipyhop import Actions
 actions = Actions()
 
 # robot navigate to a location
-def a_navto(state, robot_, loc_):
-    state.loc[robot_] = loc_
+def a_navto(state, agent_, loc_):
+    state.loc[agent_] = loc_
     return state
 
 # robot opens to a location

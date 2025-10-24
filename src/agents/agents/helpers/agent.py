@@ -304,6 +304,7 @@ class Agent(Node):
                 self.vy = None
                 self.next_room = None
                 self.moving = False
+                return
 
             self.action_request = Action.Request()
             self.next_room = self.path.pop(1)

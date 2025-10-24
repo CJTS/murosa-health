@@ -8,7 +8,7 @@ class Spot(Agent):
     def __init__(self, className):
         super().__init__(className)
         self.battery = 3
-        
+
         self.goal_room = None
 
     # ACTIONS

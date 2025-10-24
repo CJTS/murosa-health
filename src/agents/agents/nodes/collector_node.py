@@ -14,7 +14,8 @@ class Collector(Agent):
         future = None
         if actionTuple[0] == 'a_navto':
             self.get_logger().info('Doing a_navto')
-            future = self.a_navto(actionTuple[1], actionTuple[2])
+            self.a_navto(actionTuple[1], actionTuple[2])
+            return ActionResult.MOVING
         elif actionTuple[0] == 'a_approach_nurse':
             self.get_logger().info('Doing a_approach_nurse')
             future = self.a_approach_nurse(actionTuple[1], actionTuple[2])
@@ -57,11 +58,6 @@ class Collector(Agent):
                 return ActionResult.FAILURE
 
         return ActionResult.SUCCESS
-
-    def a_navto(self, robot, room):
-        self.action_request = Action.Request()
-        self.action_request.action = ','.join(('a_navto', robot, room))
-        return self.environment_client.call_async(self.action_request)
 
     def a_approach_nurse(self, robot, nurse):
         self.action_request = Action.Request()

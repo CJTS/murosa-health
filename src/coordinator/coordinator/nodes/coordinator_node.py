@@ -69,6 +69,10 @@ class Coordinator(AgnosticCoordinator):
                 'room2': True,
                 'room3': True,
                 'room4': True,
+                'room5': True,
+                'room6': True,
+                'lab': True,
+                'nr': True,
                 'icu': True
             },
             'sample': {
@@ -119,7 +123,10 @@ class Coordinator(AgnosticCoordinator):
                 'uvd1': False,
                 'spot1': False,
                 'uvd2': False,
-                'spot2': False
+                'spot2': False,
+                'collector1': False,
+                'collector2': False,
+                'arm1': False
             }
         }
 

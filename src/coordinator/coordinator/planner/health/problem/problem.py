@@ -72,8 +72,8 @@ init_state.low_battery = {
     'spotrobot1': False,
     'uvdrobot2': False,
     'spotrobot2': False,
-    'collecto1': False,
-    'collecto2': False,
+    'collector1': False,
+    'collector2': False,
     'arm1': False
 }
 init_state.connected = {
