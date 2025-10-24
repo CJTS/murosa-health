@@ -5,9 +5,9 @@ from rclpy.node import Node
 from interfaces.srv import Action
 from std_msgs.msg import Bool
 
-from coordinator.planner.disinfect.domain.disinfect_methods import methods
-from coordinator.planner.disinfect.domain.disinfect_actions import actions
-from coordinator.planner.disinfect.problem.disinfect_problem import init_state
+from coordinator.planner.health.domain.methods import methods
+from coordinator.planner.health.domain.actions import actions
+from coordinator.planner.health.problem.problem import init_state
 from coordinator.planner.ipyhop import IPyHOP
 
 class Planner(Node):
@@ -24,7 +24,7 @@ class Planner(Node):
         )
 
         self.get_logger().info('Planner server started')
-        
+
     def end_simulation_callback(self, msg):
         if msg.data:
             self.get_logger().info("Recebido sinal de desligamento do coordenador, finalizando...")
@@ -35,19 +35,27 @@ class Planner(Node):
 
         if messageTuple[0] == 'need_plan':
             actionTuple = tuple(messageTuple[1].split(','))
-            self.get_logger().info('Creating plan for: %s %s %s' % (
-                actionTuple[0], actionTuple[1], actionTuple[2]
+            self.get_logger().info('Creating plan for: %s %s %s %s %s' % (
+                actionTuple[0], actionTuple[1], actionTuple[2], actionTuple[3], actionTuple[4]
             ))
-            
+
+            goal = ''
+
+            if actionTuple[0] == 'CollectSampleMission':
+                goal = 'm_pickup_and_deliver_sample'
+            elif actionTuple[0] == 'DisinfectRoomMission' or actionTuple[0] == 'DisinfectICUMission':
+                goal = 'm_patrol_and_disinfect'
+
             planner = IPyHOP(methods, actions)
             plan = planner.plan(self.state, [(
-                'm_patrol_and_disinfect', actionTuple[0], actionTuple[1], actionTuple[2]
+                goal, actionTuple[1], actionTuple[2], actionTuple[3], actionTuple[4]
             )], verbose=1)
 
             responsePlan = []
 
             for action in plan:
                 responsePlan.append(','.join(action))
+                self.get_logger().info(str(action))
 
             response.observation = '/'.join(responsePlan)
 
@@ -60,8 +68,9 @@ class Planner(Node):
             self.state.disinfected = state['disinfected']
             self.state.cleaned = state['cleaned']
             self.state.low_battery = state['low_battery']
+            self.state.sample = state['sample']
             return response
-        elif messageTuple[0] == 'update_room_uncleaned': 
+        elif messageTuple[0] == 'update_room_uncleaned':
             self.state.cleaned[messageTuple[1]] = False
 
         response.observation = 'success'

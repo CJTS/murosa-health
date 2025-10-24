@@ -166,7 +166,7 @@ class Environment(Node):
                 future = self.sample_initial_trigger(random_room)
                 rclpy.spin_until_future_complete(self, future)
                 response = future.result()
-                self.get_logger().info('Initial Trigger:  %s' % (response.response))
+                self.get_logger().info('Initial Trigger:  %s' % (random_room))
             
             msg = String()
             msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Env', 'Front', json.dumps(self.state)).encode()

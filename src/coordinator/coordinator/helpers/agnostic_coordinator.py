@@ -33,10 +33,10 @@ class MissionRobot():
         self.plan_version = 1
         self.current_bdi = {}
         self.status = RobotStatus.CREATED
-    
+
     def __str__(self):
         return self.robot
-    
+
 class Team():
     def __init__(self, robots: MissionRobot):
         self.robots = robots
@@ -66,15 +66,14 @@ class AgnosticCoordinator(Node):
         self.register_queue = []
         self.known_errors = []
         self.agents_actions = {}
-        
+
         self.declare_parameter('replan', rclpy.Parameter.Type.BOOL)
         self.declare_parameter('bdi', rclpy.Parameter.Type.BOOL)
         self.should_replan = self.get_parameter('replan').get_parameter_value().bool_value
         self.should_use_bdi = self.get_parameter('bdi').get_parameter_value().bool_value
-        
+
         self.initialize_communication()
-        
-        
+
     def initialize_communication(self):
         # Coordinator servers
         self._action_server = self.create_service(
@@ -82,7 +81,7 @@ class AgnosticCoordinator(Node):
             'coordinator',
             self.coordinator_server_callback
         )
-        
+
         self.agent_publisher = self.create_publisher(String, '/coordinator/agent/plan', 10)
         self.agent_reset_publisher = self.create_publisher(String, '/coordinator/agent/reset', 10)
         self.end_publisher = self.create_publisher(Bool, '/coordinator/shutdown_signal', 10)
@@ -107,7 +106,7 @@ class AgnosticCoordinator(Node):
         )
         while not self.planner_communication_sync_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('planner sync service not available, waiting again...')
-            
+
     def coordinator_server_callback(self, request, response):
         """2. Receive request to coordinator, register agents, initial triggers and errors found"""
         decoded_msg = FIPAMessage.decode(request.content)
@@ -129,19 +128,19 @@ class AgnosticCoordinator(Node):
                 self.initial_trigger(decoded_msg)
             elif "Ready" in decoded_msg.content:
                 response.response = self.set_agent_ready(decoded_msg)
-                
+
         return response
 
     def register_agent(self, decoded_msg):
         raise NotImplementedError("This method should be implemented by the subclass")
-    
+
     def get_mission(self, agent: str):
         for mission in self.missions:
             for mission_robot in mission.team:
                 if mission_robot.robot == agent:
                     return mission
         return None
-    
+
     def stop_mission(self, mission: Mission):
         for agent in mission.team:
             if not agent.finished:
@@ -151,25 +150,27 @@ class AgnosticCoordinator(Node):
 
     def initial_trigger(self, msg):
         raise NotImplementedError("This method should be implemented by the subclass")
-    
+
     def create_mission(self, mission_type, trigger):
         raise NotImplementedError("This method should be implemented by the subclass")
 
     def get_team(self, mission: Mission) -> List[MissionRobot]:
         team = []
+        self.get_logger().info(str(mission))
+        self.get_logger().info(str(mission.roles))
         for role in mission.roles:
             free_robot = next((robot for robot in self.robots if robot.status == RobotStatus.READY and robot.role == role), None)
             if free_robot is not None:
                 team.append(free_robot)
-                
+
         if(len(team) is not len(mission.roles)):
             return None
-        
+
         for robot in team:
             robot.status = RobotStatus.OCCUPIED
 
         return team
-    
+
     def get_start_context(self, mission_type, team: List[MissionRobot], room: str):
         raise NotImplementedError("This method should be implemented by the subclass")
 
@@ -217,15 +218,14 @@ class AgnosticCoordinator(Node):
                 mission.status = MissionStatus.RUNNING
 
     def start_mission(self, mission: Mission) -> Mission:
-        if self.should_use_bdi: 
+        if self.should_use_bdi:
             for agent in mission.team:
                 msg = String()
                 msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent.robot, 'Start|' + ','.join(mission.context)).encode()
                 self.agent_publisher.publish(msg)
         else:
             self.update_planner_state(json.dumps(self.state))
-            context_team = self.get_team_from_context(mission)
-            future = self.send_need_plan_request(','.join(context_team))
+            future = self.send_need_plan_request(mission.type, ','.join(mission.context))
             rclpy.spin_until_future_complete(self, future)
             plan_response = future.result()
             self.get_logger().info('Plan received for: %s ' % (
@@ -237,13 +237,10 @@ class AgnosticCoordinator(Node):
                 return mission
             self.current_plan = plan_response.observation.split('/')
             mission.plan = self.current_plan
-            self.split_plans(context_team)
-            self.send_plans_request(context_team)
+            self.split_plans(mission.context)
+            self.send_plans_request(mission.context)
 
         return mission
-    
-    def get_team_from_context(self, context):
-        raise NotImplementedError("This method should be implemented by the subclass")
 
     def fix_missions(self, mission: Mission):
         error = mission.error
@@ -255,12 +252,6 @@ class AgnosticCoordinator(Node):
             self.fix_plan(mission)
         else:
             self.end_simulation()
-
-
-    
-    
-    
-    
 
     def mark_agent_finished(self, mission: Mission, agent: str):
         for mission_robot in mission.team:
@@ -278,7 +269,7 @@ class AgnosticCoordinator(Node):
             return True
 
         return False
-    
+
     def finish_mission(self, finished_mission: Mission):
         self.get_logger().info("Mission Completed")
         self.missions.remove(finished_mission)
@@ -286,15 +277,13 @@ class AgnosticCoordinator(Node):
         if(len(self.missions) == 0):
             self.end_simulation()
 
-
     def restart_mission(self, mission):
         raise NotImplementedError("This method should be implemented by the subclass")
-
 
     def get_agent_class(self, agent):
         # TODO only works for agents from 1 to 9
         return agent[:-1]
-    
+
     def send_monitor_state_request(self, action):
         self.update_state_request = Action.Request()
         self.update_state_request.action = action
@@ -311,7 +300,7 @@ class AgnosticCoordinator(Node):
 
     def verify_initial_trigger(self):
         raise NotImplementedError("This method should be implemented by the subclass")
-    
+
     def send_update_state_request(self, state):
         self.update_state_request = Action.Request()
         self.update_state_request.action = state
@@ -329,7 +318,7 @@ class AgnosticCoordinator(Node):
         self.get_logger().info('Creating plan for: %s ' % (
             ','.join(team)
         ))
-        future = self.send_need_plan_request(','.join(team))
+        future = self.send_need_plan_request(mission.type, ','.join(team))
         rclpy.spin_until_future_complete(self, future)
         plan_response = future.result()
         self.get_logger().info('Plan received for: %s ' % (
@@ -377,7 +366,6 @@ class AgnosticCoordinator(Node):
         for robot in mission.team:
             robot.finished = False
 
-
     def split_plans(self, team):
         for agent in team:
             tuples = map(action_string_to_tuple, self.current_plan)
@@ -399,7 +387,6 @@ class AgnosticCoordinator(Node):
 
         self.get_logger().info('Plans sent')
 
- 
     def treat_error(self, error_desc):
         raise NotImplementedError("This method should be implemented by the subclass")
 
@@ -410,11 +397,11 @@ class AgnosticCoordinator(Node):
         self.end_publisher.publish(msg)
         raise SystemExit
 
-    def send_need_plan_request(self, team):
+    def send_need_plan_request(self, mission_type, team):
         self.action_request = Action.Request()
-        self.action_request.action = 'need_plan|' + team
+        self.action_request.action = 'need_plan|' + mission_type+ ',' + team
         return self.planner_communication_sync_client.call_async(self.action_request)
-    
+
     def stop_low_priority_mission(self):
         low_priority_missions = [mission for mission in self.missions if mission.priority == 0]
         
@@ -432,7 +419,6 @@ class AgnosticCoordinator(Node):
         self.missions.remove(low_mission)
 
         return True
-    
 
     def sync_robots(self, robots: list[MissionRobot]):
         if not robots:
@@ -448,7 +434,7 @@ class AgnosticCoordinator(Node):
         outdated = [r for r in robots if r.plan_version < max_version]
 
         return reference_bdi, outdated
-    
+
     def strip_numbers(self, name: str) -> str:
         return re.sub(r'\d+$', '', name)
 

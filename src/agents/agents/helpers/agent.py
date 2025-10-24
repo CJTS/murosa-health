@@ -35,7 +35,7 @@ class Agent(Node):
         )
         while not self.environment_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('environment service not available, waiting again...')
-            
+
         # Navigator Client
         self.navigator_client = self.create_client(
             Action, 'navigator_server'
@@ -57,6 +57,9 @@ class Agent(Node):
             )
             self.subscription_coordinator = self.create_subscription(
                 String, '/coordinator/agent/reset', self.listener_reset_callback, 10
+            )
+            self.publisher_coordinator = self.create_publisher(
+                String, '/agent/coordinator/action', 10
             )
 
         # Publisher para falar o resultado da ação para o Jason
@@ -106,17 +109,14 @@ class Agent(Node):
         ros_msg = Message.Request()
         ros_msg.content = message
         return self.cli.call_async(ros_msg)
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
+
+
+
+
+
+
+
+
     def listener_callback(self, msg):
         # Receive messagem from jason
         # self.get_logger().info('I heard: "%s"' % msg.data)
@@ -163,7 +163,7 @@ class Agent(Node):
         self.wating_response = []
         self.wating = False
         self.with_plan = False
-    
+
     def end_local_mission(self):
         self.get_logger().info('Resetting local state')
         self.actions = []
@@ -177,7 +177,7 @@ class Agent(Node):
 
     def is_for_me(self, msg):
         return msg.receiver == self.get_name()
-        
+
     def end_simulation_callback(self, msg):
         if msg.data:
             self.get_logger().info("Recebido sinal de desligamento do coordenador, finalizando...")
@@ -275,16 +275,16 @@ class Agent(Node):
                 elif result == ActionResult.WAITING:
                     self.wating = True
                     self.actions.append(action)
-            
+
             if len(self.plan) == 0 and self.with_plan:
                 self.end_local_mission()
         else:
             self.move()
-            
+
     def a_navto(self, robot, room):
         self.goal_room = room
         self.moving = True
-            
+
     def move(self):
         self.action_request = Action.Request()
         self.action_request.action = ','.join(('path', self.current_room, self.goal_room))
