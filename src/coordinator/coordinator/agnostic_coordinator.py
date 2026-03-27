@@ -18,6 +18,8 @@ class AgnosticCoordinator(Node):
         # List of missions that have errors
         self.missions_with_error = []
         self.known_errors = []
+        self.action_to_node_id = {}
+        self.executed_actions = []
         self.declare_parameter('replan', rclpy.Parameter.Type.BOOL)
         replan_param = self.get_parameter('replan').get_parameter_value().bool_value
         self.should_replan = replan_param
@@ -235,6 +237,15 @@ class AgnosticCoordinator(Node):
 
         self.get_logger().info('Plans sent')
 
+    def send_replan_request(self, fail_node_id, failed_action):
+        self.action_request = Action.Request()
+        # ex: "replan|42|a_patrol_room,spotrobot1,room1"
+        self.action_request.action = '|'.join([
+            'replan',
+            str(fail_node_id),
+            ','.join(failed_action)
+        ])
+        return self.planner_communication_sync_client.call_async(self.action_request)
     def fix_missions(self):
         if len(self.missions_with_error) > 0:
                 mission_error = self.missions_with_error.pop()

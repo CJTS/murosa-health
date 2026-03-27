@@ -50,7 +50,15 @@ class Planner(Node):
             plan = planner.plan(self.state, [(
                 'm_patrol_and_disinfect', actionTuple[0], actionTuple[1], actionTuple[2]
             )], verbose=1)
+            node_map = {}
+            for node_id, node in planner.sol_tree.nodes(data=True):
+                self.get_logger().info(f"id={node_id}, conteúdo={node}")
 
+                if node.get('type') == 'A':
+                    action_tuple = node['info']
+                    node_map[','.join(action_tuple)] = node_id
+
+            response.observation = '/'.join(responsePlan) + '|nodemap|' + json.dumps(node_map)
             responsePlan = []
 
             for action in plan:
@@ -61,6 +69,25 @@ class Planner(Node):
 
             self.get_logger().info('Sending response')
             return response
+        elif messageTuple[0] == 'replan':
+            
+            fail_node_id = int(messageTuple[1])
+            failed_action = tuple(messageTuple[2].split(','))
+
+            
+            self.planner.blacklist_command(failed_action)
+
+            
+            plan = self.planner.replan(self.state, fail_node_id)
+
+            if plan is None:
+                response.observation = 'replan_failed'
+                return response
+
+            responsePlan = [','.join(action) for action in plan]
+            response.observation = 'replan/' + '/'.join(responsePlan)
+            return response
+        
         elif messageTuple[0] == 'update_state':
             state = json.loads(messageTuple[1])
             self.state.loc = state['loc']

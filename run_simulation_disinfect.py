@@ -4,12 +4,64 @@ import signal
 import sys
 from pathlib import Path
 import time
+import psutil
+import gc
 
+
+def cleanup_processes(processes):
+    """Terminate all running processes and clean up"""
+    for name, process in processes.items():
+        if isinstance(process, subprocess.Popen):
+            if process.poll() is None:
+                print(f"Stopping {name} service...")
+                try:
+                    parent = psutil.Process(process.pid)
+                    for child in parent.children(recursive=True):
+                        child.kill()
+                    parent.kill()
+                    # 🧹 Recolhe o processo zumbi
+                    process.wait(timeout=3)
+                except (psutil.NoSuchProcess, subprocess.TimeoutExpired):
+                    pass
+        elif hasattr(process, 'close'):
+            process.close()
+    time.sleep(5)
+
+def wait_for_termination(processes, timeout=20):
+    """Wait until all PIDs are gone from the system."""
+    start = time.time()
+    while time.time() - start < timeout:
+        still_alive = []
+        for name, proc in processes.items():
+            if isinstance(proc, subprocess.Popen):
+                if psutil.pid_exists(proc.pid):
+                    still_alive.append(name)
+        if not still_alive:
+            return True
+        print(f"Waiting for {', '.join(still_alive)} to terminate...")
+        time.sleep(1)
+    print("Warning: some processes did not terminate in time.")
+    return False
 def setup_log_directory(mission, run_number, problem_rate, replan):
     """Create logs directory for specific run if it doesn't exist"""
     log_dir = Path(f"logsdisinfect/run_{mission}_{run_number}_rate_{problem_rate}_replan_{replan}")
     log_dir.mkdir(parents=True, exist_ok=True)
     return log_dir
+
+
+
+# def start_ros(log_dir):
+#     # Start rosbridge
+#     print("Starting rosbridge...")
+#     rosbridge_log = open(log_dir / "rosbridge.log", "w")
+#     global_processes["rosbridge"] = subprocess.Popen(
+#         ["ros2", "launch", "rosbridge_server", "rosbridge_websocket_launch.xml"],
+#         stdout=rosbridge_log,
+#         stderr=subprocess.STDOUT
+#     )
+
+#     time.sleep(5)
+#     return global_processes
 
 def start_services(mission, run_number, problem_rate, replan):
     """Start all required services and return their process objects"""
@@ -21,25 +73,27 @@ def start_services(mission, run_number, problem_rate, replan):
     os.environ['REPLAN'] = str(replan)
     
     # Start rosbridge
-    # print("Starting rosbridge...")
-    # rosbridge_log = open(log_dir / "rosbridge.log", "w")
-    # processes["rosbridge"] = subprocess.Popen(
-    #     ["ros2", "launch", "rosbridge_server", "rosbridge_websocket_launch.xml"],
-    #     stdout=rosbridge_log,
-    #     stderr=subprocess.STDOUT
-    # )
-    # time.sleep(5)
+    print("Starting rosbridge...")
+    rosbridge_log = open(log_dir / "rosbridge.log", "w")
+    processes["rosbridge"] = subprocess.Popen(
+        ["ros2", "launch", "rosbridge_server", "rosbridge_websocket_launch.xml"],
+        stdout=rosbridge_log,
+        stderr=subprocess.STDOUT
+    )
+    processes["rosbridge_log"] = rosbridge_log 
+    time.sleep(5)
 
-    # Start gradle application
-    # print("Starting gradle application...")
-    # gradle_log = open(log_dir / "gradle.log", "w")
-    # processes["gradle"] = subprocess.Popen(
-    #     ["./gradlew", "run"],
-    #     cwd="jason",
-    #     stdout=gradle_log,
-    #     stderr=subprocess.STDOUT
-    # )
-    # time.sleep(5)
+    #Start gradle application
+    print("Starting gradle application...")
+    with open(log_dir / "gradle.log", "w") as gradle_log:
+        processes["gradle"] = subprocess.Popen(
+            ["./gradlew", "run"],
+            cwd="jason",
+            stdout=gradle_log,
+            stderr=subprocess.STDOUT
+        )
+    
+    time.sleep(5)
     
     # Start health service
     print("Starting " + mission + " coordinator...")
@@ -49,7 +103,7 @@ def start_services(mission, run_number, problem_rate, replan):
         stdout=coordinator_log,
         stderr=subprocess.STDOUT
     )
-
+    time.sleep(1)
     print("Starting " + mission + " service...")
     mission_log = open(log_dir / (mission + ".log"), "w")
     processes[mission] = subprocess.Popen(
@@ -57,20 +111,20 @@ def start_services(mission, run_number, problem_rate, replan):
         stdout=mission_log,
         stderr=subprocess.STDOUT
     )
-
+    
     return processes
 
-def cleanup_processes(processes):
-    """Terminate all running processes"""
-    for name, process in processes.items():
-        if process.poll() is None:  # Process is still running
-            print(f"Stopping {name} service...")
-            process.terminate()
-            try:
-                process.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                process.kill()
-
+# def cleanup_processes(processes):
+#     """Terminate all running processes"""
+#     for name, process in processes.items():
+#         if process.poll() is None:  # Process is still running
+#             print(f"Stopping {name} service...")
+#             process.terminate()
+#             try:
+#                 process.wait(timeout=5)
+#             except subprocess.TimeoutExpired:
+#                 process.kill()
+    
 def analyze_health_log(mission, run_number, runtime, problem_rate, replan):
     """Analyze the health log file for specific patterns and return results"""
     log_path = f"logsdisinfect/run_{mission}_{run_number}_rate_{problem_rate}_replan_{replan}/coordinator.log"
@@ -151,7 +205,8 @@ def main():
                             
                         print("All services started. Press Ctrl+C to stop all services.")
                         print(f"Logs are being written to the 'logs/run_{mission}_{run_number}_rate_{problem_rate}_replan_{replan}' directory.")
-                        
+                        #log_dir = setup_log_directory(mission, run_number, problem_rate, replan)
+                        #global_processes = start_ros(log_dir)
                         processes = start_services(mission, run_number, problem_rate, replan)
                         
                         # Run simulation with timeout
@@ -159,7 +214,10 @@ def main():
                         
                         print(f"Simulation run {run_number} {'completed' if completed else 'terminated due to timeout'}. Stopping other services...")
                         cleanup_processes(processes)
-                        
+                        wait_for_termination(processes)
+                        processes.clear()
+                        gc.collect()
+                        time.sleep(3)
                         # Analyze health log and store results
                         results = analyze_health_log(mission, run_number, runtime, problem_rate, replan)
                         all_results.append(results)
@@ -175,13 +233,12 @@ def main():
                         run_number += 1
                         
                         # Add a small delay between runs to ensure proper cleanup
-                        time.sleep(2)
+                        time.sleep(10)
         
                     write_summary(all_results, mission, problem_rate, replan)
                     all_results = []
         print("\nAll simulation runs completed successfully!")
         print(f"Summary written to logs/simulation_summary.csv")
-        
         # Run analysis script
         print("\nRunning analysis script...")
         subprocess.run(["python3", "analyze_results_disinfect.py"], check=True)

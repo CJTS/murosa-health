@@ -23,25 +23,25 @@ def start_services(mission, run_number, problem_rate, replan):
     os.environ['REPLAN'] = str(replan)
     
     # Start rosbridge
-    # print("Starting rosbridge...")
-    # rosbridge_log = open(log_dir / "rosbridge.log", "w")
-    # processes["rosbridge"] = subprocess.Popen(
-    #     ["ros2", "launch", "rosbridge_server", "rosbridge_websocket_launch.xml"],
-    #     stdout=rosbridge_log,
-    #     stderr=subprocess.STDOUT
-    # )
-    # time.sleep(5)
+    print("Starting rosbridge...")
+    rosbridge_log = open(log_dir / "rosbridge.log", "w")
+    processes["rosbridge"] = subprocess.Popen(
+        ["ros2", "launch", "rosbridge_server", "rosbridge_websocket_launch.xml"],
+        stdout=rosbridge_log,
+        stderr=subprocess.STDOUT
+    )
+    time.sleep(5)
 
     # Start gradle application
-    # print("Starting gradle application...")
-    # gradle_log = open(log_dir / "gradle.log", "w")
-    # processes["gradle"] = subprocess.Popen(
-    #     ["./gradlew", "run"],
-    #     cwd="jason",
-    #     stdout=gradle_log,
-    #     stderr=subprocess.STDOUT
-    # )
-    # time.sleep(5)
+    print("Starting gradle application...")
+    gradle_log = open(log_dir / "gradle.log", "w")
+    processes["gradle"] = subprocess.Popen(
+        ["./gradlew", "run"],
+        cwd="jason",
+        stdout=gradle_log,
+        stderr=subprocess.STDOUT
+    )
+    time.sleep(5)
     
     # Start health service
     print("Starting " + mission + " coordinator...")

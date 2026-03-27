@@ -9,13 +9,13 @@ from pathlib import Path
 def load_and_analyze_data(file):
     """Load simulation results and perform basic analysis"""
     # Read the CSV file
-    df = pd.read_csv(f"logs/{file}.csv")
+    df = pd.read_csv(f"logsdisinfect/{file}.csv")
     
     # Convert boolean columns to proper boolean type
     df['Replan'] = df['Replan'].astype(bool)
     
     # Create output directory for plots
-    plot_dir = Path('logs/analysis_plots')
+    plot_dir = Path('logsdisinfect/analysis_plots')
     plot_dir.mkdir(exist_ok=True)
     
     return df, plot_dir
@@ -88,8 +88,8 @@ def main():
     sns.set_style("whitegrid")
     plt.rcParams['figure.figsize'] = [10, 6]
 
-    missions = ["health"]
-    problem_rates = [0, 25, 50, 75, 100]
+    missions = ["disinfect"]
+    problem_rates = [25, 50, 75, 100]
     replan_values = [False, True]
 
     df = pd.DataFrame()
