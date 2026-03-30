@@ -7,7 +7,7 @@ from murosa_plan.disinfect.domain.disinfect_actions import actions
 from murosa_plan.disinfect.problem.disinfect_problem import init_state
 from murosa_plan.ipyhop import IPyHOP
 from std_msgs.msg import Bool
-
+import networkx as nx
 class Planner(Node):
     def __init__(self):
         super().__init__('Planner')
@@ -16,7 +16,7 @@ class Planner(Node):
             Action, 'planner_communication_sync_server', self.receive_sync_message
         )
         self.state = init_state
-
+        self.planner = None 
         # Subscriber para indicar fim da execução
         self.end_subscription = self.create_subscription(
             Bool, '/jason/shutdown_signal', self.shutdown_callback, 10
@@ -46,45 +46,52 @@ class Planner(Node):
                 actionTuple[0], actionTuple[1], actionTuple[2]
             ))
 
-            planner = IPyHOP(methods, actions)
-            plan = planner.plan(self.state, [(
+            self.planner = IPyHOP(methods, actions)
+            plan = self.planner.plan(self.state, [(
                 'm_patrol_and_disinfect', actionTuple[0], actionTuple[1], actionTuple[2]
             )], verbose=1)
-            node_map = {}
-            for node_id, node in planner.sol_tree.nodes(data=True):
-                self.get_logger().info(f"id={node_id}, conteúdo={node}")
+            
 
-                if node.get('type') == 'A':
-                    action_tuple = node['info']
-                    node_map[','.join(action_tuple)] = node_id
-
-            response.observation = '/'.join(responsePlan) + '|nodemap|' + json.dumps(node_map)
-            responsePlan = []
-
-            for action in plan:
-                self.get_logger().info(','.join(action))
-                responsePlan.append(','.join(action))
-
+            responsePlan = [','.join(action) for action in plan]
             response.observation = '/'.join(responsePlan)
 
             self.get_logger().info('Sending response')
             return response
+        
         elif messageTuple[0] == 'replan':
-            
-            fail_node_id = int(messageTuple[1])
-            failed_action = tuple(messageTuple[2].split(','))
-
-            
-            self.planner.blacklist_command(failed_action)
-
-            
-            plan = self.planner.replan(self.state, fail_node_id)
-
-            if plan is None:
+            if self.planner is None:
                 response.observation = 'replan_failed'
                 return response
 
-            responsePlan = [','.join(action) for action in plan]
+            failed_action_key = messageTuple[1]  
+            failed_action_tuple = tuple(failed_action_key.split(','))
+
+            fail_node_id = None
+            for node_id, node in self.planner.sol_tree.nodes(data=True):
+                if node.get('info') == failed_action_tuple:
+                    fail_node_id = node_id
+                    break
+
+            if fail_node_id is None:
+                self.get_logger().error(f'Nó não encontrado para a ação: {failed_action_key}')
+                response.observation = 'replan_failed'
+                return response
+
+            
+            ancestors = list(nx.ancestors(self.planner.sol_tree, fail_node_id))
+            ancestors.append(fail_node_id)
+            for nid in ancestors:
+                node = self.planner.sol_tree.nodes[nid]
+                if 'methods' in node:
+                    node['available_methods'] = iter(node['methods'])
+
+            plan_result = self.planner.replan(self.state, fail_node_id, verbose=1)
+
+            if not plan_result:
+                response.observation = 'replan_failed'
+                return response
+
+            responsePlan = [','.join(action) for action in plan_result]
             response.observation = 'replan/' + '/'.join(responsePlan)
             return response
         
@@ -93,10 +100,14 @@ class Planner(Node):
             self.state.loc = state['loc']
             self.state.doors = state['doors']
             self.state.disinfected = state['disinfected']
-            self.state.cleaned = state['cleaned']
+            # self.state.cleaned = state['cleaned']
             return response
         elif messageTuple[0] == 'update_room_uncleaned': 
-            self.state.cleaned[messageTuple[1]] = False
+            room = messageTuple[1]
+            self.state.cleaned[room] = False
+            self.get_logger().info(f"Estado atualizado: cleaned[{room}] = False → {self.state.cleaned}")
+            response.observation = 'success'
+            return response
 
         response.observation = 'success'
         return response

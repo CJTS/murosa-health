@@ -24,7 +24,7 @@ class Coordinator(AgnosticCoordinator):
         
         #list of dirty rooms
         self.room_queue = []
-        self.mission_context = "start(NurseDesinfect, NurseRoom, Spotrobot, Uvdrobot)"
+        self.mission_context = "start(Spotrobot, NurseRoom, NurseDesinfect,  Uvdrobot)"
         #self.variables = ["NurseDesinfect", "NurseRoom", "uvdrobot", "spotrobot"]
         self.variables =["Spotrobot", "NurseRoom", "NurseDesinfect", "Uvdrobot"]
         self.current_plan = []
@@ -180,6 +180,15 @@ class Coordinator(AgnosticCoordinator):
     def idk(self, mission, error):
         #self.send_reset_request(self.current_team)
         return
+    
+    def send_update_uncleaned_room_request(self, room):
+        self.get_logger().info(f"Updating uncleaned room: {room}")
+        self.action_request = Action.Request()
+        self.action_request.action = ('|'.join(('update_room_uncleaned', room))) 
+        future = self.planner_communication_sync_client.call_async(self.action_request)
+        rclpy.spin_until_future_complete(self, future)
+        response = future.result()
+        self.get_logger().info(response.observation)
     '''
     def start_mission(self):
         self.agents_actions = {}

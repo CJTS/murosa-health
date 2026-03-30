@@ -55,7 +55,7 @@ class Spotrobot(Agent):
                 return ActionResult.FAILURE
             elif response.observation == 'dirty room':
                 self.notifyError(
-                    ','.join(('dirty_room', actionTuple[2]))
+                    ','.join((actionTuple[0], actionTuple[1], actionTuple[2]))
                 )
                 return ActionResult.FAILURE
 

@@ -18,8 +18,8 @@ class AgnosticCoordinator(Node):
         # List of missions that have errors
         self.missions_with_error = []
         self.known_errors = []
-        self.action_to_node_id = {}
-        self.executed_actions = []
+        # self.action_to_node_id = {}
+        # self.executed_actions = []
         self.declare_parameter('replan', rclpy.Parameter.Type.BOOL)
         replan_param = self.get_parameter('replan').get_parameter_value().bool_value
         self.should_replan = replan_param
@@ -120,7 +120,15 @@ class AgnosticCoordinator(Node):
             msg = String()
             msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent, 'Start|' + ','.join(start_context)).encode()
             self.agent_publisher.publish(msg)
-    
+        
+        team_list = self.get_team_from_context(start_context)
+        self.get_logger().info('Creating plan for: %s' % ','.join(team_list))
+        future = self.send_need_plan_request(','.join(team_list))
+        rclpy.spin_until_future_complete(self, future)
+        plan_response = future.result()
+
+       
+        self.current_plan = plan_response.observation.split('/')
     def get_team(self):
         raise NotImplementedError("This method should be implemented by the subclass")
 
@@ -167,18 +175,28 @@ class AgnosticCoordinator(Node):
     def fix_plan(self, context):
         self.get_logger().info(",".join(context))
         team = self.get_team_from_context(context)
-
+        self.send_update_uncleaned_room_request("room1")
         self.get_logger().info('Creating plan for: %s ' % (
             ','.join(team)
         ))
         future = self.send_need_plan_request(','.join(team))
+        
         rclpy.spin_until_future_complete(self, future)
         plan_response = future.result()
+        raw = plan_response.observation  
+        if '|nodemap|' in raw:
+            plan_part, nodemap_part = raw.split('|nodemap|')
+            self.action_to_node_id = json.loads(nodemap_part)
+            self.get_logger().info(f'Node map recebido: {self.action_to_node_id}')
+        else:
+            plan_part = raw
+
+        self.current_plan = plan_part.split('/')
         self.get_logger().info('Plan received for: %s ' % (
             ','.join(team)
         ))
         self.get_logger().info(plan_response.observation)
-        self.current_plan = plan_response.observation.split('/')
+        # self.current_plan = plan_response.observation.split('/')
         formated_plan = []
         start = []
         for action in self.current_plan:
@@ -237,14 +255,18 @@ class AgnosticCoordinator(Node):
 
         self.get_logger().info('Plans sent')
 
-    def send_replan_request(self, fail_node_id, failed_action):
+    # def send_replan_request(self, fail_node_id, failed_action):
+    #     self.action_request = Action.Request()
+    #     # ex: "replan|42|a_patrol_room,spotrobot1,room1"
+    #     self.action_request.action = '|'.join([
+    #         'replan',
+    #         str(fail_node_id),
+    #         ','.join(failed_action)
+    #     ])
+    #     return self.planner_communication_sync_client.call_async(self.action_request)
+    def send_replan_request(self, failed_action_key):
         self.action_request = Action.Request()
-        # ex: "replan|42|a_patrol_room,spotrobot1,room1"
-        self.action_request.action = '|'.join([
-            'replan',
-            str(fail_node_id),
-            ','.join(failed_action)
-        ])
+        self.action_request.action = 'replan|' + failed_action_key
         return self.planner_communication_sync_client.call_async(self.action_request)
     def fix_missions(self):
         if len(self.missions_with_error) > 0:
@@ -260,11 +282,81 @@ class AgnosticCoordinator(Node):
                 else:
                     if self.should_replan:
                             self.get_logger().info('Error found')
-                            self.fix_plan(mission)
+                            # self.fix_plan(mission)
+                            self.do_replan(error_msg[1], mission)
                     else:
                         self.get_logger().info('Error found')
                         self.end_simulation()
+    
 
+    def do_replan(self, error_key, context):
+        
+        self.get_logger().info(f'=== do_replan chamado com: {error_key}')
+
+        room = error_key.split(',')[-1]
+        self.send_update_uncleaned_room_request(room)
+
+        future = self.send_replan_request(error_key)
+        rclpy.spin_until_future_complete(self, future)
+        plan_response = future.result()
+
+        if plan_response.observation == 'replan_failed':
+            self.get_logger().error('Replan falhou, encerrando simulação')
+            self.end_simulation()
+            return
+
+        self.get_logger().info(f'Replan recebido: {plan_response.observation}')
+        new_actions = plan_response.observation.replace('replan/', '').split('/')
+        self.get_logger().info(",".join(context))
+        team = self.get_team_from_context(context)
+        self.send_replan_to_agents(new_actions, team)
+
+    def send_replan_to_agents(self, new_actions, team):
+        self.get_logger().info(f'Enviando replan para agentes: {new_actions}')
+        
+        formated_plan = []
+        start = []
+        for action in new_actions:
+            splitted_action = action.split(',')
+            formated_plan.append(splitted_action[0] + "(" + ','.join(splitted_action[1:]) + ")")
+            for param in splitted_action[1:]:
+                if param not in start:
+                    start.append(param)
+
+        # Gera e envia BDI
+        bdies = generate_bdi(team, formated_plan, self.mission_context, self.variables)
+        for agent, rules in bdies.items():
+            plans = [f"+!{self.mission_context}: true <- +{self.mission_context}."]
+            for rule in rules:
+                plans.append(rule)
+            msg = String()
+            msg.data = FIPAMessage(
+                FIPAPerformative.INFORM.value, 'Coordinator', agent,
+                'Plan|' + '/'.join(plans)
+            ).encode()
+            self.agent_publisher.publish(msg)
+            self.get_logger().info(f'BDI enviado para {agent}')
+
+        
+        for agent in team:
+            msg = String()
+            msg.data = FIPAMessage(
+                FIPAPerformative.REQUEST.value, 'Coordinator', agent,
+                'Start|' + ','.join(start)
+            ).encode()
+            self.agent_publisher.publish(msg)
+
+        
+        start_msg = "initial_trigger_" + formated_plan[0] + "."
+        splitted_first = new_actions[0].split(',')
+        for initial_agent in splitted_first[1:]:
+            msg = String()
+            msg.data = FIPAMessage(
+                FIPAPerformative.INFORM.value, 'Coordinator', initial_agent,
+                'Belief|' + start_msg
+            ).encode()
+            self.agent_publisher.publish(msg)
+            self.get_logger().info(f'Belief trigger enviado para {initial_agent}')
     def end_simulation(self):
         self.get_logger().info('Ending simulation')
         msg = Bool()

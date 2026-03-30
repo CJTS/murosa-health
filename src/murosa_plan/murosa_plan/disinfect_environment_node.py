@@ -61,6 +61,8 @@ class Environment(Node):
         if actionTuple[0] == 'a_open_door':
             self.state['doors'][actionTuple[2]] = True
             response.observation = 'success'
+        elif actionTuple[0] == 'a_navto':
+            self.state['loc'][actionTuple[1]] = actionTuple[2]
         elif actionTuple[0] == 'monitor':
             response.observation = json.dumps(self.state)
         elif actionTuple[0] == 'a_infected_room':
