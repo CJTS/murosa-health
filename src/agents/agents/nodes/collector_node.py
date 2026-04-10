@@ -13,7 +13,7 @@ class Collector(Agent):
         self.current_action = actionTuple[0]
         future = None
         if actionTuple[0] == 'a_navto':
-            self.get_logger().info('Doing a_navto')
+            self.get_logger().info('Doing a_navto:' + actionTuple[2])
             self.a_navto(actionTuple[1], actionTuple[2])
             return ActionResult.MOVING
         elif actionTuple[0] == 'a_approach_nurse':
@@ -62,7 +62,7 @@ class Collector(Agent):
                 return ActionResult.FAILURE
             elif response.observation == 'resource not available':
                 self.notifyError(
-                    ','.join(('resource_not_available', actionTuple[2]))
+                    ','.join(('resource_not_available', actionTuple[3]))
                 )
                 return ActionResult.FAILURE
 

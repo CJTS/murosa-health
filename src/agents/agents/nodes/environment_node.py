@@ -131,6 +131,25 @@ class Environment(Node):
                 'room6': False,
                 'icu': False
             },
+            'sample': {
+                'room1': False,
+                'room2': False,
+                'room3': False,
+                'room4': False,
+                'room5': False,
+                'room6': False,
+                'nurse1': False,
+                'nurse2': False,
+                'nurse3': False,
+                'nurse4': False,
+                'uvdrobot1': False,
+                'spotrobot1': False,
+                'uvdrobot2': False,
+                'spotrobot2': False,
+                'collector1': False,
+                'collector2': False,
+                'arm1': False
+            },
         }
         self.start_server()
 
@@ -184,10 +203,9 @@ class Environment(Node):
         elif actionTuple[0] == 'a_collect_sample':
             self.state['disinfected'][actionTuple[2]] = False
         elif actionTuple[0] == 'a_request_resource':
-            self.get_logger().info(f"Received resource request for {actionTuple[3]} from {actionTuple[1]} at {actionTuple[2]}")
             if not self.state['resource_at'][actionTuple[3]] == actionTuple[2]:
+                self.get_logger().info(f"Resource {actionTuple[2]} is not at {actionTuple[3]}")
                 response.observation = 'resource not available'
-            response.observation = 'success'
         elif actionTuple[0] == 'move':
             self.state['pos'][actionTuple[1]] = (
                 self.state['pos'][actionTuple[1]][0] + float(actionTuple[2]),
@@ -200,7 +218,7 @@ class Environment(Node):
     def sample_initial_trigger(self, room):
         resources_list = ['resource4']
         random_resource = random.choice(resources_list)
-        message = FIPAMessage(FIPAPerformative.INFORM.value, 'Env', 'Coordinator', 'InitialTrigger|Deliver,' + room + ',' + random_resource).encode()
+        message = FIPAMessage(FIPAPerformative.INFORM.value, 'Env', 'Coordinator', 'InitialTrigger|DeliverSampleMission,' + room + ',' + random_resource).encode()
         ros_msg = Message.Request()
         ros_msg.content = message
         return self.cli.call_async(ros_msg)

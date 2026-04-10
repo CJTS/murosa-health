@@ -124,6 +124,7 @@ class AgnosticCoordinator(Node):
                 mission.status = MissionStatus.ERROR
                 mission.error = decoded_msg.content
                 self.stop_mission(mission)
+                response.response = 'Treating error'
             elif "InitialTrigger" in decoded_msg.content:
                 self.initial_trigger(decoded_msg)
             elif "Ready" in decoded_msg.content:
@@ -235,20 +236,20 @@ class AgnosticCoordinator(Node):
                 self.get_logger().info('No plan found, stopping mission')
                 self.missions.remove(mission)
                 return mission
-            self.current_plan = plan_response.observation.split('/')
-            mission.plan = self.current_plan
-            self.split_plans(mission.context)
+            current_plan = plan_response.observation.split('/')
+            mission.plan = current_plan
+            self.split_plans(mission.context, current_plan)
             self.send_plans_request(mission.context)
 
         return mission
 
     def fix_missions(self, mission: Mission):
-        self.update_planner_state(json.dumps(self.state))
+        self.check_env()
         error = mission.error
         self.get_logger().info(str(error))
         error_msg = error.split("|")
         error_desc = error_msg[1].split(",")
-        self.treat_error(error_desc)
+        self.treat_error(error_desc, mission)
         if self.should_replan:
             self.fix_plan(mission)
         else:
@@ -295,6 +296,8 @@ class AgnosticCoordinator(Node):
         future = self.send_monitor_state_request(','.join(('monitor',)))
         rclpy.spin_until_future_complete(self, future)
         response = future.result()
+        self.get_logger().info('Environment state received')
+        self.get_logger().info(response.observation)
         self.state = json.loads(response.observation)
         self.update_planner_state(response.observation)
         # self.verify_initial_trigger()
@@ -313,34 +316,26 @@ class AgnosticCoordinator(Node):
         return future.result()
 
     def fix_plan(self, mission: Mission):
-        context = mission.context
-        team = self.get_team_from_context(context)
+        team = mission.team
 
-        self.get_logger().info('Creating plan for: %s ' % (
-            ','.join(team)
-        ))
-        future = self.send_need_plan_request(mission.type, ','.join(team))
+        future = self.send_need_plan_request(mission.type, ','.join(mission.context))
         rclpy.spin_until_future_complete(self, future)
         plan_response = future.result()
         self.get_logger().info('Plan received for: %s ' % (
-            ','.join(team)
+            ','.join([str(robot) for robot in mission.team])
         ))
         self.get_logger().info(plan_response.observation)
-        self.current_plan = plan_response.observation.split('/')
-        formated_plan = []
-        start = []
-        for action in self.current_plan:
-            splitted_action = action.split(',')
-            formated_plan.append(splitted_action[0] + "(" + ','.join(splitted_action[1:len(splitted_action)])  + ")")
-            params = splitted_action[1:len(splitted_action)]
-            for param in params:
-                if param not in start:
-                    start.append(param)
 
-        self.get_logger().info('Plan formatted for: %s ' % (','.join(start)))
+        if plan_response.observation == '':
+            self.get_logger().info('No plan found, stopping mission')
+            self.missions.remove(mission)
+            return mission
+
+        current_plan = plan_response.observation.split('/')
+        mission.plan = current_plan
 
         if self.should_use_bdi:
-            bdies = generate_bdi(team, formated_plan, self.mission_context, self.variables)
+            bdies = generate_bdi(team, current_plan, self.mission_context, self.variables)
             for agent, rules in bdies.items():
                 plans = []
                 for rule in rules:
@@ -358,16 +353,16 @@ class AgnosticCoordinator(Node):
                 robot.plan_version = robot.plan_version + 1
                 robot.current_bdi = bdies
         else:
-            mission.plan = self.current_plan
-            self.split_plans(team)
-            self.send_plans_request(team)
+            mission.plan = current_plan
+            self.split_plans(mission.context, current_plan)
+            self.send_plans_request(mission.context)
 
         for robot in mission.team:
             robot.finished = False
 
-    def split_plans(self, team):
+    def split_plans(self, team, current_plan):
         for agent in team:
-            tuples = map(action_string_to_tuple, self.current_plan)
+            tuples = map(action_string_to_tuple, current_plan)
             self.agents_actions[agent] = []
 
             for action in tuples:

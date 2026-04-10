@@ -256,10 +256,6 @@ class Agent(Node):
                     )
                 elif result == ActionResult.SUCCESS:
                     self.get_logger().info("Action finished")
-                elif result == ActionResult.FAILURE:
-                    self.notifyError(
-                        ','.join(('resource_not_available', self.get_name()))
-                    )
             elif(len(self.actions) > 0 and self.should_use_bdi):
                 time.sleep(0.5)
                 self.get_logger().info('Acting')
@@ -357,6 +353,7 @@ class Agent(Node):
             self.wating_response = []
             self.wating = False
             self.with_plan = False
+            self.goal_room = None
 
     def what_room(self):
         self.action_request = Action.Request()

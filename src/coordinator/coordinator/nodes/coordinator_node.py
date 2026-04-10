@@ -176,12 +176,12 @@ class Coordinator(AgnosticCoordinator):
         elif 'spot' in agent_name:
             robot.role = RobotRoles.SPOT
         elif 'nurse' in agent_name:
-            robot.role = RobotRoles.NURSE  
+            robot.role = RobotRoles.NURSE
         elif 'collector' in agent_name:
-            robot.role = RobotRoles.COLLECTOR  
+            robot.role = RobotRoles.COLLECTOR
         elif 'arm' in agent_name:
-            robot.role = RobotRoles.ARM           
-            
+            robot.role = RobotRoles.ARM
+
         self.robots.append(robot)
 
         return 'success'
@@ -203,18 +203,18 @@ class Coordinator(AgnosticCoordinator):
         if(team is not None):
             mission.team = team
             params = [room]
-            if mission_type == 'Deliver':
+            if mission_type == 'DeliverSampleMission':
                 params.append(message.split(',')[2]) # resource
             mission.context = self.get_start_context(mission_type, team, params)
         else:
             mission.status = MissionStatus.WAITING_TEAM
 
-        if(mission_type == 'Disinfect'):
+        if(mission_type == 'DisinfectMission'):
             self.state['loc'][decoded_msg.sender] = room
             self.state['disinfected'][room] = False
-        elif (mission_type == 'Sample'):
+        elif (mission_type == 'CollectSampleMission'):
             self.state['sample'][room] = True
-        elif (mission_type == 'Deliver'):
+        elif (mission_type == 'DeliverSampleMission'):
             self.state['deliver'][room] = True
 
         self.missions.append(mission)
@@ -222,34 +222,34 @@ class Coordinator(AgnosticCoordinator):
     def create_mission(self, mission_type, trigger):
         self.get_logger().info(f"Creating mission with team")
 
-        if(mission_type == 'Disinfect' and trigger == 'icu'):
+        if(mission_type == 'DisinfectMission' and trigger == 'icu'):
             mission = DisinfectICUMission([], {})
-        elif(mission_type == 'Disinfect' and not trigger == 'icu'):
+        elif(mission_type == 'DisinfectMission' and not trigger == 'icu'):
             mission = DisinfectRoomMission([], {})
-        elif (mission_type == 'Sample'):
+        elif (mission_type == 'CollectSampleMission'):
             mission = CollectSampleMission([], {})
-        elif (mission_type == 'Deliver'):
+        elif (mission_type == 'DeliverSampleMission'):
             mission = DeliverSampleMission([], {})
 
         mission.trigger = trigger
         return mission
 
     def get_start_context(self, mission_type, team: List[MissionRobot], params: List[str]):
-        if(mission_type == 'Disinfect'):
+        if(mission_type == 'DisinfectMission'):
             context = (
                 team[2].robot, # Nurse
                 params[0], # Infected Location
                 team[0].robot, # spotrobot
                 team[1].robot # uvdrobot
             )
-        elif (mission_type == 'Sample'):
+        elif (mission_type == 'CollectSampleMission'):
             context =  (
                 team[2].robot, # Nurse
                 params[0],
                 team[0].robot, # Robot
                 team[1].robot # Arm
             )
-        elif (mission_type == 'Deliver'):
+        elif (mission_type == 'DeliverSampleMission'):
             context = (
                 team[0].robot, # Collector
                 params[1], # Resource (unknown at the beginning)
@@ -279,7 +279,7 @@ class Coordinator(AgnosticCoordinator):
                     mission_robot.status = RobotStatus.READY
                     return
 
-    def treat_error(self, error_desc):
+    def treat_error(self, error_desc, mission: Mission):
         if error_desc[0] == 'dirty_room':
             room = error_desc[1]
             self.state['cleaned'][room] = False
@@ -292,6 +292,11 @@ class Coordinator(AgnosticCoordinator):
             robot = error_desc[1]
             self.state['low_battery'][robot] = True
             self.get_logger().info(f"Robot {robot} marked as low battery")
+        elif error_desc[0] == 'resource_not_available':
+            resource = error_desc[1]
+            temp_list = list(mission.context)
+            temp_list[2] = self.state['resource_at'][resource]
+            mission.context = tuple(temp_list)
         self.update_planner_state(json.dumps(self.state))
 
 def main():
