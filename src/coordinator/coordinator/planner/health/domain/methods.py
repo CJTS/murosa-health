@@ -89,23 +89,19 @@ def disinfect_room(state, uvdrobot_, spotrobot_, nurse_):
     return actions
 methods.declare_task_methods('m_disinfect_room', [disinfect_room])
 
-def deliver_resource_task(state, task_):
-    robot_ = state.assigned[task_]
-    resource_, _ = state.requested[task_]
-    storage_ = state.resource_at.get(resource_)
-
+def deliver_resource_task(state, robot_, resource_, storage_, loc_):
     if storage_:
         return [
-            ('m_collect_resource', robot_, resource_, storage_, task_),
-            ('m_execute_delivery', robot_, task_)
+            ('m_collect_resource', robot_, resource_, storage_),
+            ('m_execute_delivery', robot_, loc_)
         ]
 methods.declare_task_methods('m_deliver_resource_task', [deliver_resource_task])
 
-def collect_resource_normal(state, robot_, resource_, storage_, task_):
+def collect_resource_normal(state, robot_, resource_, storage_):
     if state.low_battery[robot_]:
         return False
 
-    loc_ = state.storage_loc[storage_]
+    loc_ = storage_
 
     return [
         ('a_navto', robot_, loc_),
@@ -113,51 +109,38 @@ def collect_resource_normal(state, robot_, resource_, storage_, task_):
         ('a_pick_resource', robot_, storage_, resource_)
     ]
 
-def collect_resource_low_battery(state, robot_, resource_, storage_, task_):
-    if not state.low_battery[robot_]:
-        return False
-
-    # naive reassignment (you can improve selection)
-    for r in state.low_battery:
-        if not state.low_battery[r] and r != robot_:
-            return [
-                ('a_reassign_task', task_, r)
-            ]
-
 methods.declare_task_methods(
     'm_collect_resource',
-    [collect_resource_low_battery, collect_resource_normal]
+    [collect_resource_normal]
 )
 
-def deliver_normal(state, robot_, task_):
+def deliver_normal(state, robot_, loc_):
     if state.low_battery[robot_]:
         return False
 
-    _, loc_ = state.requested[task_]
-
     return [
         ('a_navto', robot_, loc_),
-        ('a_deliver_resource', robot_, task_)
+        ('a_deliver_resource', robot_, loc_)
     ]
 
-def deliver_low_battery(state, robot_, task_):
-    if not state.low_battery[robot_]:
-        return False
+# def deliver_low_battery(state, robot_, task_):
+#     if not state.low_battery[robot_]:
+#         return False
 
-    resource_, _ = state.requested[task_]
+#     resource_, _ = state.requested[task_]
 
-    checkpoint_ = list(state.checkpoint_loc.keys())[0]
-    loc_ = state.checkpoint_loc[checkpoint_]
+#     checkpoint_ = list(state.checkpoint_loc.keys())[0]
+#     loc_ = state.checkpoint_loc[checkpoint_]
 
-    return [
-        ('a_navto', robot_, loc_),
-        ('a_drop_checkpoint', robot_, checkpoint_),
-        ('m_recover_from_checkpoint', resource_, task_)
-    ]
+#     return [
+#         ('a_navto', robot_, loc_),
+#         ('a_drop_checkpoint', robot_, checkpoint_),
+#         ('m_recover_from_checkpoint', resource_, task_)
+#     ]
 
 methods.declare_task_methods(
     'm_execute_delivery',
-    [deliver_low_battery, deliver_normal]
+    [deliver_normal]
 )
 
 def recover_from_checkpoint(state, resource_, task_):

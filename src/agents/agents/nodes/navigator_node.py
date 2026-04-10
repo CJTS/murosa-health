@@ -20,6 +20,11 @@ class Navigator(Node):
             "int4": (185, 80),
             "int5": (235, 80),
 
+            "int6": (35, 170),
+            "int7": (85, 170),
+            "int8": (135, 170),
+            "int9": (185, 170),
+
             "room1": (35, 50),
             "room2": (85, 50),
             "room3": (135, 50),
@@ -31,6 +36,11 @@ class Navigator(Node):
             "room5": (85, 125),
             "room6": (135, 125),
             "nr": (185, 125),
+
+            "stor1": (35, 215),
+            "stor2": (85, 215),
+            "stor3": (135, 215),
+            "stor4": (185, 215),
         }
 
         # === Conexões (grafo)
@@ -39,7 +49,11 @@ class Navigator(Node):
             "int2": ["int1", "int3", "room2", "room5"],
             "int3": ["int2", "int4", "room3", "room6"],
             "int4": ["int3", "int5", "lab", "nr"],
-            "int5": ["int4", "icu", "ds"],
+            "int5": ["int4", "icu", "ds", "int6"],
+            "int6": ["int5", "stor4", "int7"],
+            "int7": ["int6", "stor3", "int8"],
+            "int8": ["int7", "stor2", "int9"],
+            "int9": ["int8", "stor1"],
             "room1": ["int1"],
             "room2": ["int2"],
             "room3": ["int3"],
@@ -50,6 +64,10 @@ class Navigator(Node):
             "nr": ["int4"],
             "icu": ["int5"],
             "ds": ["int5"],
+            "stor1": ["int9"],
+            "stor2": ["int8"],
+            "stor3": ["int7"],
+            "stor4": ["int6"],
         }
 
         self.end_simulation_subscription = self.create_subscription(

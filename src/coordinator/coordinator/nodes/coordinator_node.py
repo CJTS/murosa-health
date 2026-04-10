@@ -62,7 +62,8 @@ class Coordinator(AgnosticCoordinator):
                 'spot2': 'ds',
                 'collector1': 'ds',
                 'collector2': 'ds',
-                'arm1': 'lab'
+                'arm1': 'lab',
+                'collector3': 'ds',
             },
             'doors': {
                 'room1': True,
