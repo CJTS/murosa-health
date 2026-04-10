@@ -86,6 +86,42 @@ def a_collect_sample(state, nurse_, room_):
     state.sample[nurse_] = True
     return state
 
+def a_request_resource(state, robot_, storage_, resource_):
+    if state.resource_at.get(resource_) == storage_:
+        state.resource_ready[resource_] = True
+        return state
+
+def a_pick_resource(state, robot_, storage_, resource_):
+    if state.resource_ready.get(resource_) and state.loc[robot_] == state.storage_loc[storage_]:
+        state.carrying[robot_] = resource_
+        del state.resource_at[resource_]
+        return state
+
+def a_deliver_resource(state, robot_, task_):
+    resource_, loc_ = state.requested[task_]
+
+    if state.carrying.get(robot_) == resource_ and state.loc[robot_] == loc_:
+        state.carrying[robot_] = None
+        return state
+
+def a_drop_checkpoint(state, robot_, checkpoint_):
+    res = state.carrying.get(robot_)
+
+    if res and state.loc[robot_] == state.checkpoint_loc[checkpoint_]:
+        state.carrying[robot_] = None
+        state.at_checkpoint[res] = checkpoint_
+        return state
+
+def a_pick_checkpoint(state, robot_, resource_, checkpoint_):
+    if state.at_checkpoint.get(resource_) == checkpoint_:
+        state.carrying[robot_] = resource_
+        del state.at_checkpoint[resource_]
+        return state
+
+def a_reassign_task(state, task_, new_robot_):
+    state.assigned[task_] = new_robot_
+    return state
+
 actions.declare_actions([
     a_navto,
     a_open_door,
@@ -102,7 +138,13 @@ actions.declare_actions([
     a_disinfect_room,
     a_authorize_disinfect,
     a_charge,
-    a_collect_sample
+    a_collect_sample,
+    a_request_resource,
+    a_pick_resource,
+    a_deliver_resource,
+    a_drop_checkpoint,
+    a_pick_checkpoint,
+    a_reassign_task
 ])
 
 # ******************************************    Demo / Test Routine         ****************************************** #

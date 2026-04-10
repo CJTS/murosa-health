@@ -91,6 +91,18 @@ init_state.connected = {
     'intersection4': ['docking_station', 'icu', 'intersection3'],
 }
 
+init_state.resource_at = {}        # resource -> storage
+init_state.storage_loc = {}        # storage -> location
+init_state.checkpoint_loc = {}     # checkpoint -> location
+
+init_state.carrying = {}           # robot -> resource or None
+init_state.requested = {}          # task -> (resource, location)
+
+init_state.resource_ready = {}     # storage -> bool
+init_state.at_checkpoint = {}      # resource -> checkpoint
+
+init_state.assigned = {}           # task -> robot
+
 
 # ******************************************    Demo / Test Routine         ****************************************** #
 if __name__ == '__main__':

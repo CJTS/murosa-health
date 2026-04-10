@@ -1,0 +1,190 @@
+(define (domain multi-robot-htn)
+
+  (:requirements :typing :hierarchy :method-preconditions :durative-actions)
+
+  (:types
+    robot location resource storage checkpoint agent task
+  )
+
+  (:predicates
+    (at ?r - robot ?l - location)
+    (storage-at ?s - storage ?l - location)
+    (checkpoint-at ?c - checkpoint ?l - location)
+
+    (resource-at ?res - resource ?s - storage)
+    (requested ?t - task ?res - resource ?a - agent ?l - location)
+
+    (assigned ?t - task ?r - robot)
+    (carrying ?r - robot ?res - resource)
+
+    (delivered ?t - task ?res - resource)
+    (resource-ready ?s - storage ?res - resource)
+
+    (at-checkpoint ?res - resource ?c - checkpoint)
+  )
+
+  (:functions
+    (battery ?r - robot)
+    (distance ?l1 - location ?l2 - location)
+    (wait-time ?s - storage)
+  )
+
+  ;; =====================================================
+  ;; ABSTRACT TASKS
+  ;; =====================================================
+
+  (:task fulfill-task
+    :parameters (?t - task)
+  )
+
+  (:task collect-resource
+    :parameters (?r - robot ?res - resource ?s - storage)
+  )
+
+  (:task deliver-resource-task
+    :parameters (?r - robot ?res - resource ?t - task)
+  )
+
+  (:task handle-low-battery-collection
+    :parameters (?r - robot ?t - task)
+  )
+
+  (:task handle-low-battery-delivery
+    :parameters (?r - robot ?res - resource)
+  )
+
+  ;; =====================================================
+  ;; METHODS
+  ;; =====================================================
+
+  ;; Main decomposition
+  (:method fulfill-task-method
+    :parameters (?t - task ?r - robot ?res - resource ?s - storage ?a - agent ?loc - location)
+    :task (fulfill-task ?t)
+
+    :precondition (and
+      (requested ?t ?res ?a ?loc)
+      (assigned ?t ?r)
+      (resource-at ?res ?s)
+    )
+
+    :subtasks (and
+      (collect-resource ?r ?res ?s)
+      (deliver-resource-task ?r ?res ?t)
+    )
+  )
+
+  ;; -----------------------------
+  ;; COLLECTION
+  ;; -----------------------------
+  (:method collect-normal
+    :parameters (?r - robot ?res - resource ?s - storage ?l - location)
+    :task (collect-resource ?r ?res ?s)
+
+    :precondition (and
+      (storage-at ?s ?l)
+      (> (battery ?r) 10)
+    )
+
+    :subtasks (and
+      (move ?r ?l)
+      (request-resource ?r ?s ?res)
+      (pick-resource ?r ?s ?res)
+    )
+  )
+
+  ;; Battery failure during collection
+  (:method collect-low-battery
+    :parameters (?r - robot ?t - task)
+    :task (handle-low-battery-collection ?r ?t)
+
+    :precondition (< (battery ?r) 10)
+
+    :subtasks (and
+      (go-recharge ?r)
+      (reassign-task ?t)
+    )
+  )
+
+  ;; -----------------------------
+  ;; DELIVERY
+  ;; -----------------------------
+  (:method deliver-normal
+    :parameters (?r - robot ?res - resource ?t - task ?loc - location)
+    :task (deliver-resource-task ?r ?res ?t)
+
+    :precondition (and
+      (requested ?t ?res ?a ?loc)
+      (> (battery ?r) 30)
+    )
+
+    :subtasks (and
+      (move ?r ?loc)
+      (deliver ?r ?res ?t)
+    )
+  )
+
+  ;; Battery failure during delivery
+  (:method deliver-low-battery
+    :parameters (?r - robot ?res - resource ?c - checkpoint ?l - location)
+    :task (handle-low-battery-delivery ?r ?res)
+
+    :precondition (< (battery ?r) 30)
+
+    :subtasks (and
+      (move ?r ?l)
+      (drop-checkpoint ?r ?res ?c)
+      (reassign-from-checkpoint ?res)
+    )
+  )
+
+  ;; =====================================================
+  ;; PRIMITIVE ACTIONS
+  ;; =====================================================
+
+  (:action move
+    :parameters (?r - robot ?l - location)
+    :precondition (at ?r ?l)
+    :effect (at ?r ?l)
+  )
+
+  (:action request-resource
+    :parameters (?r - robot ?s - storage ?res - resource)
+    :precondition (resource-at ?res ?s)
+    :effect (resource-ready ?s ?res)
+  )
+
+  (:action pick-resource
+    :parameters (?r - robot ?s - storage ?res - resource)
+    :precondition (resource-ready ?s ?res)
+    :effect (carrying ?r ?res)
+  )
+
+  (:action deliver
+    :parameters (?r - robot ?res - resource ?t - task)
+    :precondition (carrying ?r ?res)
+    :effect (delivered ?t ?res)
+  )
+
+  (:action drop-checkpoint
+    :parameters (?r - robot ?res - resource ?c - checkpoint)
+    :precondition (carrying ?r ?res)
+    :effect (and
+      (not (carrying ?r ?res))
+      (at-checkpoint ?res ?c)
+    )
+  )
+
+  (:action go-recharge
+    :parameters (?r - robot)
+    :effect (assign (battery ?r) 100)
+  )
+
+  (:action reassign-task
+    :parameters (?t - task)
+  )
+
+  (:action reassign-from-checkpoint
+    :parameters (?res - resource)
+  )
+)

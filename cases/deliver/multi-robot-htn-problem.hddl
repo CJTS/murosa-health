@@ -1,0 +1,41 @@
+(define (problem hospital-htn)
+  (:domain multi-robot-htn)
+
+  (:objects
+    r1 r2 - robot
+    locA locB locC locD - location
+    storage1 storage2 - storage
+    checkpoint1 - checkpoint
+
+    linen sterile-kit - resource
+    nurse1 - agent
+    task1 task2 - task
+  )
+
+  (:init
+    (at r1 locA)
+    (at r2 locB)
+
+    (storage-at storage1 locC)
+    (storage-at storage2 locD)
+
+    (resource-at linen storage1)
+    (resource-at sterile-kit storage2)
+
+    (requested task1 linen nurse1 locA)
+    (requested task2 sterile-kit nurse1 locA)
+
+    (assigned task1 r1)
+    (assigned task2 r2)
+
+    (= (battery r1) 50)
+    (= (battery r2) 80)
+  )
+
+  (:htn
+    :tasks (and
+      (fulfill-task task1)
+      (fulfill-task task2)
+    )
+  )
+)

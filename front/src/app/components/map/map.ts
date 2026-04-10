@@ -25,6 +25,11 @@ export class Map implements AfterViewInit {
     { x: 60, y: 100, width: 50, height: 50, label: 'room5' },
     { x: 110, y: 100, width: 50, height: 50, label: 'room6' },
     { x: 160, y: 100, width: 50, height: 50, label: 'nr' },
+
+    { x: 10, y: 190, width: 50, height: 50, label: 'stor1' },
+    { x: 60, y: 190, width: 50, height: 50, label: 'stor2' },
+    { x: 110, y: 190, width: 50, height: 50, label: 'stor3' },
+    { x: 160, y: 190, width: 50, height: 50, label: 'stor4' },
   ];
 
   intersections = [
@@ -33,6 +38,12 @@ export class Map implements AfterViewInit {
     { x: 135, y: 80 },
     { x: 185, y: 80 },
     { x: 235, y: 80 },
+
+    { x: 35, y: 170 },
+    { x: 85, y: 170 },
+    { x: 135, y: 170 },
+    { x: 185, y: 170 },
+    { x: 235, y: 170 },
   ];
 
   constructor() {
@@ -81,8 +92,10 @@ export class Map implements AfterViewInit {
     // === Caminhos (Path Segments) ===
     ctx.setLineDash([4, 2]);
     ctx.beginPath();
+
     ctx.moveTo(0, 80);
     ctx.lineTo(260, 80);
+
     ctx.moveTo(35, 60);
     ctx.lineTo(35, 100);
     ctx.moveTo(85, 60);
@@ -92,7 +105,19 @@ export class Map implements AfterViewInit {
     ctx.moveTo(185, 60);
     ctx.lineTo(185, 100);
     ctx.moveTo(235, 60);
-    ctx.lineTo(235, 180);
+    ctx.lineTo(235, 240);
+
+    ctx.moveTo(235, 170);
+    ctx.lineTo(0, 170);
+
+    ctx.moveTo(35, 170);
+    ctx.lineTo(35, 190);
+    ctx.moveTo(85, 170);
+    ctx.lineTo(85, 190);
+    ctx.moveTo(135, 170);
+    ctx.lineTo(135, 190);
+    ctx.moveTo(185, 170);
+    ctx.lineTo(185, 190);
     ctx.stroke();
     ctx.setLineDash([]);
 
@@ -109,7 +134,7 @@ export class Map implements AfterViewInit {
 
     // === Legenda ===
     ctx.fillStyle = '#000';
-    ctx.strokeRect(410, 10, 170, 125);
+    ctx.strokeRect(410, 10, 170, 140);
     ctx.font = '14px Arial';
     ctx.fillText('Legend:', 413, 25);
 
@@ -133,6 +158,7 @@ export class Map implements AfterViewInit {
     ctx.fillText('icu = Intensive Care Unit', 417, 85);
     ctx.fillText('nr = Nurses Room', 417, 105);
     ctx.fillText('ds = Docking Station', 417, 125);
+    ctx.fillText('stor = Storage', 417, 145);
   }
 
   drawAgents(): void {

@@ -57,25 +57,6 @@ def patrol_and_disinfect(state, spotrobot_,uvdrobot_, nurse_):
         ]
 methods.declare_task_methods('m_patrol_and_disinfect',[patrol_and_disinfect])
 
-# def approach_nurse(state, spotrobot_,nurse_):
-#     actions = []
-
-#     if state.low_battery[spotrobot_]:
-#         actions.append(('a_charge', spotrobot_))
-
-#     actions = actions + [('a_navto', spotrobot_, state.loc[nurse_])]
-
-#     if not state.doors[state.loc[nurse_]]:
-#         actions = actions + [('a_open_door', spotrobot_, state.loc[nurse_])]
-
-#     actions = actions + [
-#         ('a_approach_nurse', spotrobot_, nurse_),
-#         ('a_authenticate_nurse', spotrobot_, nurse_)
-#     ]
-
-#     return actions
-# methods.declare_task_methods('m_approach_nurse', [approach_nurse])
-
 def patrol_room(state, spotrobot_, nurse_): 
     actions = []
 
@@ -89,7 +70,6 @@ def patrol_room(state, spotrobot_, nurse_):
 
     return actions
 methods.declare_task_methods('m_patrol_room', [patrol_room])
-
 
 def disinfect_room(state, uvdrobot_, spotrobot_, nurse_):
     actions = []
@@ -109,6 +89,98 @@ def disinfect_room(state, uvdrobot_, spotrobot_, nurse_):
     return actions
 methods.declare_task_methods('m_disinfect_room', [disinfect_room])
 
+def deliver_resource_task(state, task_):
+    robot_ = state.assigned[task_]
+    resource_, _ = state.requested[task_]
+    storage_ = state.resource_at.get(resource_)
+
+    if storage_:
+        return [
+            ('m_collect_resource', robot_, resource_, storage_, task_),
+            ('m_execute_delivery', robot_, task_)
+        ]
+methods.declare_task_methods('m_deliver_resource_task', [deliver_resource_task])
+
+def collect_resource_normal(state, robot_, resource_, storage_, task_):
+    if state.low_battery[robot_]:
+        return False
+
+    loc_ = state.storage_loc[storage_]
+
+    return [
+        ('a_navto', robot_, loc_),
+        ('a_request_resource', robot_, storage_, resource_),
+        ('a_pick_resource', robot_, storage_, resource_)
+    ]
+
+def collect_resource_low_battery(state, robot_, resource_, storage_, task_):
+    if not state.low_battery[robot_]:
+        return False
+
+    # naive reassignment (you can improve selection)
+    for r in state.low_battery:
+        if not state.low_battery[r] and r != robot_:
+            return [
+                ('a_reassign_task', task_, r)
+            ]
+
+methods.declare_task_methods(
+    'm_collect_resource',
+    [collect_resource_low_battery, collect_resource_normal]
+)
+
+def deliver_normal(state, robot_, task_):
+    if state.low_battery[robot_]:
+        return False
+
+    _, loc_ = state.requested[task_]
+
+    return [
+        ('a_navto', robot_, loc_),
+        ('a_deliver_resource', robot_, task_)
+    ]
+
+def deliver_low_battery(state, robot_, task_):
+    if not state.low_battery[robot_]:
+        return False
+
+    resource_, _ = state.requested[task_]
+
+    checkpoint_ = list(state.checkpoint_loc.keys())[0]
+    loc_ = state.checkpoint_loc[checkpoint_]
+
+    return [
+        ('a_navto', robot_, loc_),
+        ('a_drop_checkpoint', robot_, checkpoint_),
+        ('m_recover_from_checkpoint', resource_, task_)
+    ]
+
+methods.declare_task_methods(
+    'm_execute_delivery',
+    [deliver_low_battery, deliver_normal]
+)
+
+def recover_from_checkpoint(state, resource_, task_):
+    checkpoint_ = state.at_checkpoint.get(resource_)
+
+    if not checkpoint_:
+        return False
+
+    loc_ = state.checkpoint_loc[checkpoint_]
+
+    # find available robot
+    for r in state.low_battery:
+        if not state.low_battery[r]:
+            return [
+                ('a_navto', r, loc_),
+                ('a_pick_checkpoint', r, resource_, checkpoint_),
+                ('m_execute_delivery', r, task_)
+            ]
+
+methods.declare_task_methods(
+    'm_recover_from_checkpoint',
+    [recover_from_checkpoint]
+)
 
 # ******************************************    Demo / Test Routine         ****************************************** #
 if __name__ == '__main__':
