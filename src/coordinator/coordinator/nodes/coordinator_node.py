@@ -43,6 +43,16 @@ class CollectSampleMission(Mission):
         self.room = None
         self.type = 'CollectSampleMission'
 
+class DeliverSampleMission(Mission):
+    def __init__(self, team: List[MissionRobot], context):
+        super().__init__(team, context)
+        self.priority = 1
+        self.roles = [RobotRoles.COLLECTOR]
+        self.mission_context = "start(Collector, Resource, Storage, Room)"
+        self.variables = ["Collector", "Resource", "Storage", "Room"]
+        self.room = None
+        self.type = 'DeliverSampleMission'
+
 class Coordinator(AgnosticCoordinator):
     def __init__(self):
         """
@@ -63,7 +73,6 @@ class Coordinator(AgnosticCoordinator):
                 'collector1': 'ds',
                 'collector2': 'ds',
                 'arm1': 'lab',
-                'collector3': 'ds',
             },
             'doors': {
                 'room1': True,
@@ -128,7 +137,33 @@ class Coordinator(AgnosticCoordinator):
                 'collector1': False,
                 'collector2': False,
                 'arm1': False
-            }
+            },
+            'resource_ready': {
+                'resource1': False,
+                'resource2': False,
+                'resource3': False,
+                'resource4': False
+            },
+            'carrying': {
+                'collector1': None,
+                'collector2': None,
+                'collector3': None
+            },
+            'resource_at': {
+                'resource1': 'stor1',
+                'resource2': 'stor2',
+                'resource3': 'stor3',
+                'resource4': 'stor4'
+            },
+            'deliver': {
+                'room1': False,
+                'room2': False,
+                'room3': False,
+                'room4': False,
+                'room5': False,
+                'room6': False,
+                'icu': False
+            },
         }
 
     def register_agent(self, decoded_msg):
@@ -176,6 +211,8 @@ class Coordinator(AgnosticCoordinator):
             self.state['disinfected'][room] = False
         elif (mission_type == 'Sample'):
             self.state['sample'][room] = True
+        elif (mission_type == 'Deliver'):
+            self.state['deliver'][room] = True
 
         self.missions.append(mission)
 
@@ -188,6 +225,8 @@ class Coordinator(AgnosticCoordinator):
             mission = DisinfectRoomMission([], {})
         elif (mission_type == 'Sample'):
             mission = CollectSampleMission([], {})
+        elif (mission_type == 'Deliver'):
+            mission = DeliverSampleMission([], {})
 
         mission.trigger = trigger
         return mission
@@ -206,6 +245,13 @@ class Coordinator(AgnosticCoordinator):
                 room,
                 team[0].robot, # Robot
                 team[1].robot # Arm
+            )
+        elif (mission_type == 'Deliver'):
+            context = (
+                team[0].robot, # Collector
+                'resource1', # Resource (unknown at the beginning)
+                'stor1', # Storage (unknown at the beginning)
+                room
             )
         self.get_logger().info(f"context: {str(context)}")
         return context

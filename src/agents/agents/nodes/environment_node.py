@@ -158,7 +158,7 @@ class Environment(Node):
         return response
 
     def sample_initial_trigger(self, room):
-        message = FIPAMessage(FIPAPerformative.INFORM.value, 'Env', 'Coordinator', 'InitialTrigger|Sample,' + room).encode()
+        message = FIPAMessage(FIPAPerformative.INFORM.value, 'Env', 'Coordinator', 'InitialTrigger|Deliver,' + room + ',resource1').encode()
         ros_msg = Message.Request()
         ros_msg.content = message
         return self.cli.call_async(ros_msg)

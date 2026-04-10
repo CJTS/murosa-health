@@ -45,6 +45,8 @@ class Planner(Node):
                 goal = 'm_pickup_and_deliver_sample'
             elif actionTuple[0] == 'DisinfectRoomMission' or actionTuple[0] == 'DisinfectICUMission':
                 goal = 'm_patrol_and_disinfect'
+            elif actionTuple[0] == 'DeliverSampleMission':
+                goal = 'm_deliver_resource_task'
 
             planner = IPyHOP(methods, actions)
             plan = planner.plan(self.state, [(
