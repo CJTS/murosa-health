@@ -47,7 +47,7 @@ class DeliverSampleMission(Mission):
     def __init__(self, team: List[MissionRobot], context):
         super().__init__(team, context)
         self.priority = 1
-        self.roles = [RobotRoles.COLLECTOR]
+        self.roles = [RobotRoles.COLLECTOR, RobotRoles.COLLECTOR]
         self.mission_context = "start(Collector, Resource, Storage, Room)"
         self.variables = ["Collector", "Resource", "Storage", "Room"]
         self.room = None
@@ -189,7 +189,6 @@ class Coordinator(AgnosticCoordinator):
             mission.team = team
             params = [room]
             if mission_type == 'DeliverSampleMission':
-                params.append('mission1')
                 params.append(str(list(map(lambda resource: (resource, self.state['resource_at'][resource]), message.split(',')[2:]))).replace(",", "/"))
 
             mission.context = self.get_start_context(mission_type, team, params)
@@ -237,9 +236,8 @@ class Coordinator(AgnosticCoordinator):
             )
         elif (mission_type == 'DeliverSampleMission'):
             context = (
-                team[0].robot, # Collector
+                str(list(map(lambda mission_robot: (mission_robot.robot), team))).replace(",", "/"),
                 params[1],
-                params[2],
                 params[0]
             )
         self.get_logger().info(f"context: {str(context)}")
@@ -281,14 +279,14 @@ class Coordinator(AgnosticCoordinator):
         elif error_desc[0] == 'resource_not_available':
             resource = error_desc[1]
             temp_list = list(mission.context)
-            entry = list(eval(temp_list[2].replace("/", ",")))
+            entry = list(eval(temp_list[1].replace("/", ",")))
             new_entry = []
             for item in entry:
                 if item[0] == resource:
                     new_entry.append((item[0], self.state['resource_at'][resource]))
                 else:
                     new_entry.append(item)
-            temp_list[2] = str((new_entry)).replace(",", "/")
+            temp_list[1] = str((new_entry)).replace(",", "/")
 
             mission.context = tuple(temp_list)
         self.update_planner_state(json.dumps(self.state))

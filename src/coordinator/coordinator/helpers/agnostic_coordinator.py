@@ -37,10 +37,6 @@ class MissionRobot():
     def __str__(self):
         return self.robot
 
-class Team():
-    def __init__(self, robots: MissionRobot):
-        self.robots = robots
-
 class Mission():
     def __init__(self, team: List[MissionRobot], context):
         self.team = team
@@ -162,13 +158,11 @@ class AgnosticCoordinator(Node):
         for role in mission.roles:
             free_robot = next((robot for robot in self.robots if robot.status == RobotStatus.READY and robot.role == role), None)
             if free_robot is not None:
+                free_robot.status = RobotStatus.OCCUPIED
                 team.append(free_robot)
 
         if(len(team) is not len(mission.roles)):
             return None
-
-        for robot in team:
-            robot.status = RobotStatus.OCCUPIED
 
         return team
 
@@ -237,8 +231,9 @@ class AgnosticCoordinator(Node):
                 return mission
             current_plan = plan_response.observation.split('/')
             mission.plan = current_plan
-            self.split_plans(mission.context, current_plan)
-            self.send_plans_request(mission.context)
+            self.split_plans(mission.team, current_plan)
+            self.get_logger().info(str(self.agents_actions))
+            self.send_plans_request(mission.team)
 
         return mission
 
@@ -353,28 +348,27 @@ class AgnosticCoordinator(Node):
                 robot.current_bdi = bdies
         else:
             mission.plan = current_plan
-            self.split_plans(mission.context, current_plan)
-            self.send_plans_request(mission.context)
+            self.split_plans(mission.team, current_plan)
+            self.send_plans_request(mission.team)
 
         for robot in mission.team:
             robot.finished = False
 
-    def split_plans(self, team, current_plan):
+    def split_plans(self, team: List[MissionRobot], current_plan):
         for agent in team:
             tuples = map(action_string_to_tuple, current_plan)
-            self.agents_actions[agent] = []
+            self.agents_actions[agent.robot] = []
 
             for action in tuples:
-                if agent in action:
-                    self.agents_actions[agent].append(action)
+                if agent.robot in action:
+                    self.agents_actions[agent.robot].append(action)
 
     def send_plans_request(self, team):
-        # NOT AGNOSTIC
         self.get_logger().info('Sending plans')
         for agent in team:
             send_plan_request_nurse = String()
-            send_plan_request_nurse.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent, 'Plan|' + '/'.join(list(map(
-                action_tuple_to_string, self.agents_actions[agent]
+            send_plan_request_nurse.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent.robot, 'Plan|' + '/'.join(list(map(
+                action_tuple_to_string, self.agents_actions[agent.robot]
             )))).encode()
             self.agent_publisher.publish(send_plan_request_nurse)
 

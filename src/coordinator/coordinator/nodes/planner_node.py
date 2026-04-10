@@ -37,6 +37,7 @@ class Planner(Node):
             actionTuple = tuple(messageTuple[1].split(','))
 
             plan_param = []
+            responsePlan = []
 
             if actionTuple[0] == 'CollectSampleMission':
                 goal = 'm_pickup_and_deliver_sample'
@@ -44,26 +45,49 @@ class Planner(Node):
                 self.get_logger().info('Creating plan for: %s %s %s %s %s' % (
                     actionTuple[0], actionTuple[1], actionTuple[2], actionTuple[3], actionTuple[4]
                 ))
+                planner = IPyHOP(methods, actions)
+                plan = planner.plan(self.state, plan_param, verbose=1)
             elif actionTuple[0] == 'DisinfectRoomMission' or actionTuple[0] == 'DisinfectICUMission':
                 goal = 'm_patrol_and_disinfect'
                 plan_param = [(goal, actionTuple[1], actionTuple[2], actionTuple[3], actionTuple[4])]
                 self.get_logger().info('Creating plan for: %s %s %s %s %s' % (
                     actionTuple[0], actionTuple[1], actionTuple[2], actionTuple[3], actionTuple[4]
                 ))
+                planner = IPyHOP(methods, actions)
+                plan = planner.plan(self.state, plan_param, verbose=1)
             elif actionTuple[0] == 'DeliverSampleMission':
                 goal = 'm_deliver_mission'
-                plan_param = [(goal, actionTuple[1], actionTuple[2], actionTuple[4])]
-                self.state.requested = {
-                    'mission1': list(eval(actionTuple[3].replace("/", ",")))
-                }
-                self.get_logger().info('Creating plan for: %s %s %s %s' % (
-                    actionTuple[0], actionTuple[1], actionTuple[2], actionTuple[4]
-                ))
+                # plan_param = [(goal, actionTuple[1], actionTuple[2], actionTuple[4])]
+                requested = list(eval(actionTuple[2].replace("/", ",")))
+                self.get_logger().info('Requested samples: %s' % requested)
+                robots = list(eval(actionTuple[1].replace("/", ",")))
+                self.get_logger().info('Available robots: %s' % robots)
+                res = []
 
-            planner = IPyHOP(methods, actions)
-            plan = planner.plan(self.state, plan_param, verbose=1)
+                for i, item in enumerate(requested):
+                    res.append((robots[i % len(robots)], item))
+                self.get_logger().info('Assigned samples: %s' % res)
 
-            responsePlan = []
+                mission_index = 0
+                missions = {}
+
+                for robot in robots:
+                    mission_name = f'mission{mission_index + 1}'
+                    missions[mission_name] = [re for rob, re in res if rob == robot]
+                    mission_index += 1
+
+                self.state.requested = missions
+                self.get_logger().info('Requested missions: %s' % self.state.requested)
+
+                mission_index = 0
+                plan = []
+                for robot in robots:
+                    mission_name = f'mission{mission_index + 1}'
+                    plan_param = [(goal, robot, mission_name, actionTuple[3])]
+                    self.get_logger().info('Creating plan for: %s' % str(plan_param))
+                    planner = IPyHOP(methods, actions)
+                    plan = plan + planner.plan(self.state, plan_param, verbose=1)
+                    mission_index += 1
 
             for action in plan:
                 responsePlan.append(','.join(action))
