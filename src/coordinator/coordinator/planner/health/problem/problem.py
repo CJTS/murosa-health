@@ -97,14 +97,12 @@ init_state.resource_at = {
     'resource3': 'stor3',
     'resource4': 'stor4'
 } # resource -> storage
-
 init_state.carrying = {
     'collector1': None,
     'collector2': None,
     'collector3': None
 } # robot -> resource or None
-
-init_state.requested = {}          # task -> (resource, location)
+init_state.requested = { } # task -> (resource, location)
 
 init_state.resource_ready = {
     'resource1': False,
@@ -112,7 +110,6 @@ init_state.resource_ready = {
     'resource3': False,
     'resource4': False
 } # storage -> bool
-
 init_state.at_checkpoint = {
     'resource1': None,
     'resource2': None,

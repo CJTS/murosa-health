@@ -118,6 +118,7 @@ def a_deliver_resource(state, robot_, loc_):
 #         del state.at_checkpoint[resource_]
 #         return state
 
+
 actions.declare_actions([
     a_navto,
     a_open_door,
