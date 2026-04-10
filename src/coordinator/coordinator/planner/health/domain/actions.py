@@ -88,11 +88,10 @@ def a_collect_sample(state, nurse_, room_):
 
 def a_request_resource(state, robot_, storage_, resource_):
     if state.resource_at.get(resource_) == storage_:
-        state.resource_ready[resource_] = True
         return state
 
 def a_pick_resource(state, robot_, storage_, resource_):
-    if state.resource_ready.get(resource_) and state.loc[robot_] == storage_:
+    if state.loc[robot_] == storage_:
         state.carrying[robot_] = resource_
         del state.resource_at[resource_]
         return state

@@ -15,7 +15,7 @@ def patrol_and_disinfect(state, spotrobot_,uvdrobot_, nurse_):
         ]
 methods.declare_task_methods('m_patrol_and_disinfect',[patrol_and_disinfect])
 
-def patrol_room(state, spotrobot_, nurse_): 
+def patrol_room(state, spotrobot_, nurse_):
     actions = []
 
     if not state.cleaned[state.loc[spotrobot_]]:

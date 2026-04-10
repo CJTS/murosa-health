@@ -76,21 +76,6 @@ init_state.low_battery = {
     'collector2': False,
     'arm1': False
 }
-init_state.connected = {
-    'room1': ['intersection1'],
-    'room2': ['intersection1'],
-    'room3': ['intersection2'],
-    'room4': ['intersection2'],
-    'room5': ['intersection3'],
-    'room6': ['intersection3'],
-    'docking_station': ['intersection4'],
-    'icu': ['intersection4'],
-    'intersection1': ['room1', 'room2', 'intersection2'],
-    'intersection2': ['room3', 'room4', 'intersection1', 'intersection3'],
-    'intersection3': ['room5', 'room6', 'intersection2', 'intersection4'],
-    'intersection4': ['docking_station', 'icu', 'intersection3'],
-}
-
 init_state.resource_at = {
     'resource1': 'stor1',
     'resource2': 'stor2',
@@ -103,19 +88,6 @@ init_state.carrying = {
     'collector3': None
 } # robot -> resource or None
 init_state.requested = { } # task -> (resource, location)
-
-init_state.resource_ready = {
-    'resource1': False,
-    'resource2': False,
-    'resource3': False,
-    'resource4': False
-} # storage -> bool
-init_state.at_checkpoint = {
-    'resource1': None,
-    'resource2': None,
-    'resource3': None,
-    'resource4': None
-} # resource -> checkpoint
 
 # ******************************************    Demo / Test Routine         ****************************************** #
 if __name__ == '__main__':

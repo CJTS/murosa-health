@@ -225,7 +225,6 @@ class AgnosticCoordinator(Node):
                 msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent.robot, 'Start|' + ','.join(mission.context)).encode()
                 self.agent_publisher.publish(msg)
         else:
-            # self.update_planner_state(json.dumps(self.state))
             future = self.send_need_plan_request(mission.type, ','.join(mission.context))
             rclpy.spin_until_future_complete(self, future)
             plan_response = future.result()
@@ -292,12 +291,9 @@ class AgnosticCoordinator(Node):
         return self.environment_client.call_async(self.update_state_request)
 
     def check_env(self):
-        self.get_logger().info('Checking environment state')
         future = self.send_monitor_state_request(','.join(('monitor',)))
         rclpy.spin_until_future_complete(self, future)
         response = future.result()
-        self.get_logger().info('Environment state received')
-        self.get_logger().info(response.observation)
         self.state = json.loads(response.observation)
         self.update_planner_state(response.observation)
         # self.verify_initial_trigger()
@@ -318,6 +314,9 @@ class AgnosticCoordinator(Node):
     def fix_plan(self, mission: Mission):
         team = mission.team
 
+        self.get_logger().info('Context: %s ' % (
+            ','.join(mission.context)
+        ))
         future = self.send_need_plan_request(mission.type, ','.join(mission.context))
         rclpy.spin_until_future_complete(self, future)
         plan_response = future.result()

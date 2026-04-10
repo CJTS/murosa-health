@@ -150,6 +150,7 @@ class Environment(Node):
                 'collector2': False,
                 'arm1': False
             },
+            'requested': { }
         }
         self.start_server()
 
@@ -216,9 +217,8 @@ class Environment(Node):
         return response
 
     def sample_initial_trigger(self, room):
-        resources_list = ['resource4']
-        random_resource = random.choice(resources_list)
-        message = FIPAMessage(FIPAPerformative.INFORM.value, 'Env', 'Coordinator', 'InitialTrigger|DeliverSampleMission,' + room + ',' + random_resource).encode()
+        resources_list = ['resource1', 'resource2', 'resource3', 'resource4',]
+        message = FIPAMessage(FIPAPerformative.INFORM.value, 'Env', 'Coordinator', 'InitialTrigger|DeliverSampleMission,' + room + ',' + random.choice(resources_list) + ',' + random.choice(resources_list)).encode()
         ros_msg = Message.Request()
         ros_msg.content = message
         return self.cli.call_async(ros_msg)

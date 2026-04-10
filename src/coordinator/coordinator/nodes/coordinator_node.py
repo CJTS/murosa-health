@@ -59,7 +59,7 @@ class Coordinator(AgnosticCoordinator):
         1.1. Initialize specific coordinator variables (state)
         """
         super().__init__('Disinfect Coordinator')
-
+        self.requested = { }
         self.state = {
             'loc': {
                 'nurse1': 'nr',
@@ -138,12 +138,6 @@ class Coordinator(AgnosticCoordinator):
                 'collector2': False,
                 'arm1': False
             },
-            'resource_ready': {
-                'resource1': False,
-                'resource2': False,
-                'resource3': False,
-                'resource4': False
-            },
             'carrying': {
                 'collector1': None,
                 'collector2': None,
@@ -154,15 +148,6 @@ class Coordinator(AgnosticCoordinator):
                 'resource2': 'stor2',
                 'resource3': 'stor3',
                 'resource4': 'stor4'
-            },
-            'deliver': {
-                'room1': False,
-                'room2': False,
-                'room3': False,
-                'room4': False,
-                'room5': False,
-                'room6': False,
-                'icu': False
             },
         }
 
@@ -204,8 +189,11 @@ class Coordinator(AgnosticCoordinator):
             mission.team = team
             params = [room]
             if mission_type == 'DeliverSampleMission':
-                params.append(message.split(',')[2]) # resource
+                params.append('mission1')
+                params.append(str(list(map(lambda resource: (resource, self.state['resource_at'][resource]), message.split(',')[2:]))).replace(",", "/"))
+
             mission.context = self.get_start_context(mission_type, team, params)
+            self.get_logger().info(f"Mission context: {str(mission.context)}")
         else:
             mission.status = MissionStatus.WAITING_TEAM
 
@@ -214,8 +202,6 @@ class Coordinator(AgnosticCoordinator):
             self.state['disinfected'][room] = False
         elif (mission_type == 'CollectSampleMission'):
             self.state['sample'][room] = True
-        elif (mission_type == 'DeliverSampleMission'):
-            self.state['deliver'][room] = True
 
         self.missions.append(mission)
 
@@ -252,8 +238,8 @@ class Coordinator(AgnosticCoordinator):
         elif (mission_type == 'DeliverSampleMission'):
             context = (
                 team[0].robot, # Collector
-                params[1], # Resource (unknown at the beginning)
-                self.state['resource_at'][params[1]], # Storage (unknown at the beginning)
+                params[1],
+                params[2],
                 params[0]
             )
         self.get_logger().info(f"context: {str(context)}")
@@ -295,7 +281,15 @@ class Coordinator(AgnosticCoordinator):
         elif error_desc[0] == 'resource_not_available':
             resource = error_desc[1]
             temp_list = list(mission.context)
-            temp_list[2] = self.state['resource_at'][resource]
+            entry = list(eval(temp_list[2].replace("/", ",")))
+            new_entry = []
+            for item in entry:
+                if item[0] == resource:
+                    new_entry.append((item[0], self.state['resource_at'][resource]))
+                else:
+                    new_entry.append(item)
+            temp_list[2] = str((new_entry)).replace(",", "/")
+
             mission.context = tuple(temp_list)
         self.update_planner_state(json.dumps(self.state))
 

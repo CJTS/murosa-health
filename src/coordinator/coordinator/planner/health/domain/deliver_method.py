@@ -7,12 +7,10 @@ from coordinator.planner.health.domain.common_method import methods
 
 # ******************************************        Method Definitions      ****************************************** #
 def deliver_mission_empty(state, robot_, mission_, loc_):
-    print(f"Checking if mission {mission_} is empty...")
     if not state.requested[mission_]:
         return []
 
 def deliver_mission_non_empty(state, robot_, mission_, loc_):
-    print(f"Checking if mission {mission_} is non-empty...")
     if not state.requested[mission_]:
         return False
 

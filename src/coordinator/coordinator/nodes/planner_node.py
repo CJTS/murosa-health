@@ -35,23 +35,33 @@ class Planner(Node):
 
         if messageTuple[0] == 'need_plan':
             actionTuple = tuple(messageTuple[1].split(','))
-            self.get_logger().info('Creating plan for: %s %s %s %s %s' % (
-                actionTuple[0], actionTuple[1], actionTuple[2], actionTuple[3], actionTuple[4]
-            ))
 
-            goal = ''
+            plan_param = []
 
             if actionTuple[0] == 'CollectSampleMission':
                 goal = 'm_pickup_and_deliver_sample'
+                plan_param = [(goal, actionTuple[1], actionTuple[2], actionTuple[3], actionTuple[4])]
+                self.get_logger().info('Creating plan for: %s %s %s %s %s' % (
+                    actionTuple[0], actionTuple[1], actionTuple[2], actionTuple[3], actionTuple[4]
+                ))
             elif actionTuple[0] == 'DisinfectRoomMission' or actionTuple[0] == 'DisinfectICUMission':
                 goal = 'm_patrol_and_disinfect'
+                plan_param = [(goal, actionTuple[1], actionTuple[2], actionTuple[3], actionTuple[4])]
+                self.get_logger().info('Creating plan for: %s %s %s %s %s' % (
+                    actionTuple[0], actionTuple[1], actionTuple[2], actionTuple[3], actionTuple[4]
+                ))
             elif actionTuple[0] == 'DeliverSampleMission':
-                goal = 'm_deliver_resource_task'
+                goal = 'm_deliver_mission'
+                plan_param = [(goal, actionTuple[1], actionTuple[2], actionTuple[4])]
+                self.state.requested = {
+                    'mission1': list(eval(actionTuple[3].replace("/", ",")))
+                }
+                self.get_logger().info('Creating plan for: %s %s %s %s' % (
+                    actionTuple[0], actionTuple[1], actionTuple[2], actionTuple[4]
+                ))
 
             planner = IPyHOP(methods, actions)
-            plan = planner.plan(self.state, [(
-                goal, actionTuple[1], actionTuple[2], actionTuple[3], actionTuple[4]
-            )], verbose=1)
+            plan = planner.plan(self.state, plan_param, verbose=1)
 
             responsePlan = []
 
@@ -67,15 +77,13 @@ class Planner(Node):
             state = json.loads(messageTuple[1])
             self.state.loc = state['loc']
             self.state.doors = state['doors']
-            self.state.disinfected = state['disinfected']
-            self.state.cleaned = state['cleaned']
-            self.state.low_battery = state['low_battery']
             self.state.sample = state['sample']
             self.state.samples = state['samples']
-            self.state.resource_ready = state['resource_ready']
-            self.state.carrying = state['carrying']
+            self.state.cleaned = state['cleaned']
+            self.state.disinfected = state['disinfected']
+            self.state.low_battery = state['low_battery']
             self.state.resource_at = state['resource_at']
-            self.state.deliver = state['deliver']
+            self.state.carrying = state['carrying']
             return response
         elif messageTuple[0] == 'update_room_uncleaned':
             self.state.cleaned[messageTuple[1]] = False
