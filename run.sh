@@ -1,0 +1,5 @@
+gnome-terminal -- bash -c "./scripts/rosbridge.sh"
+gnome-terminal -- bash -c "./scripts/jason.sh"
+gnome-terminal -- bash -c "./scripts/coordinator.sh"
+gnome-terminal -- bash -c "./scripts/agents.sh"
+gnome-terminal -- bash -c "./scripts/front.sh"

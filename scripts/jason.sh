@@ -1,0 +1,2 @@
+cd ./jason
+./gradlew run
