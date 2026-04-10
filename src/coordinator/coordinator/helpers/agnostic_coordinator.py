@@ -224,7 +224,7 @@ class AgnosticCoordinator(Node):
                 msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent.robot, 'Start|' + ','.join(mission.context)).encode()
                 self.agent_publisher.publish(msg)
         else:
-            self.update_planner_state(json.dumps(self.state))
+            # self.update_planner_state(json.dumps(self.state))
             future = self.send_need_plan_request(mission.type, ','.join(mission.context))
             rclpy.spin_until_future_complete(self, future)
             plan_response = future.result()
@@ -243,6 +243,7 @@ class AgnosticCoordinator(Node):
         return mission
 
     def fix_missions(self, mission: Mission):
+        self.update_planner_state(json.dumps(self.state))
         error = mission.error
         self.get_logger().info(str(error))
         error_msg = error.split("|")

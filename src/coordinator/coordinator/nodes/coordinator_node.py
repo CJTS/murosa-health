@@ -202,7 +202,10 @@ class Coordinator(AgnosticCoordinator):
 
         if(team is not None):
             mission.team = team
-            mission.context = self.get_start_context(mission_type, team, room)
+            params = [room]
+            if mission_type == 'Deliver':
+                params.append(message.split(',')[2]) # resource
+            mission.context = self.get_start_context(mission_type, team, params)
         else:
             mission.status = MissionStatus.WAITING_TEAM
 
@@ -231,27 +234,27 @@ class Coordinator(AgnosticCoordinator):
         mission.trigger = trigger
         return mission
 
-    def get_start_context(self, mission_type, team: List[MissionRobot], room: str):
+    def get_start_context(self, mission_type, team: List[MissionRobot], params: List[str]):
         if(mission_type == 'Disinfect'):
             context = (
                 team[2].robot, # Nurse
-                room, # Infected Location
+                params[0], # Infected Location
                 team[0].robot, # spotrobot
                 team[1].robot # uvdrobot
             )
         elif (mission_type == 'Sample'):
             context =  (
                 team[2].robot, # Nurse
-                room,
+                params[0],
                 team[0].robot, # Robot
                 team[1].robot # Arm
             )
         elif (mission_type == 'Deliver'):
             context = (
                 team[0].robot, # Collector
-                'resource1', # Resource (unknown at the beginning)
-                'stor1', # Storage (unknown at the beginning)
-                room
+                params[1], # Resource (unknown at the beginning)
+                self.state['resource_at'][params[1]], # Storage (unknown at the beginning)
+                params[0]
             )
         self.get_logger().info(f"context: {str(context)}")
         return context

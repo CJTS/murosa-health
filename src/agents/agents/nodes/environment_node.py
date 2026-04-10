@@ -15,7 +15,7 @@ class Environment(Node):
         self.counter = 5000
         cleanOptions = [True, False]
         doorOptions = [False, True]
-        nurse4Room = ['room4', 'icu']
+        resource_at_stor4 = ['stor4', 'stor3']
         self.declare_parameter('problem_rate', rclpy.Parameter.Type.INTEGER)
         uncleaned_percentage = self.get_parameter('problem_rate').get_parameter_value().integer_value
         uncleaned1 = random.choices(cleanOptions, weights=(
@@ -34,7 +34,7 @@ class Environment(Node):
             100 - uncleaned_percentage, uncleaned_percentage), k=1)
         door4 = random.choices(doorOptions, weights=(
             100 - uncleaned_percentage, uncleaned_percentage), k=1)
-        icuRoom = random.choices(nurse4Room, weights=(
+        resource4 = random.choices(resource_at_stor4, weights=(
             100 - uncleaned_percentage, uncleaned_percentage), k=1)
 
         self.state = {
@@ -95,7 +95,42 @@ class Environment(Node):
                 'room5': True,
                 'room6': True,
                 'icu': True
-            }
+            },
+            'low_battery': {
+                'uvd1': False,
+                'spot1': False,
+                'uvd2': False,
+                'spot2': False,
+                'collector1': False,
+                'collector2': False,
+                'arm1': False
+            },
+            'resource_ready': {
+                'resource1': False,
+                'resource2': False,
+                'resource3': False,
+                'resource4': False
+            },
+            'carrying': {
+                'collector1': None,
+                'collector2': None,
+                'collector3': None
+            },
+            'resource_at': {
+                'resource1': 'stor1',
+                'resource2': 'stor2',
+                'resource3': 'stor3' if resource4[0] == 'stor4' else 'stor4',
+                'resource4': resource4[0]
+            },
+            'deliver': {
+                'room1': False,
+                'room2': False,
+                'room3': False,
+                'room4': False,
+                'room5': False,
+                'room6': False,
+                'icu': False
+            },
         }
         self.start_server()
 
@@ -148,6 +183,11 @@ class Environment(Node):
             response.observation = self.state['loc'][actionTuple[1]]
         elif actionTuple[0] == 'a_collect_sample':
             self.state['disinfected'][actionTuple[2]] = False
+        elif actionTuple[0] == 'a_request_resource':
+            self.get_logger().info(f"Received resource request for {actionTuple[3]} from {actionTuple[1]} at {actionTuple[2]}")
+            if not self.state['resource_at'][actionTuple[3]] == actionTuple[2]:
+                response.observation = 'resource not available'
+            response.observation = 'success'
         elif actionTuple[0] == 'move':
             self.state['pos'][actionTuple[1]] = (
                 self.state['pos'][actionTuple[1]][0] + float(actionTuple[2]),
@@ -158,7 +198,9 @@ class Environment(Node):
         return response
 
     def sample_initial_trigger(self, room):
-        message = FIPAMessage(FIPAPerformative.INFORM.value, 'Env', 'Coordinator', 'InitialTrigger|Deliver,' + room + ',resource1').encode()
+        resources_list = ['resource4']
+        random_resource = random.choice(resources_list)
+        message = FIPAMessage(FIPAPerformative.INFORM.value, 'Env', 'Coordinator', 'InitialTrigger|Deliver,' + room + ',' + random_resource).encode()
         ros_msg = Message.Request()
         ros_msg.content = message
         return self.cli.call_async(ros_msg)

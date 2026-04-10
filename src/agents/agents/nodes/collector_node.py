@@ -43,6 +43,9 @@ class Collector(Agent):
             self.get_logger().info('Doing a_pick_up_sample')
             self.a_pick_up_sample(actionTuple[1], actionTuple[2])
             return ActionResult.WAITING
+        elif actionTuple[0] == 'a_request_resource':
+            self.get_logger().info('Doing a_request_resource')
+            future = self.a_request_resource(actionTuple[1], actionTuple[2], actionTuple[3])
 
         if future != None:
             self.get_logger().info("Wating for response")
@@ -55,6 +58,11 @@ class Collector(Agent):
             elif response.observation == 'door closed':
                 self.notifyError(
                     ','.join(('door_closed', actionTuple[2]))
+                )
+                return ActionResult.FAILURE
+            elif response.observation == 'resource not available':
+                self.notifyError(
+                    ','.join(('resource_not_available', actionTuple[2]))
                 )
                 return ActionResult.FAILURE
 
@@ -91,6 +99,11 @@ class Collector(Agent):
     def a_approach_arm(self, robot, arm):
         self.action_request = Action.Request()
         self.action_request.action = ','.join(('a_approach_arm', robot, arm))
+        return self.environment_client.call_async(self.action_request)
+
+    def a_request_resource(self, robot, storage, resource):
+        self.action_request = Action.Request()
+        self.action_request.action = ','.join(('a_request_resource', robot, storage, resource))
         return self.environment_client.call_async(self.action_request)
 
     def a_deposit(self, nurse, robot):
