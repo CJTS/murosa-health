@@ -12,6 +12,8 @@ class RobotRoles(Enum):
     NURSE = 3
     COLLECTOR = 4
     ARM = 5
+    SMALL_DELIVERY_ROBOT = 6
+    LARGE_DELIVERY_ROBOT = 7
 
 class DisinfectRoomMission(Mission):
     def __init__(self, team: List[MissionRobot], context):
@@ -47,7 +49,7 @@ class DeliverSampleMission(Mission):
     def __init__(self, team: List[MissionRobot], context):
         super().__init__(team, context)
         self.priority = 1
-        self.roles = [RobotRoles.COLLECTOR, RobotRoles.COLLECTOR]
+        self.roles = [RobotRoles.SMALL_DELIVERY_ROBOT, RobotRoles.LARGE_DELIVERY_ROBOT]
         self.mission_context = "start(Collector, Resource, Storage, Room)"
         self.variables = ["Collector", "Resource", "Storage", "Room"]
         self.room = None
@@ -164,6 +166,10 @@ class Coordinator(AgnosticCoordinator):
             robot.role = RobotRoles.NURSE
         elif 'collector' in agent_name:
             robot.role = RobotRoles.COLLECTOR
+        elif 'small' in agent_name:
+            robot.role = RobotRoles.SMALL_DELIVERY_ROBOT
+        elif 'large' in agent_name:
+            robot.role = RobotRoles.LARGE_DELIVERY_ROBOT
         elif 'arm' in agent_name:
             robot.role = RobotRoles.ARM
 
@@ -188,8 +194,10 @@ class Coordinator(AgnosticCoordinator):
         if(team is not None):
             mission.team = team
             params = [room]
-            if mission_type == 'DeliverSampleMission':
-                params.append(str(list(map(lambda resource: (resource, self.state['resource_at'][resource]), message.split(',')[2:]))).replace(",", "/"))
+
+            if (mission_type == 'DeliverSampleMission'):
+                params.append(message.split(',')[2]) # small resource
+                params.append(message.split(',')[3]) # large resource
 
             mission.context = self.get_start_context(mission_type, team, params)
             self.get_logger().info(f"Mission context: {str(mission.context)}")
@@ -236,9 +244,13 @@ class Coordinator(AgnosticCoordinator):
             )
         elif (mission_type == 'DeliverSampleMission'):
             context = (
-                str(list(map(lambda mission_robot: (mission_robot.robot), team))).replace(",", "/"),
+                team[0].robot, # small delivery robot
+                self.state['resource_at'][params[1]], # resource location
                 params[1],
-                params[0]
+                team[1].robot, # small delivery robot
+                self.state['resource_at'][params[2]], # resource location
+                params[2],
+                params[0],
             )
         self.get_logger().info(f"context: {str(context)}")
         return context
@@ -278,17 +290,10 @@ class Coordinator(AgnosticCoordinator):
             self.get_logger().info(f"Robot {robot} marked as low battery")
         elif error_desc[0] == 'resource_not_available':
             resource = error_desc[1]
-            temp_list = list(mission.context)
-            entry = list(eval(temp_list[1].replace("/", ",")))
-            new_entry = []
-            for item in entry:
-                if item[0] == resource:
-                    new_entry.append((item[0], self.state['resource_at'][resource]))
-                else:
-                    new_entry.append(item)
-            temp_list[1] = str((new_entry)).replace(",", "/")
-
-            mission.context = tuple(temp_list)
+            resource_index = 1 if resource in ['resource1', 'resource2'] else 4
+            context_list = list(mission.context)
+            context_list[resource_index] = self.state['resource_at'][resource]
+            mission.context = tuple(context_list)
         self.update_planner_state(json.dumps(self.state))
 
 def main():

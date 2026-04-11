@@ -1,5 +1,6 @@
 import json
 import rclpy
+import networkx as nx
 
 from rclpy.node import Node
 from interfaces.srv import Action
@@ -18,6 +19,7 @@ class Planner(Node):
             Action, 'planner_communication_sync_server', self.receive_sync_message
         )
         self.state = init_state
+        self.planner = None
 
         self.end_simulation_subscription = self.create_subscription(
             Bool, '/coordinator/shutdown_signal', self.end_simulation_callback, 10
@@ -45,49 +47,21 @@ class Planner(Node):
                 self.get_logger().info('Creating plan for: %s %s %s %s %s' % (
                     actionTuple[0], actionTuple[1], actionTuple[2], actionTuple[3], actionTuple[4]
                 ))
-                planner = IPyHOP(methods, actions)
-                plan = planner.plan(self.state, plan_param, verbose=1)
             elif actionTuple[0] == 'DisinfectRoomMission' or actionTuple[0] == 'DisinfectICUMission':
                 goal = 'm_patrol_and_disinfect'
                 plan_param = [(goal, actionTuple[1], actionTuple[2], actionTuple[3], actionTuple[4])]
                 self.get_logger().info('Creating plan for: %s %s %s %s %s' % (
                     actionTuple[0], actionTuple[1], actionTuple[2], actionTuple[3], actionTuple[4]
                 ))
-                planner = IPyHOP(methods, actions)
-                plan = planner.plan(self.state, plan_param, verbose=1)
             elif actionTuple[0] == 'DeliverSampleMission':
-                goal = 'm_deliver_mission'
-                # plan_param = [(goal, actionTuple[1], actionTuple[2], actionTuple[4])]
-                requested = list(eval(actionTuple[2].replace("/", ",")))
-                self.get_logger().info('Requested samples: %s' % requested)
-                robots = list(eval(actionTuple[1].replace("/", ",")))
-                self.get_logger().info('Available robots: %s' % robots)
-                res = []
+                goal = 'm_deliver_resource_task'
+                plan_param = [(goal, actionTuple[1], actionTuple[2], actionTuple[3], actionTuple[4], actionTuple[5], actionTuple[6], actionTuple[7])]
+                self.get_logger().info('Creating plan for: %s %s %s %s %s %s %s' % (
+                    actionTuple[1], actionTuple[2], actionTuple[3], actionTuple[4], actionTuple[5], actionTuple[6], actionTuple[7]
+                ))
 
-                for i, item in enumerate(requested):
-                    res.append((robots[i % len(robots)], item))
-                self.get_logger().info('Assigned samples: %s' % res)
-
-                mission_index = 0
-                missions = {}
-
-                for robot in robots:
-                    mission_name = f'mission{mission_index + 1}'
-                    missions[mission_name] = [re for rob, re in res if rob == robot]
-                    mission_index += 1
-
-                self.state.requested = missions
-                self.get_logger().info('Requested missions: %s' % self.state.requested)
-
-                mission_index = 0
-                plan = []
-                for robot in robots:
-                    mission_name = f'mission{mission_index + 1}'
-                    plan_param = [(goal, robot, mission_name, actionTuple[3])]
-                    self.get_logger().info('Creating plan for: %s' % str(plan_param))
-                    planner = IPyHOP(methods, actions)
-                    plan = plan + planner.plan(self.state, plan_param, verbose=1)
-                    mission_index += 1
+            self.planner = IPyHOP(methods, actions)
+            plan = self.planner.plan(self.state, plan_param, verbose=1)
 
             for action in plan:
                 responsePlan.append(','.join(action))
@@ -96,6 +70,42 @@ class Planner(Node):
             response.observation = '/'.join(responsePlan)
 
             self.get_logger().info('Sending response')
+            return response
+        elif messageTuple[0] == 'repair':
+            if self.planner is None:
+                response.observation = 'replan_failed'
+                return response
+
+            failed_action_key = messageTuple[1]
+            failed_action_tuple = tuple(failed_action_key.split(','))
+
+            fail_node_id = None
+            for node_id, node in self.planner.sol_tree.nodes(data=True):
+                if node.get('info') == failed_action_tuple:
+                    fail_node_id = node_id
+                    break
+
+            if fail_node_id is None:
+                self.get_logger().error(f'Nó não encontrado para a ação: {failed_action_key}')
+                response.observation = 'replan_failed'
+                return response
+
+
+            ancestors = list(nx.ancestors(self.planner.sol_tree, fail_node_id))
+            ancestors.append(fail_node_id)
+            for nid in ancestors:
+                node = self.planner.sol_tree.nodes[nid]
+                if 'methods' in node:
+                    node['available_methods'] = iter(node['methods'])
+
+            plan_result = self.planner.replan(self.state, fail_node_id, verbose=1)
+
+            if not plan_result:
+                response.observation = 'replan_failed'
+                return response
+
+            responsePlan = [','.join(action) for action in plan_result]
+            response.observation = 'replan/' + '/'.join(responsePlan)
             return response
         elif messageTuple[0] == 'update_state':
             state = json.loads(messageTuple[1])

@@ -3,16 +3,11 @@ from coordinator.planner.health.domain.actions import actions
 from coordinator.planner.health.problem.problem import init_state
 from coordinator.planner.ipyhop import IPyHOP
 
-goal = 'm_deliver_mission'
+goal = 'm_deliver_resource_task'
 planner = IPyHOP(methods, actions)
-init_state.requested = {
-    'mission1': [('resource1', 'stor1'), ('resource2', 'stor2')]
-}
 plan = planner.plan(init_state, [(
-    goal, 'collector1', 'mission1', 'room1'
+    goal, 'collector1', 'stor1', 'resource1', 'collector2', 'stor2', 'resource2', 'room1'
 )], verbose=1)
 
-print(plan)
-
-# for action in plan:
-#     print(','.join(action))
+for action in plan:
+    print(','.join(action))

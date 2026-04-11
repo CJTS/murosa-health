@@ -232,7 +232,6 @@ class AgnosticCoordinator(Node):
             current_plan = plan_response.observation.split('/')
             mission.plan = current_plan
             self.split_plans(mission.team, current_plan)
-            self.get_logger().info(str(self.agents_actions))
             self.send_plans_request(mission.team)
 
         return mission
@@ -245,7 +244,12 @@ class AgnosticCoordinator(Node):
         error_desc = error_msg[1].split(",")
         self.treat_error(error_desc, mission)
         if self.should_replan:
-            self.fix_plan(mission)
+            if self.calculate_dependency(mission) > 50:
+                self.get_logger().info('High dependency detected, replanning mission')
+                self.replan(mission)
+            else:
+                self.get_logger().info('Low dependency detected, repairing mission')
+                self.repair(error_msg[1], mission)
         else:
             self.end_simulation()
 
@@ -306,7 +310,7 @@ class AgnosticCoordinator(Node):
         rclpy.spin_until_future_complete(self, future)
         return future.result()
 
-    def fix_plan(self, mission: Mission):
+    def replan(self, mission: Mission):
         team = mission.team
 
         self.get_logger().info('Context: %s ' % (
@@ -424,6 +428,91 @@ class AgnosticCoordinator(Node):
 
     def strip_numbers(self, name: str) -> str:
         return re.sub(r'\d+$', '', name)
+
+    def send_repair_request(self, failed_action_key):
+        self.action_request = Action.Request()
+        self.action_request.action = 'repair|' + failed_action_key
+        return self.planner_communication_sync_client.call_async(self.action_request)
+
+    def repair(self, error_key, context):
+        self.get_logger().info(f'=== repair chamado com: {error_key}')
+
+        room = error_key.split(',')[-1]
+
+        future = self.send_repair_request(error_key)
+        rclpy.spin_until_future_complete(self, future)
+        plan_response = future.result()
+
+        if plan_response.observation == 'repair_failed':
+            self.get_logger().error('Replan falhou, encerrando simulação')
+            self.end_simulation()
+            return
+
+        self.get_logger().info(f'Replan recebido: {plan_response.observation}')
+        new_actions = plan_response.observation.replace('repair/', '').split('/')
+        self.get_logger().info(",".join(context))
+        team = self.get_team_from_context(context)
+        self.send_repair_to_agents(new_actions, team)
+
+    def send_repair_to_agents(self, new_actions, team):
+        self.get_logger().info(f'Enviando repair para agentes: {new_actions}')
+
+        formated_plan = []
+        start = []
+        for action in new_actions:
+            splitted_action = action.split(',')
+            formated_plan.append(splitted_action[0] + "(" + ','.join(splitted_action[1:]) + ")")
+            for param in splitted_action[1:]:
+                if param not in start:
+                    start.append(param)
+
+        # Gera e envia BDI
+        bdies = generate_bdi(team, formated_plan, self.mission_context, self.variables)
+        for agent, rules in bdies.items():
+            plans = [f"+!{self.mission_context}: true <- +{self.mission_context}."]
+            for rule in rules:
+                plans.append(rule)
+            msg = String()
+            msg.data = FIPAMessage(
+                FIPAPerformative.INFORM.value, 'Coordinator', agent,
+                'Plan|' + '/'.join(plans)
+            ).encode()
+            self.agent_publisher.publish(msg)
+            self.get_logger().info(f'BDI enviado para {agent}')
+
+        for agent in team:
+            msg = String()
+            msg.data = FIPAMessage(
+                FIPAPerformative.REQUEST.value, 'Coordinator', agent,
+                'Start|' + ','.join(start)
+            ).encode()
+            self.agent_publisher.publish(msg)
+
+        start_msg = "initial_trigger_" + formated_plan[0] + "."
+        splitted_first = new_actions[0].split(',')
+        for initial_agent in splitted_first[1:]:
+            msg = String()
+            msg.data = FIPAMessage(
+                FIPAPerformative.INFORM.value, 'Coordinator', initial_agent,
+                'Belief|' + start_msg
+            ).encode()
+            self.agent_publisher.publish(msg)
+            self.get_logger().info(f'Belief trigger enviado para {initial_agent}')
+
+    def calculate_dependency(self, mission: Mission):
+        robots = list(map(lambda r: r.robot, mission.team))
+        multi_robot_count = 0
+        for action in mission.plan:
+            parts = [p.strip() for p in action.split(",")]
+            args = parts[1:]  # ignore action name
+            robots_in_action = [arg for arg in args if arg in robots]
+            if len(robots_in_action) > 1:
+                multi_robot_count += 1
+
+        total_actions = len(mission.plan)
+        percentage = (multi_robot_count / total_actions) * 100
+        self.get_logger().info(f"Dependency percentage: {percentage}% ({multi_robot_count} out of {total_actions} actions involve multiple robots)")
+        return percentage
 
     def run(self):
         while rclpy.ok():

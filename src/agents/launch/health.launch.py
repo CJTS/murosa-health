@@ -35,30 +35,30 @@ def generate_launch_description():
                 'bdi': LaunchConfiguration('bdi'),
             }]
         ),
-        Node(
-            package='agents',
-            executable='nurse',
-            name='nurse2',
-            parameters=[{
-                'bdi': LaunchConfiguration('bdi'),
-            }]
-        ),
-        Node(
-            package='agents',
-            executable='nurse',
-            name='nurse3',
-            parameters=[{
-                'bdi': LaunchConfiguration('bdi'),
-            }]
-        ),
-        Node(
-            package='agents',
-            executable='nurse',
-            name='nurse4',
-            parameters=[{
-                'bdi': LaunchConfiguration('bdi'),
-            }]
-        ),
+        # Node(
+        #     package='agents',
+        #     executable='nurse',
+        #     name='nurse2',
+        #     parameters=[{
+        #         'bdi': LaunchConfiguration('bdi'),
+        #     }]
+        # ),
+        # Node(
+        #     package='agents',
+        #     executable='nurse',
+        #     name='nurse3',
+        #     parameters=[{
+        #         'bdi': LaunchConfiguration('bdi'),
+        #     }]
+        # ),
+        # Node(
+        #     package='agents',
+        #     executable='nurse',
+        #     name='nurse4',
+        #     parameters=[{
+        #         'bdi': LaunchConfiguration('bdi'),
+        #     }]
+        # ),
         Node(
             package='agents',
             executable='uvd',
@@ -111,6 +111,38 @@ def generate_launch_description():
             package='agents',
             executable='arm',
             name='arm1',
+            parameters=[{
+                'bdi': LaunchConfiguration('bdi'),
+            }]
+        ),
+        Node(
+            package='agents',
+            executable='small',
+            name='small_delivery_robot1',
+            parameters=[{
+                'bdi': LaunchConfiguration('bdi'),
+            }]
+        ),
+        Node(
+            package='agents',
+            executable='small',
+            name='small_delivery_robot2',
+            parameters=[{
+                'bdi': LaunchConfiguration('bdi'),
+            }]
+        ),
+        Node(
+            package='agents',
+            executable='large',
+            name='large_delivery_robot1',
+            parameters=[{
+                'bdi': LaunchConfiguration('bdi'),
+            }]
+        ),
+        Node(
+            package='agents',
+            executable='large',
+            name='large_delivery_robot2',
             parameters=[{
                 'bdi': LaunchConfiguration('bdi'),
             }]

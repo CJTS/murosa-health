@@ -1,5 +1,6 @@
 import rclpy
 import time
+import random
 
 from interfaces.srv import Message, Action
 from agents.helpers.agent import Agent
@@ -10,9 +11,18 @@ from agents.helpers.FIPAPerformatives import FIPAPerformative
 class Nurse(Agent):
     def __init__(self, className):
         super().__init__(className)
+        self.counter = 0
 
     def send_has_infected_room(self):
         message = FIPAMessage(FIPAPerformative.INFORM.value, self.get_name(), 'Coordinator', 'InitialTrigger|' + self.current_room).encode()
+        ros_msg = Message.Request()
+        ros_msg.content = message
+        return self.cli.call_async(ros_msg)
+
+    def send_need_material_room(self):
+        small_resources_list = ['resource1', 'resource2']
+        large_resources_list = ['resource3', 'resource4']
+        message = FIPAMessage(FIPAPerformative.INFORM.value, 'Env', 'Coordinator', 'InitialTrigger|DeliverSampleMission,' + self.current_room + ',' + random.choice(small_resources_list) + ',' + random.choice(large_resources_list)).encode()
         ros_msg = Message.Request()
         ros_msg.content = message
         return self.cli.call_async(ros_msg)
@@ -148,6 +158,23 @@ class Nurse(Agent):
         else:
             self.get_logger().info("Robot is waiting, send action message")
             self.acting_for_agent(robot, 'a_deposit')
+
+    def run(self):
+        while rclpy.ok():
+            rclpy.spin_once(self, timeout_sec=0.001)
+            if self.current_room is None:
+                future = self.what_room()
+                rclpy.spin_until_future_complete(self, future)
+                response = future.result()
+                if response.observation != 'none':
+                    self.current_room = response.observation
+            else:
+                if not self.wating:
+                    self.act()
+                self.counter = self.counter + 1
+                if self.counter == 10000:
+                    self.send_need_material_room()
+                    # self.counter = 0
 
 
 def main():

@@ -177,6 +177,10 @@ export class Map implements AfterViewInit {
         ctx.fillStyle = 'green';
       } else if (agentName.includes('nurse')) {
         ctx.fillStyle = 'purple';
+      } else if (agentName.includes('small')) {
+        ctx.fillStyle = 'blue';
+      }else if (agentName.includes('large')) {
+        ctx.fillStyle = 'blue';
       }
 
       ctx.beginPath();

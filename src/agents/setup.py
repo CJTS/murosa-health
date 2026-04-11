@@ -30,6 +30,8 @@ setup(
             'nurse = agents.nodes.nurse_node:main',
             'spot = agents.nodes.spot_node:main',
             'uvd = agents.nodes.uvd_node:main',
+            'small = agents.nodes.small_delivery_robot_node:main',
+            'large = agents.nodes.large_delivery_robot_node:main',
         ],
     },
 )

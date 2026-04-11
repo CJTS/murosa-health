@@ -49,7 +49,11 @@ class Environment(Node):
                 'spot2': 'ds',
                 'collector1': 'ds',
                 'collector2': 'ds',
-                'arm1': 'lab'
+                'arm1': 'lab',
+                'small_delivery_robot1': 'ds',
+                'small_delivery_robot2': 'ds',
+                'large_delivery_robot1': 'ds',
+                'large_delivery_robot2': 'ds'
             },
             'pos': {
                 'nurse1': (185, 125),
@@ -62,7 +66,11 @@ class Environment(Node):
                 'spot2': (235, 50),
                 'collector1': (235, 50),
                 'collector2': (235, 50),
-                'arm1': (185, 50)
+                'arm1': (185, 50),
+                'small_delivery_robot1': (235, 50),
+                'small_delivery_robot2': (235, 50),
+                'large_delivery_robot1': (235, 50),
+                'large_delivery_robot2': (235, 50)
             },
             'doors': {
                 'room1': door1[0],
@@ -219,6 +227,7 @@ class Environment(Node):
     def sample_initial_trigger(self, room):
         resources_list = ['resource1', 'resource2', 'resource3', 'resource4',]
         message = FIPAMessage(FIPAPerformative.INFORM.value, 'Env', 'Coordinator', 'InitialTrigger|DeliverSampleMission,' + room + ',' + random.choice(resources_list) + ',' + random.choice(resources_list) + ',' + random.choice(resources_list)).encode()
+        # message = FIPAMessage(FIPAPerformative.INFORM.value, 'Env', 'Coordinator', 'InitialTrigger|DeliverSampleMission,' + room + ',resource3,resource4').encode()
         ros_msg = Message.Request()
         ros_msg.content = message
         return self.cli.call_async(ros_msg)
@@ -226,15 +235,15 @@ class Environment(Node):
     def run(self):
         while rclpy.ok():
             rclpy.spin_once(self, timeout_sec=0.001)
-            self.counter = self.counter + 1
-            if self.counter == 10000:
-                rooms_list = ["room1", "room2", "room3", "room4", "room5", "room6", "icu"]
-                random_room = random.choice(rooms_list)
-                self.state['samples'][random_room] = True
-                future = self.sample_initial_trigger(random_room)
-                rclpy.spin_until_future_complete(self, future)
-                response = future.result()
-                self.get_logger().info('Initial Trigger:  %s' % (random_room))
+            # self.counter = self.counter + 1
+            # if self.counter == 10000:
+            #     rooms_list = ["room1", "room2", "room3", "room4", "room5", "room6", "icu"]
+            #     random_room = random.choice(rooms_list)
+            #     self.state['samples'][random_room] = True
+            #     future = self.sample_initial_trigger(random_room)
+            #     rclpy.spin_until_future_complete(self, future)
+            #     response = future.result()
+            #     self.get_logger().info('Initial Trigger:  %s' % (random_room))
 
             msg = String()
             msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Env', 'Front', json.dumps(self.state)).encode()
