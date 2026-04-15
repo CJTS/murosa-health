@@ -88,14 +88,14 @@ class Navigator(Node):
     def receive_message(self, request, response):
         actionTuple = tuple(request.action.split(','))
         if actionTuple[0] == 'path':
-            self.get_logger().info(str(request.action))
+            # self.get_logger().info(str(request.action))
             response.observation = ','.join(self.astar(actionTuple[1], actionTuple[2]))
-            self.get_logger().info(str(response.observation))
+            # self.get_logger().info(str(response.observation))
         elif actionTuple[0] == 'velocity':
-            self.get_logger().info(str(request.action))
+            # self.get_logger().info(str(request.action))
             vx, vy = self.compute_velocity(actionTuple[1], actionTuple[2])
             response.observation = ','.join([str(vx), str(vy)])
-            self.get_logger().info(str(response.observation))
+            # self.get_logger().info(str(response.observation))
         elif actionTuple[0] == 'reached':
             reached = self.has_reached_node((float(actionTuple[1]), float(actionTuple[2])), actionTuple[3])
             response.observation = str(reached)

@@ -186,6 +186,7 @@ class Coordinator(AgnosticCoordinator):
         message = decoded_msg.content.split('|')[1]
 
         mission_type = message.split(',')[0]
+        self.get_logger().info(f"Received initial trigger for mission type: {message}")
         room = message.split(',')[1]
 
         mission = self.create_mission(mission_type, room)
@@ -209,6 +210,8 @@ class Coordinator(AgnosticCoordinator):
             self.state['disinfected'][room] = False
         elif (mission_type == 'CollectSampleMission'):
             self.state['sample'][room] = True
+
+        mission.requester = decoded_msg.sender
 
         self.missions.append(mission)
 

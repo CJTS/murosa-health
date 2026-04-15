@@ -14,17 +14,18 @@ class Nurse(Agent):
         self.counter = 0
 
     def send_has_infected_room(self):
-        message = FIPAMessage(FIPAPerformative.INFORM.value, self.get_name(), 'Coordinator', 'InitialTrigger|' + self.current_room).encode()
+        message = FIPAMessage(FIPAPerformative.INFORM.value, self.get_name(), 'Coordinator', 'InitialTrigger|CollectSampleMission,' + self.current_room).encode()
         ros_msg = Message.Request()
         ros_msg.content = message
         return self.cli.call_async(ros_msg)
 
-    def send_need_material_room(self):
+    def send_need_material_room(self, room):
         small_resources_list = ['resource1', 'resource2']
         large_resources_list = ['resource3', 'resource4']
-        message = FIPAMessage(FIPAPerformative.INFORM.value, 'Env', 'Coordinator', 'InitialTrigger|DeliverSampleMission,' + self.current_room + ',' + random.choice(small_resources_list) + ',' + random.choice(large_resources_list)).encode()
+        message = FIPAMessage(FIPAPerformative.INFORM.value, self.get_name(), 'Coordinator', 'InitialTrigger|DeliverSampleMission,' + room + ',' + random.choice(small_resources_list) + ',' + random.choice(large_resources_list)).encode()
         ros_msg = Message.Request()
         ros_msg.content = message
+        self.wating_for_material = True
         return self.cli.call_async(ros_msg)
 
     def choose_action(self, actionTuple):
@@ -173,7 +174,11 @@ class Nurse(Agent):
                     self.act()
                 self.counter = self.counter + 1
                 if self.counter == 10000:
-                    self.send_need_material_room()
+                    rooms = ['room1', 'room2', 'room3', 'room4', 'room5', 'room6', 'icu']
+                    room = random.choice(rooms)
+                    self.a_navto(self.current_room, room)
+                    self.get_logger().info(f"Checking for infected room {self.current_room} after 10000 cycles")
+                    self.send_need_material_room(room)
                     # self.counter = 0
 
 

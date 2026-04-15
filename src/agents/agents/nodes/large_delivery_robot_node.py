@@ -35,7 +35,7 @@ class LargeDeliveryRobot(Agent):
                 return ActionResult.FAILURE
             elif response.observation == 'resource not available':
                 self.notifyError(
-                    ','.join(('resource_not_available', actionTuple[3]))
+                    ','.join(('resource_not_available', actionTuple[3])) + '|' + ','.join(actionTuple)
                 )
                 return ActionResult.FAILURE
 

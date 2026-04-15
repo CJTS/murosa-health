@@ -35,7 +35,7 @@ class SmallDeliveryRobot(Agent):
                 return ActionResult.FAILURE
             elif response.observation == 'resource not available':
                 self.notifyError(
-                    ','.join(('resource_not_available', actionTuple[3]))
+                    ','.join(('resource_not_available', actionTuple[3], actionTuple))
                 )
                 return ActionResult.FAILURE
 

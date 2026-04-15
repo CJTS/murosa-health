@@ -113,13 +113,6 @@ class Agent(Node):
         ros_msg.content = message
         return self.cli.call_async(ros_msg)
 
-
-
-
-
-
-
-
     def listener_callback(self, msg):
         # Receive messagem from jason
         # self.get_logger().info('I heard: "%s"' % msg.data)
@@ -146,6 +139,11 @@ class Agent(Node):
         # self.get_logger().info('And it is for me')
         ## Perform action
         message = decoded_msg.content.split('|')
+        if decoded_msg.performative == FIPAPerformative.INFORM.value  and message[0] == 'Finished':
+            self.get_logger().info('And it is for me')
+            self.send_has_infected_room()
+            return
+
         self.plan = list(map(action_string_to_tuple, message[1].split('/')))
         self.with_plan = True
 

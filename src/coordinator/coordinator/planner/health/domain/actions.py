@@ -103,6 +103,10 @@ def a_deliver_resource(state, robot_, loc_):
         state.carrying[robot_] = None
         return state
 
+def a_assemble_resource(state, robot_, storage_, resource_):
+    if state.loc[robot_] == storage_:
+        return state
+
 # def a_drop_checkpoint(state, robot_, checkpoint_):
 #     res = state.carrying.get(robot_)
 
@@ -140,6 +144,7 @@ actions.declare_actions([
     a_deliver_resource,
     # a_drop_checkpoint,
     # a_pick_checkpoint,
+    a_assemble_resource
 ])
 
 # ******************************************    Demo / Test Routine         ****************************************** #

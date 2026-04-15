@@ -87,9 +87,8 @@ class Planner(Node):
 
             if fail_node_id is None:
                 self.get_logger().error(f'Nó não encontrado para a ação: {failed_action_key}')
-                response.observation = 'replan_failed'
+                response.observation = 'repair_failed'
                 return response
-
 
             ancestors = list(nx.ancestors(self.planner.sol_tree, fail_node_id))
             ancestors.append(fail_node_id)
@@ -101,11 +100,11 @@ class Planner(Node):
             plan_result = self.planner.replan(self.state, fail_node_id, verbose=1)
 
             if not plan_result:
-                response.observation = 'replan_failed'
+                response.observation = 'repair_failed'
                 return response
 
             responsePlan = [','.join(action) for action in plan_result]
-            response.observation = 'replan/' + '/'.join(responsePlan)
+            response.observation = 'repair/' + '/'.join(responsePlan)
             return response
         elif messageTuple[0] == 'update_state':
             state = json.loads(messageTuple[1])

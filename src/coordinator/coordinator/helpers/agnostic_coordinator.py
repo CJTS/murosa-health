@@ -48,6 +48,7 @@ class Mission():
         self.plan = []
         self.state = {}
         self.error = None
+        self.requester = None
 
 class AgnosticCoordinator(Node):
     def __init__(self, name):
@@ -249,7 +250,7 @@ class AgnosticCoordinator(Node):
                 self.replan(mission)
             else:
                 self.get_logger().info('Low dependency detected, repairing mission')
-                self.repair(error_msg[1], mission)
+                self.repair(error_msg[2], mission)
         else:
             self.end_simulation()
 
@@ -274,8 +275,12 @@ class AgnosticCoordinator(Node):
         self.get_logger().info("Mission Completed")
         self.missions.remove(finished_mission)
         self.get_logger().info(str(len(self.missions)))
-        if(len(self.missions) == 0):
-            self.end_simulation()
+        msg = String()
+        msg.data = FIPAMessage(FIPAPerformative.INFORM.value, 'Coordinator', finished_mission.requester, 'Finished|' + ','.join(finished_mission.context)).encode()
+        self.agent_publisher.publish(msg)
+        self.get_logger().info('Sent mission completion message to requester: %s' % finished_mission.requester)
+        # if(len(self.missions) == 0):
+            # self.end_simulation()
 
     def restart_mission(self, mission):
         raise NotImplementedError("This method should be implemented by the subclass")
@@ -434,10 +439,8 @@ class AgnosticCoordinator(Node):
         self.action_request.action = 'repair|' + failed_action_key
         return self.planner_communication_sync_client.call_async(self.action_request)
 
-    def repair(self, error_key, context):
+    def repair(self, error_key, mission: Mission):
         self.get_logger().info(f'=== repair chamado com: {error_key}')
-
-        room = error_key.split(',')[-1]
 
         future = self.send_repair_request(error_key)
         rclpy.spin_until_future_complete(self, future)
@@ -448,56 +451,92 @@ class AgnosticCoordinator(Node):
             self.end_simulation()
             return
 
-        self.get_logger().info(f'Replan recebido: {plan_response.observation}')
+        self.get_logger().info(f'Replan recebido')
         new_actions = plan_response.observation.replace('repair/', '').split('/')
-        self.get_logger().info(",".join(context))
-        team = self.get_team_from_context(context)
-        self.send_repair_to_agents(new_actions, team)
+        self.get_logger().info(",".join(mission.context))
+        self.send_repair_to_agents(new_actions, mission)
 
-    def send_repair_to_agents(self, new_actions, team):
-        self.get_logger().info(f'Enviando repair para agentes: {new_actions}')
+    def send_repair_to_agents(self, new_plan, mission: Mission):
+        old_plan = mission.plan
+        new_agents_actions = {}
+        old_agents_actions = {}
 
-        formated_plan = []
-        start = []
-        for action in new_actions:
-            splitted_action = action.split(',')
-            formated_plan.append(splitted_action[0] + "(" + ','.join(splitted_action[1:]) + ")")
-            for param in splitted_action[1:]:
-                if param not in start:
-                    start.append(param)
+        for index, agent in mission.team:
+            tuples = map(action_string_to_tuple, new_plan)
+            new_agents_actions[agent.robot] = []
 
-        # Gera e envia BDI
-        bdies = generate_bdi(team, formated_plan, self.mission_context, self.variables)
-        for agent, rules in bdies.items():
-            plans = [f"+!{self.mission_context}: true <- +{self.mission_context}."]
-            for rule in rules:
-                plans.append(rule)
-            msg = String()
-            msg.data = FIPAMessage(
-                FIPAPerformative.INFORM.value, 'Coordinator', agent,
-                'Plan|' + '/'.join(plans)
-            ).encode()
-            self.agent_publisher.publish(msg)
-            self.get_logger().info(f'BDI enviado para {agent}')
+            for action in tuples:
+                if agent.robot in action:
+                    new_agents_actions[agent.robot].append(action)
 
-        for agent in team:
-            msg = String()
-            msg.data = FIPAMessage(
-                FIPAPerformative.REQUEST.value, 'Coordinator', agent,
-                'Start|' + ','.join(start)
-            ).encode()
-            self.agent_publisher.publish(msg)
+        for agent in mission.team:
+            tuples = map(action_string_to_tuple, old_plan)
+            old_agents_actions[agent.robot] = []
 
-        start_msg = "initial_trigger_" + formated_plan[0] + "."
-        splitted_first = new_actions[0].split(',')
-        for initial_agent in splitted_first[1:]:
-            msg = String()
-            msg.data = FIPAMessage(
-                FIPAPerformative.INFORM.value, 'Coordinator', initial_agent,
-                'Belief|' + start_msg
-            ).encode()
-            self.agent_publisher.publish(msg)
-            self.get_logger().info(f'Belief trigger enviado para {initial_agent}')
+            for action in tuples:
+                if agent.robot in action:
+                    old_agents_actions[agent.robot].append(action)
+
+        for agent in mission.team:
+            if new_agents_actions[agent.robot] != old_agents_actions[agent.robot]:
+                send_plan_request = String()
+                send_plan_request.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent.robot, 'Plan|' + '/'.join(list(map(
+                    action_tuple_to_string, new_agents_actions[agent.robot]
+                )))).encode()
+                self.agent_publisher.publish(send_plan_request)
+                self.get_logger().info(f'New plan sent to {agent.robot}: ' + '/'.join(list(map(
+                    action_tuple_to_string, new_agents_actions[agent.robot]
+                ))))
+                self.get_logger().info(f'Old plan {agent.robot}: ' + '/'.join(list(map(
+                    action_tuple_to_string, old_agents_actions[agent.robot]
+                ))))
+            else:
+                self.get_logger().info(f'No changes for {agent.robot}, not sending new plan.')
+
+    # def send_repair_to_agents(self, new_actions, team):
+    #     self.get_logger().info(f'Enviando repair para agentes: {new_actions}')
+
+    #     formated_plan = []
+    #     start = []
+    #     for action in new_actions:
+    #         splitted_action = action.split(',')
+    #         formated_plan.append(splitted_action[0] + "(" + ','.join(splitted_action[1:]) + ")")
+    #         for param in splitted_action[1:]:
+    #             if param not in start:
+    #                 start.append(param)
+
+    #     # Gera e envia BDI
+    #     bdies = generate_bdi(team, formated_plan, self.mission_context, self.variables)
+    #     for agent, rules in bdies.items():
+    #         plans = [f"+!{self.mission_context}: true <- +{self.mission_context}."]
+    #         for rule in rules:
+    #             plans.append(rule)
+    #         msg = String()
+    #         msg.data = FIPAMessage(
+    #             FIPAPerformative.INFORM.value, 'Coordinator', agent,
+    #             'Plan|' + '/'.join(plans)
+    #         ).encode()
+    #         self.agent_publisher.publish(msg)
+    #         self.get_logger().info(f'BDI enviado para {agent}')
+
+    #     for agent in team:
+    #         msg = String()
+    #         msg.data = FIPAMessage(
+    #             FIPAPerformative.REQUEST.value, 'Coordinator', agent,
+    #             'Start|' + ','.join(start)
+    #         ).encode()
+    #         self.agent_publisher.publish(msg)
+
+    #     start_msg = "initial_trigger_" + formated_plan[0] + "."
+    #     splitted_first = new_actions[0].split(',')
+    #     for initial_agent in splitted_first[1:]:
+    #         msg = String()
+    #         msg.data = FIPAMessage(
+    #             FIPAPerformative.INFORM.value, 'Coordinator', initial_agent,
+    #             'Belief|' + start_msg
+    #         ).encode()
+    #         self.agent_publisher.publish(msg)
+    #         self.get_logger().info(f'Belief trigger enviado para {initial_agent}')
 
     def calculate_dependency(self, mission: Mission):
         robots = list(map(lambda r: r.robot, mission.team))
