@@ -12,6 +12,7 @@ class Nurse(Agent):
     def __init__(self, className):
         super().__init__(className)
         self.counter = 0
+        self.generate_sample = False
 
     def send_has_infected_room(self):
         message = FIPAMessage(FIPAPerformative.INFORM.value, self.get_name(), 'Coordinator', 'InitialTrigger|CollectSampleMission,' + self.current_room).encode()
@@ -88,6 +89,13 @@ class Nurse(Agent):
         self.action_request = Action.Request()
         self.action_request.action = ','.join(
             ('a_infected_room', self.get_name())
+        )
+        return self.environment_client.call_async(self.action_request)
+
+    def a_generate_sample(self):
+        self.action_request = Action.Request()
+        self.action_request.action = ','.join(
+            ('a_generate_sample', self.get_name(), self.current_room)
         )
         return self.environment_client.call_async(self.action_request)
 
@@ -173,6 +181,12 @@ class Nurse(Agent):
                 if not self.wating:
                     self.act()
                 self.counter = self.counter + 1
+                if self.generate_sample:
+                    self.get_logger().info("Generating sample in " + self.current_room)
+                    future = self.a_generate_sample()
+                    rclpy.spin_until_future_complete(self, future)
+                    self.send_has_infected_room()
+                    self.generate_sample = False
                 if self.counter == 10000:
                     rooms = ['room1', 'room2', 'room3', 'room4', 'room5', 'room6', 'icu']
                     room = random.choice(rooms)

@@ -94,6 +94,7 @@ class Coordinator(AgnosticCoordinator):
                 'room4': False,
                 'room5': False,
                 'room6': False,
+                'icu': False,
                 'nurse1': False,
                 'nurse2': False,
                 'nurse3': False,
@@ -209,7 +210,10 @@ class Coordinator(AgnosticCoordinator):
             self.state['loc'][decoded_msg.sender] = room
             self.state['disinfected'][room] = False
         elif (mission_type == 'CollectSampleMission'):
+            self.state['samples'][room] = True
             self.state['sample'][room] = True
+            self.state['sample'][decoded_msg.sender] = True
+            self.state['loc'][decoded_msg.sender] = room
 
         mission.requester = decoded_msg.sender
 

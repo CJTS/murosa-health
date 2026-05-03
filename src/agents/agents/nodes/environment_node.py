@@ -77,7 +77,10 @@ class Environment(Node):
                 'room2': door2[0],
                 'room3': door3[0],
                 'room4': door4[0],
-                'icu': door4[0]
+                'room5': 'False',
+                'room6': 'False',
+                'icu': door4[0],
+                'lab': 'False'
             },
             'cleaned': {
                 'room1': uncleaned1[0],
@@ -146,6 +149,7 @@ class Environment(Node):
                 'room4': False,
                 'room5': False,
                 'room6': False,
+                'icu': False,
                 'nurse1': False,
                 'nurse2': False,
                 'nurse3': False,
@@ -221,6 +225,11 @@ class Environment(Node):
                 self.state['pos'][actionTuple[1]][1] + float(actionTuple[3])
             )
             response.observation = ','.join([str(self.state['pos'][actionTuple[1]][0]), str(self.state['pos'][actionTuple[1]][1])])
+        elif actionTuple[0] == 'a_generate_sample':
+            self.get_logger().info(f"Generating sample in {request.action}")
+            self.state['sample'][actionTuple[1]] = True
+            self.state['sample'][actionTuple[2]] = True
+            self.state['samples'][actionTuple[2]] = True
 
         return response
 

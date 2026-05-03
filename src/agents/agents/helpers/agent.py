@@ -139,9 +139,9 @@ class Agent(Node):
         # self.get_logger().info('And it is for me')
         ## Perform action
         message = decoded_msg.content.split('|')
-        if decoded_msg.performative == FIPAPerformative.INFORM.value  and message[0] == 'Finished':
+        if decoded_msg.performative == FIPAPerformative.INFORM.value and message[0] == 'Finished' and message[1] == 'DeliverSampleMission':
             self.get_logger().info('And it is for me')
-            self.send_has_infected_room()
+            self.generate_sample = True
             return
 
         self.plan = list(map(action_string_to_tuple, message[1].split('/')))

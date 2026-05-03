@@ -47,6 +47,7 @@ class Planner(Node):
                 self.get_logger().info('Creating plan for: %s %s %s %s %s' % (
                     actionTuple[0], actionTuple[1], actionTuple[2], actionTuple[3], actionTuple[4]
                 ))
+                self.get_logger().info('State before planning: %s' % str(self.state.__dict__))
             elif actionTuple[0] == 'DisinfectRoomMission' or actionTuple[0] == 'DisinfectICUMission':
                 goal = 'm_patrol_and_disinfect'
                 plan_param = [(goal, actionTuple[1], actionTuple[2], actionTuple[3], actionTuple[4])]
