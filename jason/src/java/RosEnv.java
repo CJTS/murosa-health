@@ -75,7 +75,7 @@ public class RosEnv extends Environment {
 				if(decodedContent.length >= 2) {
 					agents = decodedContent[1].split(agentActionRegex);
 				}
-				
+
 				logger.info(msg.data);
 
 				clearPercepts(decodedMessage.getSender());
