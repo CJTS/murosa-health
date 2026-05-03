@@ -92,7 +92,7 @@ class Agent(Node):
             if self.should_use_bdi:
                 # If using BDI, it after it is initialized, it will notify the coordinator that it is ready
                 msg = String()
-                msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', 'Jason', 'Create|' + ','.join(agent_name)).encode()
+                msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', 'Jason', 'Create|' + self.get_name()).encode()
                 self.jason_publisher.publish(msg)
             else:
                 # If not using BDI, the notification is required

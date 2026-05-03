@@ -194,21 +194,31 @@ def generate_bdi(agents, actions, context, variables):
     return bdies
 
 # Example usage
-context = "start(SpotRobot, NurseRoom, Nurse, UvdRobot)"
-variables = ["SpotRobot", "NurseRoom", "Nurse", "UvdRobot"]
-agents = ["spotrobot1", "uvdrobot2", "nurse_disinfected1"]
+context = "start(SmallDeliveryRobot, SmallStorage, SmallResource, LargeDeliveryRobot, LargeStorage, LargeResource, NurseRoom)"
+variables = ["SmallDeliveryRobot", "SmallStorage", "SmallResource", "LargeDeliveryRobot", "LargeStorage", "LargeResource", "NurseRoom"]
+agents = ["small_delivery_robot1", "large_delivery_robot1"]
 
 actions = [
-    "a_navto(spotrobot1,room1)",
-    "a_open_door(spotrobot1,room1)",
-    "a_approach_nurse(spotrobot1,nurse_disinfected1)",
-    "a_authenticate_nurse(spotrobot1,nurse_disinfected1)",
-    "a_clean_room(nurse_disinfected1,room1)",
-    "a_authorize_patrol(spotrobot1,nurse_disinfected1)",
-    "a_patrol_room(spotrobot1,room1)",
-    "a_authorize_disinfect(uvdrobot2,spotrobot1)",
-    "a_navto(uvdrobot2,room1)",
-    "a_disinfect_room(uvdrobot2,room1)"
+    # "a_navto(spotrobot1,room1)",
+    # "a_open_door(spotrobot1,room1)",
+    # "a_approach_nurse(spotrobot1,nurse_disinfected1)",
+    # "a_authenticate_nurse(spotrobot1,nurse_disinfected1)",
+    # "a_clean_room(nurse_disinfected1,room1)",
+    # "a_authorize_patrol(spotrobot1,nurse_disinfected1)",
+    # "a_patrol_room(spotrobot1,room1)",
+    # "a_authorize_disinfect(uvdrobot2,spotrobot1)",
+    # "a_navto(uvdrobot2,room1)",
+    # "a_disinfect_room(uvdrobot2,room1)"
+    "a_navto(small_delivery_robot1,stor1)",
+    "a_request_resource(small_delivery_robot1,stor1,resource1)",
+    "a_pick_resource(small_delivery_robot1,stor1,resource1)",
+    "a_navto(small_delivery_robot1,room6)",
+    "a_deliver_resource(small_delivery_robot1,room6)",
+    "a_navto(large_delivery_robot1,stor3)",
+    "a_request_resource(large_delivery_robot1,stor3,resource3)",
+    "a_pick_resource(large_delivery_robot1,stor3,resource3)",
+    "a_navto(large_delivery_robot1,room6)",
+    "a_deliver_resource(large_delivery_robot1,room6)"
 ]
 
 bdis = generate_bdi(agents, actions, context, variables)
@@ -216,3 +226,4 @@ for agente, regras in bdis.items():
     print(f"\n/* {agente} */")
     for regra in regras:
         print(regra)
+
