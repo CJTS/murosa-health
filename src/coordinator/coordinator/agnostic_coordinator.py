@@ -282,8 +282,8 @@ class AgnosticCoordinator(Node):
                 else:
                     if self.should_replan:
                             self.get_logger().info('Error found')
-                            # self.fix_plan(mission)
-                            self.do_replan(error_msg[1], mission)
+                            self.fix_plan(mission)
+                            # self.do_replan(error_msg[1], mission)
                     else:
                         self.get_logger().info('Error found')
                         self.end_simulation()

@@ -5,7 +5,7 @@ from murosa_plan.FIPAPerformatives import FIPAPerformative
 from murosa_plan.helper import FIPAMessage, action_string_to_tuple
 from std_msgs.msg import String, Bool
 from murosa_plan.ActionResults import ActionResult
-
+import copy
 class Agent(Node):
     def __init__(self, className):
         super().__init__(className)
@@ -13,8 +13,9 @@ class Agent(Node):
         self.actions = []
         self.plan = []
         self.wating_response = []
+        self.mission_context_data = []
         self.wating = False
-
+        self.local_state = None
         # Coordinator Client
         self.cli = self.create_client(Message, 'coordinator')
         while not self.cli.wait_for_service(timeout_sec=1.0):
@@ -64,7 +65,14 @@ class Agent(Node):
         )
 
         self.initialize()
-
+    # def listener_agent_plan_callback(self, msg):
+    #     decoded_msg = FIPAMessage.decode(msg.data)
+    #     if not self.is_for_me(decoded_msg):
+    #         return
+    #     if decoded_msg.content.startswith('Start|'):
+    #         parts = decoded_msg.content.split('|')[1].split(',')
+    #         self.mission_context_data = parts
+    #         self.get_logger().info('Mission context saved: %s' % str(self.mission_context_data))
     def initialize(self):
         # Send message to coordinator to be inserted in agent pools
         future = self.registration()
@@ -217,8 +225,35 @@ class Agent(Node):
                 self.get_logger().info("ActionResult.WAITING")
                 self.wating = True
                 self.actions.append(action)
+    def get_local_planner(self):
+        
+        return None
+    
+    def try_local_replan(self, error_desc: list) -> bool:
+        planner = self.get_local_planner()
+        if planner is None:
+            self.get_logger().info("Planner is none")
+            return False
 
+        
+        new_plan = planner.plan(error_desc, self.agentName)
+
+        if not new_plan:
+            self.get_logger().info('Local replan failed for: %s' % str(error_desc))
+            return False
+
+        self.get_logger().info('Local replan succeeded: %s' % str(new_plan))
+        self.plan = list(reversed(new_plan))
+        self.wating = False
+        return True
+    
     def notifyError(self, error):
+        error_desc = error.split(',')
+        self.get_logger().info('Error: %s — trying local replan first' % error)
+
+        if self.try_local_replan(error_desc):
+            return
+        self.get_logger().info('Escalating error to coordinator: %s' % error)
         message = FIPAMessage(FIPAPerformative.INFORM.value, self.agentName, 'Coordinator', 'ERROR|' + error).encode()
         ros_msg = Message.Request()
         ros_msg.content = message

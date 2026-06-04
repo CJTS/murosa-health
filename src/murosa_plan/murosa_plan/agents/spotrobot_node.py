@@ -5,11 +5,17 @@ from murosa_plan.ActionResults import ActionResult
 from murosa_plan.helper import FIPAMessage
 from interfaces.srv import Action, Message
 from std_msgs.msg import String, Bool
-
+from murosa_plan.disinfect.agentplanners.spotrobot_planner import SpotrobotPlanner
+import copy
+from murosa_plan.disinfect.problem.disinfect_problem import init_state
 class Spotrobot(Agent):
     def __init__(self, className):
         super().__init__(className)
+        self._local_planner = SpotrobotPlanner()
 
+
+    def get_local_planner(self):
+        return self._local_planner
     # ACTIONS
     def choose_action(self, actionTuple):
         self.current_action = actionTuple[0]
@@ -48,7 +54,9 @@ class Spotrobot(Agent):
 
             if response.observation == 'success':
                 self.pos = actionTuple[2]
+                self._local_planner.update_state(actionTuple)
             elif response.observation == 'door closed':
+                self._local_planner.state.doors[actionTuple[2]] = False
                 self.notifyError(
                     ','.join(('door_closed', actionTuple[2]))
                 )
@@ -61,6 +69,17 @@ class Spotrobot(Agent):
 
         return ActionResult.SUCCESS
     
+    def get_mission_context(self):
+        return (
+            "start(NurseDesinfect, NurseRoom, Spotrobot, Uvdrobot)",
+            ["NurseDesinfect", "NurseRoom", "Spotrobot", "Uvdrobot"]
+        )
+    def _update_local_state(self, actionTuple):
+        action = actionTuple[0]
+        if action == 'a_navto':
+            self.local_state.loc[actionTuple[1]] = actionTuple[2]
+        elif action == 'a_open_door':
+            self.local_state.doors[actionTuple[2]] = True
     def a_navto(self, spotrobot, room):
         self.action_request = Action.Request()
         self.action_request.action = ','.join(('a_navto', spotrobot, room))
