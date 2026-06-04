@@ -40,6 +40,9 @@ class Spotrobot(Agent):
         elif actionTuple[0]== 'a_patrol_room':
             self.get_logger().info('Doing a_patrol_room')
             future = self.a_patrol_room(actionTuple[1], actionTuple[2])
+        elif actionTuple[0] == 'a_detect_macanet':
+            self.get_logger().info('Doing a_detect_macanet')
+            future = self.a_detect_macanet(actionTuple[1], actionTuple[2])
         elif actionTuple[0] == 'a_authorize_disinfect':
             self.get_logger().info('Doing a_authorize_disinfect')
             self.a_authorize_disinfect(actionTuple[1], actionTuple[2])
@@ -114,12 +117,15 @@ class Spotrobot(Agent):
         else:
             self.get_logger().info("Nurse is waiting, send action message")
             self.acting_for_agent(nurse, 'a_authorize_patrol')
-
+    
     def a_patrol_room(self, spotrobot, room):
         self.action_request = Action.Request()
         self.action_request.action = ','.join(('a_patrol_room', spotrobot, room))
         return self.environment_client.call_async(self.action_request)
-    
+    def a_detect_macanet(self, spotrobot, room):
+        self.action_request = Action.Request()
+        self.action_request.action = ','.join(('a_detect_macanet', spotrobot, room))
+        return self.environment_client.call_async(self.action_request)
     def a_authorize_disinfect(self, uvdrobot_,spotrobot_):
         self.get_logger().info("a_authorize_disinfect")
         if all('a_authorize_disinfect' not in action for action in self.wating_response):
