@@ -29,8 +29,9 @@ def a_patrol_room(state, spotrobot_, room_):
 def a_authorize_disinfect(state, uvdrobot_, spotrobot_):
     return state
 
-def m_patrol_room(state, spotrobot_, room_):
+def m_patrol_room(state, spotrobot_, uvdrobot_, room_):
     if not state.cleaned[room_]:
+        
         return False
 
     if state.doors[room_]:
@@ -38,12 +39,14 @@ def m_patrol_room(state, spotrobot_, room_):
         return [
             ('a_navto',       spotrobot_, room_),
             ('a_patrol_room', spotrobot_, room_),
+            ('a_authorize_disinfect', uvdrobot_,  spotrobot_),
         ]
     else:
         
         return [
             ('m_handle_door_closed', spotrobot_, room_),
             ('a_patrol_room',        spotrobot_, room_),
+            ('a_authorize_disinfect', uvdrobot_,  spotrobot_),
         ]
 
 def m_handle_door_closed(state, spotrobot_, room_):
@@ -100,5 +103,12 @@ class SpotrobotPlanner(AgentPlanner):
 
     def get_tasks(self, error_desc, agent_name, context=None):
         if error_desc[0] == 'door_closed' and len(error_desc) >= 2:
-            return [('m_patrol_room', agent_name, error_desc[1])]
+            room = error_desc[1]
+            uvdrobot = next(
+                (p for p in (context or []) if 'uvdrobot' in p), None
+            )
+            if not uvdrobot:
+                print('No uvdrobot in context — cannot replan')
+                return []
+            return [('m_patrol_room', agent_name, uvdrobot, room)]
         return []

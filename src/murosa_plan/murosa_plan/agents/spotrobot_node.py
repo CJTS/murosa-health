@@ -12,7 +12,7 @@ class Spotrobot(Agent):
     def __init__(self, className):
         super().__init__(className)
         self._local_planner = SpotrobotPlanner()
-
+        
 
     def get_local_planner(self):
         return self._local_planner
@@ -65,6 +65,8 @@ class Spotrobot(Agent):
                 )
                 return ActionResult.FAILURE
             elif response.observation == 'dirty room':
+                self.plan = []
+                self._from_local_replan = False
                 self.notifyError(
                     ','.join((actionTuple[0], actionTuple[1], actionTuple[2]))
                 )
@@ -126,13 +128,21 @@ class Spotrobot(Agent):
         self.action_request = Action.Request()
         self.action_request.action = ','.join(('a_detect_macanet', spotrobot, room))
         return self.environment_client.call_async(self.action_request)
-    def a_authorize_disinfect(self, uvdrobot_,spotrobot_):
-        self.get_logger().info("a_authorize_disinfect")
+    def a_authorize_disinfect(self, uvdrobot_, spotrobot_):
+        self.get_logger().info('a_authorize_disinfect')
+        
+        # Só manda beliefs se vier do replan local
+        if self._from_local_replan:
+            self._send_belief_to_jason(uvdrobot_, 'milestone1')
+            self._send_belief_to_jason(
+                uvdrobot_,
+                f'trigger_a_authorize_disinfect({uvdrobot_},{spotrobot_})'
+            )
+            self._from_local_replan = False  # reset
+        
         if all('a_authorize_disinfect' not in action for action in self.wating_response):
-            self.get_logger().info("Here first, waiting for spotrobot")
             self.ask_for_agent(uvdrobot_, 'a_authorize_disinfect')
         else:
-            self.get_logger().info("Nurse is waiting, send action message")
             self.acting_for_agent(uvdrobot_, 'a_authorize_disinfect')
     '''
     def act(self):

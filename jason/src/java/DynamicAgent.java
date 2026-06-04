@@ -64,7 +64,32 @@ public class DynamicAgent extends AgArch {
                 }
             }
         );
+        bridge.subscribe(
+            SubscriptionRequestMsg.generate("/agent/jason/plan").setType("std_msgs/String"),
+            (JsonNode data, String stringRep) -> {
+                MessageUnpacker<PrimitiveMsg<String>> unpacker = new MessageUnpacker<>(PrimitiveMsg.class);
+                PrimitiveMsg<String> msg = unpacker.unpackRosMessage(data);
+                FIPAMessage decodedMessage = FIPAMessage.decode(msg.data);
+                logger.info(msg.data);
 
+                if(decodedMessage.getReceiver().equals(getAgName())) {
+                    String regex = "[|]";
+                    String[] decodedContent = decodedMessage.getContent().split(regex);
+
+                    if(decodedMessage.getPerformative().equals("inform")) {
+                        if(decodedContent[0].equals("Plan")) {
+                            addPlanDynamically(decodedContent[1]);
+                        } else if (decodedContent[0].equals("Belief")) {
+                            try {
+                                getTS().getAg().addBel(Literal.parseLiteral(decodedContent[1]));
+                            } catch (RevisionFailedException ex) {
+                                System.err.println("Error: " + ex.getMessage());
+                            }
+                        }
+                    }
+                }
+            }
+        );
 		FIPAMessage message = new FIPAMessage("inform", getAgName(), "coordinator");
 		message.setContent("Ready");
         Publisher navigation = new Publisher("/agent/coordinator/action", "std_msgs/String", bridge);

@@ -16,6 +16,7 @@ class Agent(Node):
         self.mission_context_data = []
         self.wating = False
         self.local_state = None
+        self._from_local_replan = False
         # Coordinator Client
         self.cli = self.create_client(Message, 'coordinator')
         while not self.cli.wait_for_service(timeout_sec=1.0):
@@ -41,7 +42,8 @@ class Agent(Node):
         # self.subscription_reset = self.create_subscription(
         #     String, '/coordinator/agent/reset', self.listener_reset_callback, 10
         # )
-
+        # Publisher para mandar beliefs/plans para o Jason
+        self.agent_jason_publisher = self.create_publisher(String, '/agent/jason/plan', 10)
         # Publisher para falar o resultado da ação para o Jason
         self.publisher = self.create_publisher(String, '/agent/jason/result', 10)
 
@@ -105,7 +107,14 @@ class Agent(Node):
             self.publisher_coordinator.publish(msg)
         else:
             self.add_action(decoded_msg)
-
+    def _send_belief_to_jason(self, agent_name: str, belief: str):
+        msg = String()
+        msg.data = FIPAMessage(
+            FIPAPerformative.INFORM.value, 'Agent', agent_name,
+            'Belief|' + belief + '.'
+        ).encode()
+        self.agent_jason_publisher.publish(msg)
+        self.get_logger().info('Belief sent to %s: %s' % (agent_name, belief))
     def listener_plan_callback(self, msg):
         # Receive messagem from jason
         self.get_logger().info('I heard: "%s"' % msg.data)
@@ -181,14 +190,19 @@ class Agent(Node):
                 self.get_logger().info('Ready to act')
                 self.acting_for_agent(decoded_msg.sender, decoded_msg.content.split("|")[1])
         elif "Done" == decoded_msg.content.split("|")[0]:
-            # Check if the action is in the actions or plans
             if len(self.actions) > 0 or len(self.plan) > 0:
                 self.get_logger().info('Finished action')
                 msg = String()
-                action = self.actions.pop()
-                msg.data = FIPAMessage(FIPAPerformative.INFORM.value, self.agentName, 'Jason', 'Success|' + ",".join(action)).encode()
-                self.publisher.publish(msg)
-                self.get_logger().info('Publishing: "%s"' % msg.data)
+                if len(self.actions) > 0:
+                    action = self.actions.pop()
+                    msg.data = FIPAMessage(FIPAPerformative.INFORM.value, self.agentName, 'Jason', 'Success|' + ",".join(action)).encode()
+                    self.publisher.publish(msg)
+                    self.get_logger().info('Publishing: "%s"' % msg.data)
+                else:
+                    self.get_logger().info('Action from local replan — notifying coordinator Finished')
+                    finish_msg = String()
+                    finish_msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, self.agentName, 'Coordinator', 'Finished').encode()
+                    self.publisher_coordinator.publish(finish_msg)
                 self.wating = False
                 self.acting_for_agent(decoded_msg.sender, decoded_msg.content.split("|")[1])
             else:
@@ -243,6 +257,7 @@ class Agent(Node):
             return False
 
         self.get_logger().info('Local replan succeeded: %s' % str(new_plan))
+        self._from_local_replan = True
         self.plan = list(reversed(new_plan))
         self.wating = False
         return True
