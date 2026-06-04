@@ -34,9 +34,9 @@ class Agent(Node):
         )
 
         # # Subscriber para falar com o Coordenador (Ação)
-        #self.subscription_coordinator = self.create_subscription(
-        #     String, '/coordinator/agent/plan', self.listener_plan_callback, 10
-        # )
+        self.subscription_coordinator = self.create_subscription(
+            String, '/coordinator/agent/plan', self.listener_agent_plan_callback, 10  # ← correto
+        )
          #colocado para disinfect
         # self.subscription_reset = self.create_subscription(
         #     String, '/coordinator/agent/reset', self.listener_reset_callback, 10
@@ -65,14 +65,14 @@ class Agent(Node):
         )
 
         self.initialize()
-    # def listener_agent_plan_callback(self, msg):
-    #     decoded_msg = FIPAMessage.decode(msg.data)
-    #     if not self.is_for_me(decoded_msg):
-    #         return
-    #     if decoded_msg.content.startswith('Start|'):
-    #         parts = decoded_msg.content.split('|')[1].split(',')
-    #         self.mission_context_data = parts
-    #         self.get_logger().info('Mission context saved: %s' % str(self.mission_context_data))
+    def listener_agent_plan_callback(self, msg):
+        decoded_msg = FIPAMessage.decode(msg.data)
+        if not self.is_for_me(decoded_msg):
+            return
+        if decoded_msg.content.startswith('Start|'):
+            parts = decoded_msg.content.split('|')[1].split(',')
+            self.mission_context_data = parts
+            self.get_logger().info('Mission context saved: %s' % str(self.mission_context_data))
     def initialize(self):
         # Send message to coordinator to be inserted in agent pools
         future = self.registration()
@@ -235,8 +235,8 @@ class Agent(Node):
             self.get_logger().info("Planner is none")
             return False
 
-        
-        new_plan = planner.plan(error_desc, self.agentName)
+        self.get_logger().info("Mission context = %s " % self.mission_context_data)
+        new_plan = planner.plan(error_desc, self.agentName, context=self.mission_context_data)
 
         if not new_plan:
             self.get_logger().info('Local replan failed for: %s' % str(error_desc))

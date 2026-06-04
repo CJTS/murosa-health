@@ -23,16 +23,16 @@ class AgentPlanner:
     def update_state(self, actionTuple: tuple):
         pass
 
-    def plan(self, error_desc: list, agent_name: str):
-        tasks = self.get_tasks(error_desc, agent_name)
+    def get_tasks(self, error_desc: list, agent_name: str, context: list = None) -> list:
+        raise NotImplementedError
+
+    def plan(self, error_desc: list, agent_name: str, context: list = None):
+        tasks = self.get_tasks(error_desc, agent_name, context=context)
         if not tasks:
             return None
-
         state_copy = copy.deepcopy(self.state)
-
         try:
             result = self.planner.plan(state_copy, tasks, verbose=1)
         except Exception as e:
             result = None
-
         return result if result else None

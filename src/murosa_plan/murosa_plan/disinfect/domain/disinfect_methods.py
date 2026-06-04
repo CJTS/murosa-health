@@ -27,10 +27,10 @@ methods.declare_task_methods('m_approach_nurse', [approach_nurse])
 def patrol_room(state, spotrobot_, nurse_):
     room_ = state.loc[nurse_]
     if state.doors[room_]:
-        if state.cleaned[state.loc[spotrobot_]]:
-            return [('a_navto',       spotrobot_, room_), ('a_patrol_room', spotrobot_, room_),]
+        if state.cleaned[room_]:
+            return [('a_navto', spotrobot_, room_), ('a_patrol_room', spotrobot_, room_),]
         else:
-            return[('a_clean_room', nurse_, state.loc[nurse_]), ('a_navto',       spotrobot_, room_), ('a_authorize_patrol',spotrobot_,nurse_), ('a_patrol_room', spotrobot_, state.loc[spotrobot_])]
+            return[('a_clean_room', nurse_, state.loc[nurse_]),('a_authorize_patrol',spotrobot_,nurse_), ('a_navto',       spotrobot_, room_),  ('a_patrol_room', spotrobot_, state.loc[spotrobot_])]
 
     else:
         return [

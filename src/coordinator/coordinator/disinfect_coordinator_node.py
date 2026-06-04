@@ -129,12 +129,6 @@ class Coordinator(AgnosticCoordinator):
                         self.start_mission()
                 else:
                     #self.get_logger().info(f"Room {location} already disinfected by {agent}, skipping mission.")
-                    if agent in self.occ_nurses:
-                        for agent_context in self.current_team:
-                            self.free_agent(agent_context)
-                            self.get_logger().info(f"Freeing agent: {agent_context}")
-                        if  (len(self.room_queue)) > 0:
-                            self.send_reset_request(self.current_team)
                         
                             # Verify if the mission is complete
                     if (len(self.room_queue)) == 0:
