@@ -59,6 +59,8 @@ class Spotrobot(Agent):
                 self.pos = actionTuple[2]
                 self._local_planner.update_state(actionTuple)
             elif response.observation == 'door closed':
+                self.plan = []
+                self._from_local_replan = False
                 self._local_planner.state.doors[actionTuple[2]] = False
                 self.notifyError(
                     ','.join(('door_closed', actionTuple[2]))

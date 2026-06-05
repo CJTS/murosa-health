@@ -10,6 +10,7 @@ class Agent(Node):
     def __init__(self, className):
         super().__init__(className)
         self.className = className.lower()
+        self._local_replan_enabled = True
         self.actions = []
         self.plan = []
         self.wating_response = []
@@ -244,6 +245,8 @@ class Agent(Node):
         return None
     
     def try_local_replan(self, error_desc: list) -> bool:
+        if not self._local_replan_enabled:
+            return False
         planner = self.get_local_planner()
         if planner is None:
             self.get_logger().info("Planner is none")

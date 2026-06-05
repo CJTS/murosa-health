@@ -34,16 +34,21 @@ def patrol_room(state, spotrobot_, nurse_):
 
     else:
         return [
-            ('a_navto',          spotrobot_, room_),
-            ('a_detect_macanet', spotrobot_, room_),
-            ('a_open_door',      spotrobot_, room_),
-            ('a_patrol_room',    spotrobot_, room_),
+            ('m_handle_door_closed', spotrobot_, room_),
+            ('a_patrol_room',        spotrobot_, room_),
         ]
     
     
 methods.declare_task_methods('m_patrol_room', [patrol_room])
 
-
+def m_handle_door_closed(state, spotrobot_, room_):
+    return [
+        ('a_detect_macanet',     spotrobot_, room_),
+        ('a_open_door', spotrobot_, room_),
+        ('a_navto',          spotrobot_, room_),
+        
+    ]
+methods.declare_task_methods('m_handle_door_closed',    [m_handle_door_closed])
 def disinfect_room(state, uvdrobot_, spotrobot_, nurse_):
     if state.cleaned[state.loc[nurse_]]:
         return [('a_authorize_disinfect',uvdrobot_,spotrobot_), ('a_navto', uvdrobot_, state.loc[nurse_]), ('a_disinfect_room', uvdrobot_, state.loc[nurse_])]

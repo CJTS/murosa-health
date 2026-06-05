@@ -24,9 +24,15 @@ class Coordinator(AgnosticCoordinator):
         
         #list of dirty rooms
         self.room_queue = []
-        self.mission_context = "start(Spotrobot, NurseRoom, NurseDesinfect,  Uvdrobot)"
-        #self.variables = ["NurseDesinfect", "NurseRoom", "uvdrobot", "spotrobot"]
-        self.variables =["Spotrobot", "NurseRoom", "NurseDesinfect", "Uvdrobot"]
+        self.mission_context = "start(NurseDesinfect, NurseRoom, Spotrobot, Uvdrobot)"
+        # self.variables =["Spotrobot", "NurseRoom", "NurseDesinfect", "Uvdrobot"]
+        
+        self.variables_map = {
+            'nurse': 'NurseDesinfect',
+            'room': 'NurseRoom',
+            'spotrobot': 'Spotrobot',
+            'uvdrobot': 'Uvdrobot',
+        }
         self.current_plan = []
         self.current_team = []	
         self.agents_actions = {}
@@ -174,7 +180,10 @@ class Coordinator(AgnosticCoordinator):
     def idk(self, mission, error):
         #self.send_reset_request(self.current_team)
         return
-    
+    def pre_replan_update(self, error_key: str, context):
+        error_type = error_key.split(',')[0] if error_key else ''
+        if error_type != 'door_closed':
+            self.send_update_uncleaned_room_request(context[1])
     def send_update_uncleaned_room_request(self, room):
         self.get_logger().info(f"Updating uncleaned room: {room}")
         self.action_request = Action.Request()

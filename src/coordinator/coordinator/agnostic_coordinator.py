@@ -171,16 +171,20 @@ class AgnosticCoordinator(Node):
             msg = String()
             msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', 'Jason', 'Create|' + ','.join(agent)).encode()
             self.jason_publisher.publish(msg)
-
-    def fix_plan(self, context):
+    def pre_replan_update(self, error_key: str, context):
+      raise NotImplementedError("This method should be implemented by the subclass")
+    def fix_plan(self, context, error_key=''):
+        self.get_logger().info(f'context type: {type(context)}, value: {context}')
+        self.get_logger().info(",".join(context))
+        self.pre_replan_update(error_key, context)
         self.get_logger().info(",".join(context))
         team = self.get_team_from_context(context)
-        self.send_update_uncleaned_room_request("room1")
         self.get_logger().info('Creating plan for: %s ' % (
             ','.join(team)
         ))
         future = self.send_need_plan_request(','.join(team))
-        
+        start = list(context)
+        self.get_logger().info(f'Start é {start}')
         rclpy.spin_until_future_complete(self, future)
         plan_response = future.result()
         raw = plan_response.observation  
@@ -190,7 +194,7 @@ class AgnosticCoordinator(Node):
             self.get_logger().info(f'Node map recebido: {self.action_to_node_id}')
         else:
             plan_part = raw
-
+        
         self.current_plan = plan_part.split('/')
         self.get_logger().info('Plan received for: %s ' % (
             ','.join(team)
@@ -198,17 +202,20 @@ class AgnosticCoordinator(Node):
         self.get_logger().info(plan_response.observation)
         # self.current_plan = plan_response.observation.split('/')
         formated_plan = []
-        start = []
+        # start = []
         for action in self.current_plan:
             splitted_action = action.split(',')
             formated_plan.append(splitted_action[0] + "(" + ','.join(splitted_action[1:len(splitted_action)])  + ")")
-            params = splitted_action[1:len(splitted_action)]
-            for param in params:
-                if param not in start:
-                    start.append(param)
-
-        bdies = generate_bdi(team, formated_plan, self.mission_context, self.variables)
+            #params = splitted_action[1:len(splitted_action)]
+            #for param in params:
+            #    if param not in start:
+            #        start.append(param)
+        self.get_logger().info(f'Plan gerado: {self.current_plan}')
+        self.get_logger().info(f'Formatted plan: {formated_plan}')
+        bdies = generate_bdi(team, formated_plan, self.mission_context, self.variables_map)
         for agent, rules in bdies.items():
+            
+            self.get_logger().info(f'BDI para {agent}: {rules}')
             plans = [f"+!{self.mission_context}: true <- +{self.mission_context}."]
             for rule in rules:
                 plans.append(rule)
@@ -219,6 +226,19 @@ class AgnosticCoordinator(Node):
         start_msg = "initial_trigger_" + formated_plan[0] + "."
 
         for agent in team:
+            if agent not in bdies:
+                self.get_logger().info(f'{agent} has no actions in replan — sending minimal BDI')
+                plans = [
+                    f"+!{self.mission_context}: true <- +{self.mission_context}.",
+                    f"+coordinator_end({agent}): true <- end.",
+                ]
+                msg = String()
+                msg.data = FIPAMessage(FIPAPerformative.INFORM.value, 'Coordinator', agent, 'Plan|' + '/'.join(plans)).encode()
+                self.agent_publisher.publish(msg)
+                # Manda o trigger após o plano
+                msg = String()
+                msg.data = FIPAMessage(FIPAPerformative.INFORM.value, 'Coordinator', agent, 'Belief|coordinator_end(' + agent + ').').encode()
+                self.agent_publisher.publish(msg)
             msg = String()
             msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent, 'Start|' + ','.join(start)).encode()
             self.agent_publisher.publish(msg)
@@ -282,7 +302,7 @@ class AgnosticCoordinator(Node):
                 else:
                     if self.should_replan:
                             self.get_logger().info('Error found')
-                            self.fix_plan(mission)
+                            self.fix_plan(mission, error_msg[1])
                             # self.do_replan(error_msg[1], mission)
                     else:
                         self.get_logger().info('Error found')
@@ -324,7 +344,7 @@ class AgnosticCoordinator(Node):
                     start.append(param)
 
         # Gera e envia BDI
-        bdies = generate_bdi(team, formated_plan, self.mission_context, self.variables)
+        bdies = generate_bdi(team, formated_plan, self.mission_context, self.variables_map)
         for agent, rules in bdies.items():
             plans = [f"+!{self.mission_context}: true <- +{self.mission_context}."]
             for rule in rules:
@@ -339,6 +359,15 @@ class AgnosticCoordinator(Node):
 
         
         for agent in team:
+            if agent not in bdies:
+                self.get_logger().info(f'{agent} has no actions in replan — sending minimal BDI')
+                plans = [
+                     f"+{self.mission_context}: true <- end.",
+                ]
+                msg = String()
+                msg.data = FIPAMessage(FIPAPerformative.INFORM.value, 'Coordinator', agent, 'Plan|' + '/'.join(plans)).encode()
+                self.agent_publisher.publish(msg)
+                self.get_logger().info(f'{agent} has no actions in replan — freeing directly')
             msg = String()
             msg.data = FIPAMessage(
                 FIPAPerformative.REQUEST.value, 'Coordinator', agent,

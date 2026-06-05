@@ -21,12 +21,25 @@ def get_ordered_instanciated_variables(actions):
     
     return instanciated_variables
 
+# def map_intaciated_to_variables(variables, ordered_instanciated_variables):
+#     mapped_params = {}
+#     i = 0
+#     for param in ordered_instanciated_variables:
+#         mapped_params[param] = variables[i]
+#         i += 1
+#     return mapped_params
+
 def map_intaciated_to_variables(variables, ordered_instanciated_variables):
     mapped_params = {}
-    i = 0
     for param in ordered_instanciated_variables:
-        mapped_params[param] = variables[i]
-        i += 1
+        matched = False
+        for key, var in variables.items():
+            if key in param.lower():
+                mapped_params[param] = var
+                matched = True
+                break
+        if not matched:
+            mapped_params[param] = param  # fallback
     return mapped_params
 
 def map_params_to_variables(params, variables_map):
