@@ -7,9 +7,12 @@ def generate_launch_description():
     problem_rate_launch_arg = DeclareLaunchArgument(
         'problem_rate', default_value=EnvironmentVariable('PROBLEM_RATE')
     )
-
+    local_replan_launch_arg = DeclareLaunchArgument(
+        'local_replan', default_value=EnvironmentVariable('LOCAL_REPLAN', default_value='false')
+    )
     return LaunchDescription([
         problem_rate_launch_arg,
+        local_replan_launch_arg,
         Node(
             package='murosa_plan',
             executable='disinfect_environment',
@@ -36,6 +39,7 @@ def generate_launch_description():
         Node(
             package='murosa_plan',
             executable='spotrobot',
-            name='spotrobot'
+            name='spotrobot',
+            parameters=[{'local_replan': LaunchConfiguration('local_replan')}]
         ),
     ])

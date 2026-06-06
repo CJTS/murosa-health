@@ -10,7 +10,8 @@ class Agent(Node):
     def __init__(self, className):
         super().__init__(className)
         self.className = className.lower()
-        self._local_replan_enabled = True
+        self.declare_parameter('local_replan', False)
+        self._local_replan_enabled = self.get_parameter('local_replan').get_parameter_value().bool_value
         self.actions = []
         self.plan = []
         self.wating_response = []
