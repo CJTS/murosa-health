@@ -193,6 +193,10 @@ class Environment(Node):
         if actionTuple[0] == 'a_open_door':
             self.state['doors'][actionTuple[2]] = True
             response.observation = 'success'
+        elif actionTuple[0] == 'a_detect_macanet':
+            response.observation = 'success'
+        elif actionTuple[0] == 'a_navto' and not self.state['doors'][actionTuple[2]]:
+            response.observation = 'door closed'
         elif actionTuple[0] == 'a_navto':
             self.state['loc'][actionTuple[1]] = actionTuple[2]
             response.observation = 'success'

@@ -26,6 +26,10 @@ def a_approach_nurse(state, robot_, nurse_):
 def a_authenticate_nurse(state, robot_, _nurse):
     return state
 
+# robot detect_macanet
+def a_detect_macanet(state, spotrobot_, room_):
+    return state
+
 # robot opens drawer for nurse to deposit sample
 def a_open_drawer(state, robot_):
     return state
@@ -59,6 +63,8 @@ def a_navto(state, robot_, loc_):
     state.loc[robot_] = loc_
     return state
 
+def a_detect_macanet(state, spotrobot_, room_):
+    return state
 
 def a_authorize_patrol(state, spotrobot_, nurse_):
     return state
@@ -144,7 +150,8 @@ actions.declare_actions([
     a_deliver_resource,
     # a_drop_checkpoint,
     # a_pick_checkpoint,
-    a_assemble_resource
+    a_assemble_resource,
+    a_detect_macanet,
 ])
 
 # ******************************************    Demo / Test Routine         ****************************************** #

@@ -9,6 +9,7 @@ from agents.helpers.FIPAPerformatives import FIPAPerformative
 from agents.helpers.helper import FIPAMessage, action_string_to_tuple
 from agents.helpers.ActionResults import ActionResult
 
+import copy
 class Agent(Node):
     def __init__(self, className):
         super().__init__(className)
@@ -26,7 +27,10 @@ class Agent(Node):
         self.path = None
         self.vx = None
         self.vy = None
-
+        self.mission_context_data = []
+        self.local_state = None
+        self._from_local_replan = False
+        self._local_replan_enabled = True
         # Coordinator Client
         self.cli = self.create_client(Message, 'coordinator')
         while not self.cli.wait_for_service(timeout_sec=1.0):
@@ -39,6 +43,19 @@ class Agent(Node):
         while not self.environment_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('environment service not available, waiting again...')
 
+        self.subscription_coordinator = self.create_subscription(
+                String, '/coordinator/agent/plan', self.listener_plan_callback, 10
+            )
+
+        self.subscription_coordinator_plan = self.create_subscription(
+            String, '/coordinator/agent/plan', self.listener_agent_plan_callback, 10
+        )
+
+        self.publisher_coordinator = self.create_publisher(
+                String, '/agent/coordinator/action', 10
+            )
+        # Publisher para mandar beliefs/plans para o Jason
+        self.agent_jason_publisher = self.create_publisher(String, '/agent/jason/plan', 10)
         # Navigator Client
         self.navigator_client = self.create_client(
             Action, 'navigator_server'
@@ -55,15 +72,13 @@ class Agent(Node):
 
         # Subscriber para falar com o Coordenador (Ação)
         if not self.should_use_bdi:
-            self.subscription_coordinator = self.create_subscription(
-                String, '/coordinator/agent/plan', self.listener_plan_callback, 10
-            )
+            # self.subscription_coordinator = self.create_subscription(
+            #     String, '/coordinator/agent/plan', self.listener_plan_callback, 10
+            # )
             self.subscription_coordinator = self.create_subscription(
                 String, '/coordinator/agent/reset', self.listener_reset_callback, 10
             )
-            self.publisher_coordinator = self.create_publisher(
-                String, '/agent/coordinator/action', 10
-            )
+            
 
         # Publisher para falar o resultado da ação para o Jason
         if self.should_use_bdi:
@@ -217,17 +232,16 @@ class Agent(Node):
                 self.acting_for_agent(decoded_msg.sender, decoded_msg.content.split("|")[1])
         elif "Done" == decoded_msg.content.split("|")[0]:
             # Check if the action is in the actions or plans
-            if len(self.actions) > 0 or any(decoded_msg.content.split("|")[1] in action for action in self.plan):
+            if len(self.actions) > 0 or len(self.plan) > 0 or  any(decoded_msg.content.split("|")[1] in action for action in self.plan):
                 self.get_logger().info('Action finished ' + decoded_msg.content.split("|")[1])
 
-                if self.should_use_bdi:
+                if self.should_use_bdi and len(self.actions) > 0:
                     msg = String()
                     action = self.actions.pop()
                     msg.data = FIPAMessage(FIPAPerformative.INFORM.value, self.get_name(), 'Jason', 'Success|' + ",".join(action)).encode()
                     self.publisher.publish(msg)
-                else:
+                elif len(self.plan) > 0:
                     action = self.plan.pop(0)
-
                 # self.get_logger().info('Publishing: "%s"' % msg.data)
                 self.wating = False
                 self.acting_for_agent(decoded_msg.sender, decoded_msg.content.split("|")[1])
@@ -337,7 +351,27 @@ class Agent(Node):
                 rclpy.spin_until_future_complete(self, future)
 
 
+    # def notifyError(self, error):
+    #     message = FIPAMessage(FIPAPerformative.INFORM.value, self.get_name(), 'Coordinator', 'ERROR|' + error).encode()
+    #     ros_msg = Message.Request()
+    #     ros_msg.content = message
+    #     future = self.cli.call_async(ros_msg)
+    #     rclpy.spin_until_future_complete(self, future)
+    #     response = future.result()
+    #     self.get_logger().info('%s' % (response.response))
+    #     if not self.should_use_bdi:
+    #         self.actions = []
+    #         self.plan = []
+    #         self.wating_response = []
+    #         self.wating = False
+    #         self.with_plan = False
+    #         self.goal_room = None
     def notifyError(self, error):
+        error_desc = error.split(',')
+        self.get_logger().info('Error: %s — trying local replan first' % error)
+        if self.try_local_replan(error_desc):
+            return
+        self.get_logger().info('Escalating error to coordinator: %s' % error)
         message = FIPAMessage(FIPAPerformative.INFORM.value, self.get_name(), 'Coordinator', 'ERROR|' + error).encode()
         ros_msg = Message.Request()
         ros_msg.content = message
@@ -360,6 +394,50 @@ class Agent(Node):
         )
         return self.environment_client.call_async(self.action_request)
 
+    def _send_belief_to_jason(self, agent_name: str, belief: str):
+        msg = String()
+        msg.data = FIPAMessage(
+            FIPAPerformative.INFORM.value, 'Agent', agent_name,
+            'Belief|' + belief + '.'
+        ).encode()
+        self.agent_jason_publisher.publish(msg)
+        self.get_logger().info('Belief sent to %s: %s' % (agent_name, belief))
+
+    def listener_agent_plan_callback(self, msg):
+        decoded_msg = FIPAMessage.decode(msg.data)
+        if not self.is_for_me(decoded_msg):
+            return
+        if decoded_msg.content.startswith('Start|'):
+            parts = decoded_msg.content.split('|')[1].split(',')
+            self.mission_context_data = parts
+            self.get_logger().info('Mission context saved: %s' % str(self.mission_context_data))
+
+    def get_local_planner(self):
+        
+        return None
+    
+    def try_local_replan(self, error_desc: list) -> bool:
+        if not self._local_replan_enabled:
+            return False
+        planner = self.get_local_planner()
+        if planner is None:
+            self.get_logger().info("Planner is none")
+            return False
+
+        self.get_logger().info("Mission context = %s " % self.mission_context_data)
+        new_plan = planner.plan(error_desc, self.get_name(), context=self.mission_context_data)
+
+        if not new_plan:
+            self.get_logger().info('Local replan failed for: %s' % str(error_desc))
+            return False
+
+        self.get_logger().info('Local replan succeeded: %s' % str(new_plan))
+        self.plan = list(reversed(new_plan))
+        self._from_local_replan = True
+        self.wating = False
+        return True
+    
+    
     def run(self):
         while rclpy.ok():
             rclpy.spin_once(self, timeout_sec=0.001)

@@ -287,7 +287,7 @@ class Coordinator(AgnosticCoordinator):
             room = error_desc[1]
             self.state['cleaned'][room] = False
             self.get_logger().info(f"Room {room} marked as dirty again")
-        elif error_desc[0] == 'closed_door':
+        elif error_desc[0] == 'door_closed':
             door = error_desc[1]
             self.state['doors'][door] = False
             self.get_logger().info(f"Door {door} marked as closed")

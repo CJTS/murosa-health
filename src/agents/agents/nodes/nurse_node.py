@@ -14,8 +14,14 @@ class Nurse(Agent):
         self.counter = 0
         self.generate_sample = False
 
-    def send_has_infected_room(self):
+    def send_collect_sample(self):
         message = FIPAMessage(FIPAPerformative.INFORM.value, self.get_name(), 'Coordinator', 'InitialTrigger|CollectSampleMission,' + self.current_room).encode()
+        ros_msg = Message.Request()
+        ros_msg.content = message
+        return self.cli.call_async(ros_msg)
+    
+    def send_has_infected_room(self):
+        message = FIPAMessage(FIPAPerformative.INFORM.value, self.get_name(), 'Coordinator', 'InitialTrigger|DisinfectMission,' + self.current_room).encode()
         ros_msg = Message.Request()
         ros_msg.content = message
         return self.cli.call_async(ros_msg)
@@ -192,7 +198,8 @@ class Nurse(Agent):
                     room = random.choice(rooms)
                     self.a_navto(self.current_room, room)
                     self.get_logger().info(f"Checking for infected room {self.current_room} after 10000 cycles")
-                    self.send_need_material_room(room)
+                    self.send_has_infected_room()
+                    # self.send_need_material_room(room)
                     # self.counter = 0
 
 
