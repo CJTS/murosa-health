@@ -232,17 +232,16 @@ class Agent(Node):
                 self.acting_for_agent(decoded_msg.sender, decoded_msg.content.split("|")[1])
         elif "Done" == decoded_msg.content.split("|")[0]:
             # Check if the action is in the actions or plans
-            if len(self.actions) > 0 or len(self.plan) > 0 or  any(decoded_msg.content.split("|")[1] in action for action in self.plan):
+            if len(self.actions) > 0 or any(decoded_msg.content.split("|")[1] in action for action in self.plan):
                 self.get_logger().info('Action finished ' + decoded_msg.content.split("|")[1])
 
-                if self.should_use_bdi and len(self.actions) > 0:
+                if self.should_use_bdi:
                     msg = String()
                     action = self.actions.pop()
                     msg.data = FIPAMessage(FIPAPerformative.INFORM.value, self.get_name(), 'Jason', 'Success|' + ",".join(action)).encode()
                     self.publisher.publish(msg)
-                elif len(self.plan) > 0:
+                else:
                     action = self.plan.pop(0)
-                # self.get_logger().info('Publishing: "%s"' % msg.data)
                 self.wating = False
                 self.acting_for_agent(decoded_msg.sender, decoded_msg.content.split("|")[1])
             else:

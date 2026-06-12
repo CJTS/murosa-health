@@ -376,6 +376,7 @@ class AgnosticCoordinator(Node):
     def send_plans_request(self, team):
         self.get_logger().info('Sending plans')
         for agent in team:
+            self.get_logger().info(f'Plan for {agent.robot}: {self.agents_actions[agent.robot]}')
             send_plan_request_nurse = String()
             send_plan_request_nurse.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent.robot, 'Plan|' + '/'.join(list(map(
                 action_tuple_to_string, self.agents_actions[agent.robot]

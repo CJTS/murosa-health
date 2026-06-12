@@ -6,7 +6,7 @@ File Description: Hospital methods file. All the methods for Hospital planning d
 from agents.planner.spot_planner.domain.common_method import methods
 
 # ******************************************        Method Definitions      ****************************************** #
-def patrol(state, spotrobot_,uvdrobot_, nurse_):
+def patrol(state, spotrobot_,uvdrobot_, nurse_, nurse_room_):
     if state.disinfected[state.loc[nurse_]] == False:
         return [
             ('m_approach_nurse', spotrobot_, nurse_),

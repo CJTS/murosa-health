@@ -16,7 +16,7 @@ class Uvd(Agent):
             if(self.battery > 2):
                 self.get_logger().info('Doing a_navto')
                 self.a_navto(actionTuple[1], actionTuple[2])
-                self.battery -= 1
+                # self.battery -= 1
                 return ActionResult.MOVING
             else:
                 self.get_logger().info('low_battery')
@@ -25,7 +25,7 @@ class Uvd(Agent):
             if(self.battery > 2):
                 self.get_logger().info('Doing a_disinfect_room')
                 future = self.a_disinfect_room(actionTuple[1], actionTuple[2])
-                self.battery -= 1
+                # self.battery -= 1
             else:
                 self.get_logger().info('low_battery')
                 return ActionResult.BATTERY_FAILURE
@@ -33,7 +33,7 @@ class Uvd(Agent):
             if(self.battery > 2):
                 self.get_logger().info('Doing a_authorize_disinfect')
                 self.a_authorize_disinfect(actionTuple[1], actionTuple[2])
-                self.battery -= 1
+                # self.battery -= 1
                 return ActionResult.WAITING
             else:
                 self.get_logger().info('low_battery')

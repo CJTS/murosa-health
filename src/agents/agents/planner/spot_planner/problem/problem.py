@@ -29,7 +29,7 @@ init_state.doors = {
     'room6': True,
     'lab': True,
     'icu': True
-},
+}
 init_state.sample = {
     'room1': False,
     'room2': False,

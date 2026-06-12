@@ -20,8 +20,8 @@ class Nurse(Agent):
         ros_msg.content = message
         return self.cli.call_async(ros_msg)
     
-    def send_has_infected_room(self):
-        message = FIPAMessage(FIPAPerformative.INFORM.value, self.get_name(), 'Coordinator', 'InitialTrigger|DisinfectMission,' + self.current_room).encode()
+    def send_has_infected_room(self, room):
+        message = FIPAMessage(FIPAPerformative.INFORM.value, self.get_name(), 'Coordinator', 'InitialTrigger|DisinfectMission,' + room).encode()
         ros_msg = Message.Request()
         ros_msg.content = message
         return self.cli.call_async(ros_msg)
@@ -191,14 +191,14 @@ class Nurse(Agent):
                     self.get_logger().info("Generating sample in " + self.current_room)
                     future = self.a_generate_sample()
                     rclpy.spin_until_future_complete(self, future)
-                    self.send_has_infected_room()
+                    self.send_has_infected_room(room)
                     self.generate_sample = False
                 if self.counter == 10000:
                     rooms = ['room1', 'room2', 'room3', 'room4', 'room5', 'room6', 'icu']
                     room = random.choice(rooms)
                     self.a_navto(self.current_room, room)
                     self.get_logger().info(f"Checking for infected room {self.current_room} after 10000 cycles")
-                    self.send_has_infected_room()
+                    self.send_has_infected_room(room)
                     # self.send_need_material_room(room)
                     # self.counter = 0
 

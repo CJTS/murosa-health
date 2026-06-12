@@ -26,6 +26,12 @@ class Environment(Node):
             100 - uncleaned_percentage, uncleaned_percentage), k=1)
         uncleaned4 = random.choices(cleanOptions, weights=(
             100 - uncleaned_percentage, uncleaned_percentage), k=1)
+        uncleaned5 = random.choices(cleanOptions, weights=(
+            100 - uncleaned_percentage, uncleaned_percentage), k=1)
+        uncleaned6 = random.choices(cleanOptions, weights=(
+            100 - uncleaned_percentage, uncleaned_percentage), k=1)
+        uncleanedicu = random.choices(cleanOptions, weights=(
+            100 - uncleaned_percentage, uncleaned_percentage), k=1)
         door1 = random.choices(doorOptions, weights=(
             100 - uncleaned_percentage, uncleaned_percentage), k=1)
         door2 = random.choices(doorOptions, weights=(
@@ -77,16 +83,18 @@ class Environment(Node):
                 'room2': door2[0],
                 'room3': door3[0],
                 'room4': door4[0],
-                'room5': 'False',
-                'room6': 'False',
+                'room5': False,
+                'room6': False,
                 'icu': door4[0],
-                'lab': 'False'
+                'lab': False
             },
             'cleaned': {
                 'room1': uncleaned1[0],
                 'room2': uncleaned2[0],
                 'room3': uncleaned3[0],
                 'room4': uncleaned4[0],
+                'room5': uncleaned5[0],   
+                'room6': uncleaned6[0],   
                 'icu': uncleaned4[0]
             },
             'samples': {
@@ -205,8 +213,6 @@ class Environment(Node):
             else:
                 self.state['loc'][actionTuple[1]] = room
                 response.observation = 'success'
-            self.state['loc'][actionTuple[1]] = actionTuple[2]
-            response.observation = 'success'
         elif actionTuple[0] == 'monitor':
             response.observation = json.dumps(self.state)
         elif actionTuple[0] == 'a_infected_room':

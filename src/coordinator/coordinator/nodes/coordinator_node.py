@@ -112,6 +112,8 @@ class Coordinator(AgnosticCoordinator):
                 'room2': True,
                 'room3': True,
                 'room4': True,
+                'room5': True,
+                'room6': True,
                 'icu': True
             },
             'samples': {
@@ -207,6 +209,7 @@ class Coordinator(AgnosticCoordinator):
             mission.status = MissionStatus.WAITING_TEAM
 
         if(mission_type == 'DisinfectMission'):
+            future = self.send_monitor_state_request(f'a_infected_room,{decoded_msg.sender},{room}')
             self.state['loc'][decoded_msg.sender] = room
             self.state['disinfected'][room] = False
         elif (mission_type == 'CollectSampleMission'):
