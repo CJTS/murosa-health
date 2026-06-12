@@ -3,14 +3,16 @@ import rclpy
 from interfaces.srv import Action
 from agents.helpers.agent import Agent
 from agents.helpers.ActionResults import ActionResult
-from agents.planner.spot_planner import spot_planner
+from agents.planner.spot_planner.spot_planner import SpotrobotPlanner
+
+
 import copy
 from agents.planner.spot_planner.problem.problem import init_state
 class Spot(Agent):
     def __init__(self, className):
         super().__init__(className)
         self.battery = 3
-        self._local_planner = spot_planner()
+        self._local_planner = SpotrobotPlanner()
         self.goal_room = None
 
     def get_local_planner(self):
