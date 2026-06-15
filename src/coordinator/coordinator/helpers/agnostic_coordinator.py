@@ -154,7 +154,6 @@ class AgnosticCoordinator(Node):
         team = []
         self.get_logger().info(str(mission))
         self.get_logger().info(str(mission.roles))
-        self.get_logger().info(str(self.robots))
         for role in mission.roles:
             free_robot = next((robot for robot in self.robots if robot.status == RobotStatus.READY and robot.role == role), None)
             self.get_logger().info(str(free_robot))

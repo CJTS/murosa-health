@@ -271,11 +271,11 @@ class Coordinator(AgnosticCoordinator):
             mission = DisinfectICUMission([], {})
         else:
             mission = DisinfectRoomMission([], {})
-    
+
         mission.status = MissionStatus.WAITING_TEAM
         mission.trigger = room
         self.missions.append(mission)
-    
+
         return mission
 
     def free_agent(self, agent: str):
