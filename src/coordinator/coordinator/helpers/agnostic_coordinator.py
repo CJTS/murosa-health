@@ -251,7 +251,7 @@ class AgnosticCoordinator(Node):
         self.treat_error(error_desc, mission)
         if self.should_replan:
             # if self.calculate_dependency(mission) > 50:
-            self.get_logger().info('High dependency detected, replanning mission')
+            self.get_logger().info(f'High dependency detected, replanning mission {self.calculate_dependency(mission)}')
             self.replan(mission)
             # else:
             #     self.get_logger().info('Low dependency detected, repairing mission')

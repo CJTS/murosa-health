@@ -14,7 +14,7 @@ class Environment(Node):
         super().__init__('Environment')
         self.counter = 5000
         cleanOptions = [True, False]
-        doorOptions = [False, True]
+        doorOptions = [True, False]
         resource_at_stor4 = ['stor4', 'stor3']
         self.declare_parameter('problem_rate', rclpy.Parameter.Type.INTEGER)
         uncleaned_percentage = self.get_parameter('problem_rate').get_parameter_value().integer_value
@@ -93,8 +93,8 @@ class Environment(Node):
                 'room2': uncleaned2[0],
                 'room3': uncleaned3[0],
                 'room4': uncleaned4[0],
-                'room5': uncleaned5[0],   
-                'room6': uncleaned6[0],   
+                'room5': uncleaned5[0],
+                'room6': uncleaned6[0],
                 'icu': uncleaned4[0]
             },
             'samples': {

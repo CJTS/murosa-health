@@ -38,9 +38,9 @@ class Spot(Agent):
         if actionTuple[0] == 'a_navto':
             if(self.battery > 2):
                 self.get_logger().info('Doing a_navto')
-                future = self.a_navto(actionTuple[1], actionTuple[2])
+                self.a_navto(actionTuple[1], actionTuple[2])
                 # self.battery -= 1
-                # return ActionResult.MOVING
+                return ActionResult.MOVING
             else:
                 self.get_logger().info('low_battery')
                 return ActionResult.BATTERY_FAILURE
@@ -129,17 +129,12 @@ class Spot(Agent):
                 return ActionResult.FAILURE
 
         return ActionResult.SUCCESS
-    
+
     def a_open_door(self, spotrobot, room):
         self.action_request = Action.Request()
         self.action_request.action = ','.join(
             ('a_open_door', spotrobot, room)
         )
-        return self.environment_client.call_async(self.action_request)
-
-    def a_navto(self, spotrobot, room):
-        self.action_request = Action.Request()
-        self.action_request.action = ','.join(('a_navto', spotrobot, room))
         return self.environment_client.call_async(self.action_request)
 
     def a_approach_nurse(self, spotrobot, nurse):

@@ -19,7 +19,7 @@ class Nurse(Agent):
         ros_msg = Message.Request()
         ros_msg.content = message
         return self.cli.call_async(ros_msg)
-    
+
     def send_has_infected_room(self, room):
         message = FIPAMessage(FIPAPerformative.INFORM.value, self.get_name(), 'Coordinator', 'InitialTrigger|DisinfectMission,' + room).encode()
         ros_msg = Message.Request()
@@ -197,6 +197,8 @@ class Nurse(Agent):
                     rooms = ['room1', 'room2', 'room3', 'room4', 'room5', 'room6', 'icu']
                     room = random.choice(rooms)
                     self.a_navto(self.current_room, room)
+                    if self.should_use_bdi:
+                        self.actions.append(('a_navto', self.current_room, room))
                     self.get_logger().info(f"Checking for infected room {self.current_room} after 10000 cycles")
                     future = self.a_infected_room()
                     rclpy.spin_until_future_complete(self, future)

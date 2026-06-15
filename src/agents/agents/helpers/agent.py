@@ -78,7 +78,6 @@ class Agent(Node):
             self.subscription_coordinator = self.create_subscription(
                 String, '/coordinator/agent/reset', self.listener_reset_callback, 10
             )
-            
 
         # Publisher para falar o resultado da ação para o Jason
         if self.should_use_bdi:
@@ -255,7 +254,9 @@ class Agent(Node):
 
     def act(self):
         if not self.moving:
+
             if(len(self.plan) > 0):
+                self.get_logger().info('Acting with plan: %s' % (str(self.plan)))
                 time.sleep(1)
                 action = self.plan.pop(0)
                 result = self.choose_action(action)
@@ -270,7 +271,8 @@ class Agent(Node):
                 elif result == ActionResult.SUCCESS:
                     self.get_logger().info("Action finished")
             elif(len(self.actions) > 0 and self.should_use_bdi):
-                time.sleep(0.5)
+                self.get_logger().info('Acting with actions: %s' % (str(self.actions)))
+                time.sleep(1)
                 self.get_logger().info('Acting')
                 action = self.actions.pop()
                 result = self.choose_action(action)
@@ -290,6 +292,8 @@ class Agent(Node):
                     self.publisher.publish(msg)
                 elif result == ActionResult.WAITING:
                     self.wating = True
+                    self.actions.append(action)
+                elif result == ActionResult.MOVING:
                     self.actions.append(action)
 
             if len(self.plan) == 0 and self.with_plan:
@@ -312,11 +316,18 @@ class Agent(Node):
             self.path = response.observation.split(',')
         elif self.vx == None and self.vy == None:
             if len(self.path) < 2:
+                self.get_logger().info('Finished moving to %s' % self.goal_room)
+                self.current_room = self.goal_room
                 self.path = None
                 self.vx = None
                 self.vy = None
                 self.next_room = None
                 self.moving = False
+                if self.should_use_bdi:
+                    action = self.actions.pop()
+                    msg = String()
+                    msg.data = FIPAMessage(FIPAPerformative.INFORM.value, self.get_name(), 'Jason', 'Success|' + ','.join(action)).encode()
+                    self.publisher.publish(msg)
                 return
 
             self.action_request = Action.Request()
@@ -414,9 +425,8 @@ class Agent(Node):
     #         self.get_logger().info('Mission context saved: %s' % str(self.mission_context_data))
 
     def get_local_planner(self):
-        
         return None
-    
+
     def try_local_replan(self, error_desc: list) -> bool:
         if not self._local_replan_enabled:
             return False
@@ -437,8 +447,7 @@ class Agent(Node):
         self._from_local_replan = True
         self.wating = False
         return True
-    
-    
+
     def run(self):
         while rclpy.ok():
             rclpy.spin_once(self, timeout_sec=0.001)
