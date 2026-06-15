@@ -121,6 +121,7 @@ class AgnosticCoordinator(Node):
                 mission.status = MissionStatus.ERROR
                 mission.error = decoded_msg.content
                 self.stop_mission(mission)
+                time.sleep(1)
                 response.response = 'Treating error'
             elif "InitialTrigger" in decoded_msg.content:
                 self.initial_trigger(decoded_msg)
@@ -143,6 +144,7 @@ class AgnosticCoordinator(Node):
                 msg = String()
                 msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent.robot, 'Stop|' + agent.robot).encode()
                 self.agent_publisher.publish(msg)
+                self.agent_reset_publisher.publish(msg)
 
     def initial_trigger(self, msg):
         raise NotImplementedError("This method should be implemented by the subclass")
@@ -357,6 +359,9 @@ class AgnosticCoordinator(Node):
                 parts = action.split(',')
                 current_plan_bdi.append(parts[0] + '(' + ','.join(parts[1:]) + ')')
             team_names = [a.robot for a in team]
+
+            self.get_logger().info(str(current_plan_bdi))
+
             bdies = generate_bdi(team_names, current_plan_bdi, mission.mission_context, mission.variables)
             for agent, rules in bdies.items():
                 plans = []
@@ -366,9 +371,11 @@ class AgnosticCoordinator(Node):
                 msg.data = FIPAMessage(FIPAPerformative.INFORM.value, 'Coordinator', agent, 'Plan|' + '/'.join(plans)).encode()
                 self.agent_publisher.publish(msg)
 
+            time.sleep(1)
+
             for agent in team:
                 msg = String()
-                msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent.robot, 'Start|' + ','.join(mission.mission_context)).encode()
+                msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent.robot, 'Start|' + ','.join(mission.context)).encode()
                 self.agent_publisher.publish(msg)
 
             for robot in mission.team:

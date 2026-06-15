@@ -193,12 +193,12 @@ class Nurse(Agent):
                     rclpy.spin_until_future_complete(self, future)
                     self.send_has_infected_room(room)
                     self.generate_sample = False
-                if self.counter == 10000:
-                    rooms = ['room1', 'room2', 'room3', 'room4', 'room5', 'room6', 'icu']
+                if self.counter == 1000:
+                    rooms = ['room1', 'room2', 'room3', 'room4', 'room5', 'room6']
                     room = random.choice(rooms)
-                    self.a_navto(self.current_room, room)
                     if self.should_use_bdi:
                         self.actions.append(('a_navto', self.current_room, room))
+                    self.a_navto(self.current_room, room)
                     self.get_logger().info(f"Checking for infected room {self.current_room} after 10000 cycles")
                     future = self.a_infected_room()
                     rclpy.spin_until_future_complete(self, future)

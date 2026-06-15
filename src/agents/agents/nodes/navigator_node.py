@@ -87,8 +87,8 @@ class Navigator(Node):
 
     def receive_message(self, request, response):
         actionTuple = tuple(request.action.split(','))
+        self.get_logger().info(str(request.action))
         if actionTuple[0] == 'path':
-            # self.get_logger().info(str(request.action))
             response.observation = ','.join(self.astar(actionTuple[1], actionTuple[2]))
             # self.get_logger().info(str(response.observation))
         elif actionTuple[0] == 'velocity':

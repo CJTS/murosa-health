@@ -22,9 +22,12 @@ def get_ordered_instanciated_variables(actions):
     return instanciated_variables
 
 def map_intaciated_to_variables(variables, ordered_instanciated_variables):
+    print(f"Mapping variables {variables} to instantiated variables {ordered_instanciated_variables}")
     mapped_params = {}
     i = 0
     for param in ordered_instanciated_variables:
+        print(f"Mapping {param} to {i} {variables} =")
+        print(f"{variables[i]}")
         mapped_params[param] = variables[i]
         i += 1
     return mapped_params
@@ -45,7 +48,9 @@ def is_from_another(milestone_sources, i, agent1):
 def generate_bdi(agents, actions, context, variables):
     # Generate variables array based on action parameters
     ordered_instanciated_variables = get_ordered_instanciated_variables(actions)
+    print(ordered_instanciated_variables)
     variables_map = map_intaciated_to_variables(variables, ordered_instanciated_variables)
+    print(variables_map)
     milestone_sources = defaultdict(set)
     bdies = defaultdict(list)
 
@@ -135,8 +140,8 @@ def generate_bdi(agents, actions, context, variables):
     max_milestone = len(actions)
 
     # Build param string for start(...) belief
-    start_params = ', '.join(variables)
-    start_belief = f"start({start_params})"
+    # start_params = ', '.join(variables)
+    # start_belief = f"start({start_params})"
 
     # Verify all agents have an end in last rule
     for agent in bdies:
@@ -149,7 +154,7 @@ def generate_bdi(agents, actions, context, variables):
         #  ADD STOP / START MISSION RULES
         # ================================
         stop_lines = []
-        stop_lines.append(f"+stop: {start_belief} <- ")
+        stop_lines.append(f"+stop: {context} <- ")
         # Remove triggers for each action
         for act in actions:
             act_name, params = extract_agent_name(act)
@@ -168,7 +173,7 @@ def generate_bdi(agents, actions, context, variables):
         last_action_with_params = f"{last_action}({', '.join(mapped_last_params)})"
         stop_lines.append(f"    -success_{last_action_with_params};")
         # Remove start belief itself
-        stop_lines.append(f"    -{start_belief};")
+        stop_lines.append(f"    -{context};")
         stop_lines.append(f"    -stop.")
         bdies[agent].insert(0, "\n".join(stop_lines))
 
@@ -179,9 +184,9 @@ def generate_bdi(agents, actions, context, variables):
 
         # If this agent is part of the first action, trigger it
         if agent in first_params:
-            bdies[agent].insert(1, f"+{start_belief}: true <- +{start_belief}; !{first_action_with_params}.")
+            bdies[agent].insert(1, f"+{context}: true <- +{context}; !{first_action_with_params}.")
         else:
-            bdies[agent].insert(1, f"+{start_belief}: true <- +{start_belief}; .")
+            bdies[agent].insert(1, f"+{context}: true <- +{context}; .")
 
 
 
@@ -195,10 +200,10 @@ def generate_bdi(agents, actions, context, variables):
 
 # Example usage
 context = "start(Nurse, NurseRoom, SpotRobot, UvdRobot)"
-variables = ['Nurse', 'NurseRoom', 'SpotRobot', 'UvdRobot']
-agents = ['spot2', 'uvd2', 'nurse1']
+variables = ["SpotRobot", "NurseRoom", "Nurse", "UvdRobot"]
+agents = ['spot1', 'uvd2', 'nurse1']
 
-actions = ['a_navto,spot2,room6', 'a_approach_nurse,spot2,nurse1', 'a_authenticate_nurse,spot2,nurse1', 'a_clean_room,nurse1,room6', 'a_authorize_patrol,spot2,nurse1', 'a_patrol_room,spot2,room6', 'a_authorize_disinfect,uvd2,spot2', 'a_navto,uvd2,room6', 'a_disinfect_room,uvd2,room6']
+actions = ['a_navto(spot1,room2)', 'a_approach_nurse(spot1,nurse1)', 'a_authenticate_nurse(spot1,nurse1)', 'a_clean_room(nurse1,room2)', 'a_authorize_patrol(spot1,nurse1)', 'a_patrol_room(spot1,room2)', 'a_authorize_disinfect(uvd1,spot1)', 'a_navto(uvd1,room2)', 'a_disinfect_room(uvd1,room2)']
 
 bdis = generate_bdi(agents, actions, context, variables)
 for agente, regras in bdis.items():
