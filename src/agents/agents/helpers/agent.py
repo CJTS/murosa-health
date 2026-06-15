@@ -223,7 +223,8 @@ class Agent(Node):
             # self.get_logger().info('And it is not for me')
             return
 
-        # self.get_logger().info('And it is for me')
+        self.get_logger().info('I heard: "%s"' % msg.data)
+        self.get_logger().info('And it is for me')
         if "Ready" == decoded_msg.content.split("|")[0]:
             if all(decoded_msg.content.split("|")[1] not in action for action in self.wating_response):
                 self.get_logger().info('No there yet ' + decoded_msg.content.split("|")[1])

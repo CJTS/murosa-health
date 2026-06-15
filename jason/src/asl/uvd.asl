@@ -1,26 +1,26 @@
 // Stop mission
-+stop: start(SpotRobot, NurseRoom, Nurse, UvdRobot) <- 
++stop: start(Nurse, NurseRoom, SpotRobot, UvdRobot) <- 
     -trigger_a_authorize_disinfect(UvdRobot, SpotRobot)[source(SpotRobot)];
     -milestone5[source(SpotRobot)];
     -milestone6;
     -milestone7;
     -success_a_disinfect_room(UvdRobot, NurseRoom);
-    -start(SpotRobot, NurseRoom, Nurse, UvdRobot);
+    -start(Nurse, NurseRoom, SpotRobot, UvdRobot);
     -stop.
 
 // Start disinfect mission
-+start(SpotRobot, NurseRoom, Nurse, UvdRobot): true <- 
-    +start(SpotRobot, NurseRoom, Nurse, UvdRobot).
++start(Nurse, NurseRoom, SpotRobot, UvdRobot): true <- 
+    +start(Nurse, NurseRoom, SpotRobot, UvdRobot).
 
 // Mission actions
-+trigger_a_authorize_disinfect(UvdRobot, SpotRobot): start(SpotRobot, NurseRoom, Nurse, UvdRobot) <- 
++trigger_a_authorize_disinfect(UvdRobot, SpotRobot): start(Nurse, NurseRoom, SpotRobot, UvdRobot) <- 
     !a_authorize_disinfect(UvdRobot, SpotRobot);
     -trigger_a_authorize_disinfect(UvdRobot, SpotRobot)[source(SpotRobot)].
 
 +!a_authorize_disinfect(UvdRobot, SpotRobot): not low_battery & milestone5 <- 
     a_authorize_disinfect(UvdRobot, SpotRobot).
 
-+success_a_authorize_disinfect(UvdRobot, SpotRobot): start(SpotRobot, NurseRoom, Nurse, UvdRobot) & milestone5 <- 
++success_a_authorize_disinfect(UvdRobot, SpotRobot): start(Nurse, NurseRoom, SpotRobot, UvdRobot) & milestone5 <- 
     -milestone5[source(SpotRobot)];
     +milestone6; 
     !a_navto(UvdRobot, NurseRoom).
@@ -28,7 +28,7 @@
 +!a_navto(UvdRobot, NurseRoom): not low_battery & milestone6  <-
     a_navto(UvdRobot, NurseRoom).
 
-+success_a_navto(UvdRobot, NurseRoom): start(SpotRobot, NurseRoom, Nurse, UvdRobot) & milestone6 <-
++success_a_navto(UvdRobot, NurseRoom): start(Nurse, NurseRoom, SpotRobot, UvdRobot) & milestone6 <-
     -milestone6;
     +milestone7;
     !a_disinfect_room(UvdRobot, NurseRoom).
@@ -38,7 +38,7 @@
 
 +success_a_disinfect_room(UvdRobot, NurseRoom): milestone7 <- 
     -milestone7;
-    -start(SpotRobot, NurseRoom, Nurse, UvdRobot);
+    -start(Nurse, NurseRoom, SpotRobot, UvdRobot);
     -success_a_disinfect_room(UvdRobot, NurseRoom);
     end.
 

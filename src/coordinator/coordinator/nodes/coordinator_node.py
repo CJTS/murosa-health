@@ -20,7 +20,7 @@ class DisinfectRoomMission(Mission):
         super().__init__(team, context)
         self.priority = 0
         self.roles = [RobotRoles.SPOT, RobotRoles.UVD, RobotRoles.NURSE]
-        self.mission_context = "start(SpotRobot, NurseRoom, Nurse, UvdRobot)"
+        self.mission_context = "start(Nurse, NurseRoom, SpotRobot, UvdRobot)"
         self.variables = ["SpotRobot", "NurseRoom", "Nurse", "UvdRobot"]
         self.room = None
         self.type = 'DisinfectRoomMission'
@@ -30,7 +30,7 @@ class DisinfectICUMission(Mission):
         super().__init__(team, context)
         self.priority = 2
         self.roles = [RobotRoles.SPOT, RobotRoles.UVD, RobotRoles.NURSE]
-        self.mission_context = "start(SpotRobot, NurseRoom, Nurse, UvdRobot)"
+        self.mission_context = "start(Nurse, NurseRoom, SpotRobot, UvdRobot)"
         self.variables = ["SpotRobot", "NurseRoom", "Nurse", "UvdRobot"]
         self.room = None
         self.type = 'DisinfectICUMission'

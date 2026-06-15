@@ -280,10 +280,11 @@ class AgnosticCoordinator(Node):
         self.get_logger().info("Mission Completed")
         self.missions.remove(finished_mission)
         self.get_logger().info(str(len(self.missions)))
-        msg = String()
-        msg.data = FIPAMessage(FIPAPerformative.INFORM.value, 'Coordinator', finished_mission.requester, 'Finished|' + finished_mission.type).encode()
-        self.agent_publisher.publish(msg)
-        self.get_logger().info('Sent mission completion message to requester: %s' % finished_mission.requester)
+        if not self.should_use_bdi:
+            msg = String()
+            msg.data = FIPAMessage(FIPAPerformative.INFORM.value, 'Coordinator', finished_mission.requester, 'Finished|' + finished_mission.type).encode()
+            self.agent_publisher.publish(msg)
+            self.get_logger().info('Sent mission completion message to requester: %s' % finished_mission.requester)
         # if(len(self.missions) == 0):
             # self.end_simulation()
 

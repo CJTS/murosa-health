@@ -137,7 +137,7 @@ class Spot(Agent):
         )
         return self.environment_client.call_async(self.action_request)
 
-    def a_approach_nurse(self, spotrobot, nurse):
+    def a_approach_nurse(self, nurse, spotrobot):
         if self._from_local_replan:
             self._send_belief_to_jason(spotrobot, 'milestone1')
             self._send_belief_to_jason(
