@@ -198,6 +198,8 @@ class Nurse(Agent):
                     room = random.choice(rooms)
                     self.a_navto(self.current_room, room)
                     self.get_logger().info(f"Checking for infected room {self.current_room} after 10000 cycles")
+                    future = self.a_infected_room()
+                    rclpy.spin_until_future_complete(self, future)
                     self.send_has_infected_room(room)
                     # self.send_need_material_room(room)
                     # self.counter = 0

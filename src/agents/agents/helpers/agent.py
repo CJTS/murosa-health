@@ -30,7 +30,7 @@ class Agent(Node):
         self.mission_context_data = []
         self.local_state = None
         self._from_local_replan = False
-        self._local_replan_enabled = True
+        self._local_replan_enabled = False
         # Coordinator Client
         self.cli = self.create_client(Message, 'coordinator')
         while not self.cli.wait_for_service(timeout_sec=1.0):
@@ -47,9 +47,9 @@ class Agent(Node):
                 String, '/coordinator/agent/plan', self.listener_plan_callback, 10
             )
 
-        self.subscription_coordinator_plan = self.create_subscription(
-            String, '/coordinator/agent/plan', self.listener_agent_plan_callback, 10
-        )
+        # self.subscription_coordinator_plan = self.create_subscription(
+        #     String, '/coordinator/agent/plan', self.listener_agent_plan_callback, 10
+        # )
 
         self.publisher_coordinator = self.create_publisher(
                 String, '/agent/coordinator/action', 10
@@ -154,6 +154,10 @@ class Agent(Node):
         # self.get_logger().info('And it is for me')
         ## Perform action
         message = decoded_msg.content.split('|')
+        if message[0] == 'Start':
+            self.mission_context_data = message[1].split(',')
+            self.get_logger().info('Mission context saved: %s' % str(self.mission_context_data))
+            return
         if decoded_msg.performative == FIPAPerformative.INFORM.value and message[0] == 'Finished' and message[1] == 'DeliverSampleMission':
             self.get_logger().info('And it is for me')
             self.generate_sample = True
@@ -367,8 +371,8 @@ class Agent(Node):
     #         self.goal_room = None
     def notifyError(self, error):
         error_desc = error.split(',')
-        self.get_logger().info('Error: %s — trying local replan first' % error)
         if self.try_local_replan(error_desc):
+            self.get_logger().info('Error: %s — trying local replan first' % error)
             return
         self.get_logger().info('Escalating error to coordinator: %s' % error)
         message = FIPAMessage(FIPAPerformative.INFORM.value, self.get_name(), 'Coordinator', 'ERROR|' + error).encode()
@@ -402,14 +406,14 @@ class Agent(Node):
         self.agent_jason_publisher.publish(msg)
         self.get_logger().info('Belief sent to %s: %s' % (agent_name, belief))
 
-    def listener_agent_plan_callback(self, msg):
-        decoded_msg = FIPAMessage.decode(msg.data)
-        if not self.is_for_me(decoded_msg):
-            return
-        if decoded_msg.content.startswith('Start|'):
-            parts = decoded_msg.content.split('|')[1].split(',')
-            self.mission_context_data = parts
-            self.get_logger().info('Mission context saved: %s' % str(self.mission_context_data))
+    # def listener_agent_plan_callback(self, msg):
+    #     decoded_msg = FIPAMessage.decode(msg.data)
+    #     if not self.is_for_me(decoded_msg):
+    #         return
+    #     if decoded_msg.content.startswith('Start|'):
+    #         parts = decoded_msg.content.split('|')[1].split(',')
+    #         self.mission_context_data = parts
+    #         self.get_logger().info('Mission context saved: %s' % str(self.mission_context_data))
 
     def get_local_planner(self):
         
@@ -431,7 +435,7 @@ class Agent(Node):
             return False
 
         self.get_logger().info('Local replan succeeded: %s' % str(new_plan))
-        self.plan = list(reversed(new_plan))
+        self.plan = list(new_plan)
         self._from_local_replan = True
         self.wating = False
         return True

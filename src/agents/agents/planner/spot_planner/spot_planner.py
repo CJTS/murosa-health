@@ -22,13 +22,24 @@ class SpotrobotPlanner(AgentPlanner):
             self.state.loc[actionTuple[1]] = actionTuple[2]
         elif action == 'a_open_door':
             self.state.doors[actionTuple[2]] = True
+    def plan(self, error_desc: list, agent_name: str, context=None):
+        # Atualiza loc da nurse com a room do contexto
+        if context:
+            nurse      = next((p for p in context if 'nurse' in p), None)
+            nurse_room = next((p for p in context if 'room' in p or p == 'icu'), None)
+            if nurse and nurse_room:
+                self.state.loc[nurse] = nurse_room
+                self.state.disinfected[nurse_room] = False 
 
+        return super().plan(error_desc, agent_name, context=context)
     def get_tasks(self, error_desc, agent_name, context=None):
         if error_desc[0] == 'door_closed' and len(error_desc) >= 2:
             nurse    = next((p for p in (context or []) if 'nurse' in p), None)
-            uvdrobot = next((p for p in (context or []) if 'uvdrobot' in p), None)
-            if not uvdrobot or not nurse:
-                print('Missing nurse or uvdrobot in context — cannot replan')
+            nurse_room = next((p for p in (context or []) if 'room' in p or p == 'icu'), None)
+            uvdrobot = next((p for p in (context or []) if 'uvd' in p), None)
+            print(f'nurse: {nurse}, nurse_room: {nurse_room}, uvdrobot: {uvdrobot}')
+            if not uvdrobot or not nurse or not nurse_room:
+                print('Missing context — cannot replan')
                 return []
-            return [('m_patrol_and_disinfect', agent_name, uvdrobot, nurse)]
+            return [('m_patrol_and_disinfect', agent_name, uvdrobot, nurse, nurse_room)]
         return []

@@ -214,12 +214,13 @@ class AgnosticCoordinator(Node):
                 mission.status = MissionStatus.RUNNING
 
     def start_mission(self, mission: Mission) -> Mission:
-        if self.should_use_bdi:
-            for agent in mission.team:
-                msg = String()
-                msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent.robot, 'Start|' + ','.join(mission.context)).encode()
-                self.agent_publisher.publish(msg)
-        else:
+        # if self.should_use_bdi:
+        for agent in mission.team:
+            msg = String()
+            msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent.robot, 'Start|' + ','.join(mission.context)).encode()
+            self.agent_publisher.publish(msg)
+        # else:
+        if  not self.should_use_bdi:
             self.update_planner_state(json.dumps(self.state))
             future = self.send_need_plan_request(mission.type, ','.join(mission.context))
             rclpy.spin_until_future_complete(self, future)
@@ -246,12 +247,12 @@ class AgnosticCoordinator(Node):
         error_desc = error_msg[1].split(",")
         self.treat_error(error_desc, mission)
         if self.should_replan:
-            if self.calculate_dependency(mission) > 50:
-                self.get_logger().info('High dependency detected, replanning mission')
-                self.replan(mission)
-            else:
-                self.get_logger().info('Low dependency detected, repairing mission')
-                self.repair(error_msg[2], mission)
+            # if self.calculate_dependency(mission) > 50:
+            self.get_logger().info('High dependency detected, replanning mission')
+            self.replan(mission)
+            # else:
+            #     self.get_logger().info('Low dependency detected, repairing mission')
+            #     self.repair(error_msg[2], mission)
         else:
             self.end_simulation()
 
@@ -299,8 +300,16 @@ class AgnosticCoordinator(Node):
         future = self.send_monitor_state_request(','.join(('monitor',)))
         rclpy.spin_until_future_complete(self, future)
         response = future.result()
-        self.state = json.loads(response.observation)
-        self.update_planner_state(response.observation)
+        new_state = json.loads(response.observation)
+        if hasattr(self, 'state'):
+            new_state['doors'] = self.state['doors']
+            new_state['cleaned'] = self.state['cleaned']
+            new_state['disinfected'] = self.state['disinfected']
+            new_state['loc'] = self.state['loc']
+        self.state = new_state
+        self.update_planner_state(json.dumps(self.state))
+        # self.state = json.loads(response.observation)
+        # self.update_planner_state(response.observation)
         # self.verify_initial_trigger()
 
     def verify_initial_trigger(self):
