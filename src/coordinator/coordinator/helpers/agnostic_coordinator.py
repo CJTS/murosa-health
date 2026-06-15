@@ -357,7 +357,7 @@ class AgnosticCoordinator(Node):
                 parts = action.split(',')
                 current_plan_bdi.append(parts[0] + '(' + ','.join(parts[1:]) + ')')
             team_names = [a.robot for a in team]
-            bdies = generate_bdi(team_names, current_plan, mission.mission_context, mission.variables)
+            bdies = generate_bdi(team_names, current_plan_bdi, mission.mission_context, mission.variables)
             for agent, rules in bdies.items():
                 plans = []
                 for rule in rules:
@@ -368,7 +368,7 @@ class AgnosticCoordinator(Node):
 
             for agent in team:
                 msg = String()
-                msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent.robot, 'Start|' + ','.join(start)).encode()
+                msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent.robot, 'Start|' + ','.join(mission.mission_context)).encode()
                 self.agent_publisher.publish(msg)
 
             for robot in mission.team:

@@ -18,7 +18,7 @@ def get_ordered_instanciated_variables(actions):
             # Remove numbers and capitalize
             if param not in instanciated_variables:
                 instanciated_variables.append(param)
-    
+
     return instanciated_variables
 
 def map_intaciated_to_variables(variables, ordered_instanciated_variables):
@@ -39,7 +39,7 @@ def is_from_another(milestone_sources, i, agent1):
     for src in milestone_sources['milestone' + str(i)]:
         if(src != agent1):
             return f"[source({src})]"
-   
+
     return ''
 
 def generate_bdi(agents, actions, context, variables):
@@ -60,16 +60,16 @@ def generate_bdi(agents, actions, context, variables):
 
         agents1 = set(params1) & set(agents)
         agents2 = set(params2) & set(agents)
-        
+
         other_agents = list(set(agents2) - set(agents1))
-        
+
         # Map parameters to variables
         mapped_params1 = map_params_to_variables(params1, variables_map)
         mapped_params2 = map_params_to_variables(params2, variables_map)
-        
+
         action1_with_params = f"{action1}({', '.join(mapped_params1)})"
         action2_with_params = f"{action2}({', '.join(mapped_params2)})"
-        
+
         # Verifica quantas vezes o agente aparece nas ações
         count = defaultdict(int)
         for ag in list(agents1) + list(agents2):
@@ -120,7 +120,7 @@ def generate_bdi(agents, actions, context, variables):
                         bdies[agent1].append(f"+success_{action1_with_params}: {context} <- +milestone{str(i+1)}; -initial_trigger_{action1_with_params}; !{action2_with_params}.")
 
         i += 1
-        
+
     # Por ultimo
     current_action = actions[i]
     action1, params1 = extract_agent_name(current_action)
@@ -194,32 +194,11 @@ def generate_bdi(agents, actions, context, variables):
     return bdies
 
 # Example usage
-context = "start(SmallDeliveryRobot, SmallStorage, SmallResource, LargeDeliveryRobot, LargeStorage, LargeResource, NurseRoom)"
-variables = ["SmallDeliveryRobot", "SmallStorage", "SmallResource", "LargeDeliveryRobot", "LargeStorage", "LargeResource", "NurseRoom"]
-agents = ["small_delivery_robot1", "large_delivery_robot1"]
+context = "start(Nurse, NurseRoom, SpotRobot, UvdRobot)"
+variables = ['Nurse', 'NurseRoom', 'SpotRobot', 'UvdRobot']
+agents = ['spot2', 'uvd2', 'nurse1']
 
-actions = [
-    # "a_navto(spotrobot1,room1)",
-    # "a_open_door(spotrobot1,room1)",
-    # "a_approach_nurse(spotrobot1,nurse_disinfected1)",
-    # "a_authenticate_nurse(spotrobot1,nurse_disinfected1)",
-    # "a_clean_room(nurse_disinfected1,room1)",
-    # "a_authorize_patrol(spotrobot1,nurse_disinfected1)",
-    # "a_patrol_room(spotrobot1,room1)",
-    # "a_authorize_disinfect(uvdrobot2,spotrobot1)",
-    # "a_navto(uvdrobot2,room1)",
-    # "a_disinfect_room(uvdrobot2,room1)"
-    "a_navto(small_delivery_robot1,stor1)",
-    "a_request_resource(small_delivery_robot1,stor1,resource1)",
-    "a_pick_resource(small_delivery_robot1,stor1,resource1)",
-    "a_navto(small_delivery_robot1,room6)",
-    "a_deliver_resource(small_delivery_robot1,room6)",
-    "a_navto(large_delivery_robot1,stor3)",
-    "a_request_resource(large_delivery_robot1,stor3,resource3)",
-    "a_pick_resource(large_delivery_robot1,stor3,resource3)",
-    "a_navto(large_delivery_robot1,room6)",
-    "a_deliver_resource(large_delivery_robot1,room6)"
-]
+actions = ['a_navto,spot2,room6', 'a_approach_nurse,spot2,nurse1', 'a_authenticate_nurse,spot2,nurse1', 'a_clean_room,nurse1,room6', 'a_authorize_patrol,spot2,nurse1', 'a_patrol_room,spot2,room6', 'a_authorize_disinfect,uvd2,spot2', 'a_navto,uvd2,room6', 'a_disinfect_room,uvd2,room6']
 
 bdis = generate_bdi(agents, actions, context, variables)
 for agente, regras in bdis.items():
