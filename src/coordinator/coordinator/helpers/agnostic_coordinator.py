@@ -251,7 +251,7 @@ class AgnosticCoordinator(Node):
         self.treat_error(error_desc, mission)
         if self.should_replan:
             # if self.calculate_dependency(mission) > 50:
-            self.get_logger().info(f'High dependency detected, replanning mission {self.calculate_dependency(mission)}')
+            # self.get_logger().info(f'High dependency detected, replanning mission {self.calculate_dependency(mission)}')
             self.replan(mission)
             # else:
             #     self.get_logger().info('Low dependency detected, repairing mission')
@@ -352,7 +352,12 @@ class AgnosticCoordinator(Node):
         mission.plan = current_plan
 
         if self.should_use_bdi:
-            bdies = generate_bdi(team, current_plan, self.mission_context, self.variables)
+            current_plan_bdi = []
+            for action in current_plan:
+                parts = action.split(',')
+                current_plan_bdi.append(parts[0] + '(' + ','.join(parts[1:]) + ')')
+            team_names = [a.robot for a in team]
+            bdies = generate_bdi(team_names, current_plan, mission.mission_context, mission.variables)
             for agent, rules in bdies.items():
                 plans = []
                 for rule in rules:
@@ -363,7 +368,7 @@ class AgnosticCoordinator(Node):
 
             for agent in team:
                 msg = String()
-                msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent, 'Start|' + ','.join(start)).encode()
+                msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, 'Coordinator', agent.robot, 'Start|' + ','.join(start)).encode()
                 self.agent_publisher.publish(msg)
 
             for robot in mission.team:

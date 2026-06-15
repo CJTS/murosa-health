@@ -21,7 +21,7 @@ class DisinfectRoomMission(Mission):
         self.priority = 0
         self.roles = [RobotRoles.SPOT, RobotRoles.UVD, RobotRoles.NURSE]
         self.mission_context = "start(Nurse, NurseRoom, SpotRobot, UvdRobot)"
-        self.variables = ["SpotRobot", "NurseRoom", "Nurse", "UvdRobot"]
+        self.variables = ["Nurse", "NurseRoom","SpotRobot" , "UvdRobot"]
         self.room = None
         self.type = 'DisinfectRoomMission'
 
@@ -31,7 +31,7 @@ class DisinfectICUMission(Mission):
         self.priority = 2
         self.roles = [RobotRoles.SPOT, RobotRoles.UVD, RobotRoles.NURSE]
         self.mission_context = "start(Nurse, NurseRoom, SpotRobot, UvdRobot)"
-        self.variables = ["SpotRobot", "NurseRoom", "Nurse", "UvdRobot"]
+        self.variables = ["Nurse", "NurseRoom","SpotRobot" , "UvdRobot"]
         self.room = None
         self.type = 'DisinfectICUMission'
 
