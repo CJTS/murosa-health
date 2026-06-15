@@ -124,8 +124,6 @@ class AgnosticCoordinator(Node):
                 response.response = 'Treating error'
             elif "InitialTrigger" in decoded_msg.content:
                 self.initial_trigger(decoded_msg)
-            elif "Ready" in decoded_msg.content:
-                response.response = self.set_agent_ready(decoded_msg)
 
         return response
 
@@ -156,12 +154,15 @@ class AgnosticCoordinator(Node):
         team = []
         self.get_logger().info(str(mission))
         self.get_logger().info(str(mission.roles))
+        self.get_logger().info(str(self.robots))
         for role in mission.roles:
             free_robot = next((robot for robot in self.robots if robot.status == RobotStatus.READY and robot.role == role), None)
+            self.get_logger().info(str(free_robot))
             if free_robot is not None:
                 free_robot.status = RobotStatus.OCCUPIED
                 team.append(free_robot)
 
+        self.get_logger().info(str(team))
         if(len(team) is not len(mission.roles)):
             return None
 
@@ -171,6 +172,7 @@ class AgnosticCoordinator(Node):
         raise NotImplementedError("This method should be implemented by the subclass")
 
     def set_agent_ready(self, decoded_msg):
+        self.get_logger().info(f"Setting {decoded_msg.sender} as ready")
         robot = next((robot for robot in self.robots if robot.robot == decoded_msg.sender), None)
         robot.status = RobotStatus.READY
         return 'success'
@@ -191,6 +193,8 @@ class AgnosticCoordinator(Node):
             self.free_agent(robot_name)
             if self.verify_mission_complete(mission):
                 self.finish_mission(mission)
+        elif "Ready" in decoded_msg.content:
+            self.set_agent_ready(decoded_msg)
 
     def analyze_missions(self):
         for mission in self.missions:

@@ -111,8 +111,7 @@ class Agent(Node):
                 self.jason_publisher.publish(msg)
             else:
                 # If not using BDI, the notification is required
-                future = self.send_ready_request()
-                rclpy.spin_until_future_complete(self, future)
+                self.send_ready_request()
 
     def send_registration_request(self):
         # Create FIPA message
@@ -123,10 +122,9 @@ class Agent(Node):
 
     def send_ready_request(self):
         # Sends message that it is ready to start performing missions
-        message = FIPAMessage(FIPAPerformative.INFORM.value, self.get_name(), 'Coordinator', 'Ready').encode()
-        ros_msg = Message.Request()
-        ros_msg.content = message
-        return self.cli.call_async(ros_msg)
+        msg = String()
+        msg.data = FIPAMessage(FIPAPerformative.INFORM.value, self.get_name(), 'Coordinator', 'Ready').encode()
+        return self.publisher_coordinator.publish(msg)
 
     def listener_callback(self, msg):
         # Receive messagem from jason
