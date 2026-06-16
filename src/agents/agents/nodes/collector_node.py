@@ -70,7 +70,7 @@ class Collector(Agent):
 
     def a_approach_nurse(self, robot, nurse):
         self.get_logger().info("a_approach_nurse")
-        if all('a_approach_nurse' not in action for action in self.wating_response):
+        if not self.is_waiting_for('a_approach_nurse', nurse):
             self.get_logger().info("Here first, waiting for nurse")
             self.ask_for_agent(nurse, 'a_approach_nurse')
         else:
@@ -79,7 +79,7 @@ class Collector(Agent):
 
     def a_authenticate_nurse(self, robot, nurse):
         self.get_logger().info("a_authenticate_nurse")
-        if all('a_authenticate_nurse' not in action for action in self.wating_response):
+        if not self.is_waiting_for('a_authenticate_nurse', nurse):
             self.get_logger().info("Here first, waiting for nurse")
             self.ask_for_agent(nurse, 'a_authenticate_nurse')
         else:
@@ -108,7 +108,7 @@ class Collector(Agent):
 
     def a_deposit(self, nurse, robot):
         self.get_logger().info("a_deposit")
-        if all('a_deposit' not in action for action in self.wating_response):
+        if not self.is_waiting_for('a_deposit', nurse):
             self.get_logger().info("Here first, waiting for nurse")
             self.ask_for_agent(nurse, 'a_deposit')
         else:
@@ -117,7 +117,7 @@ class Collector(Agent):
 
     def a_pick_up_sample(self, arm, robot):
         self.get_logger().info("a_pick_up_sample")
-        if all('a_pick_up_sample' not in action for action in self.wating_response):
+        if not self.is_waiting_for('a_pick_up_sample', arm):
             self.get_logger().info("Here first, waiting for arm")
             self.ask_for_agent(arm, 'a_pick_up_sample')
         else:

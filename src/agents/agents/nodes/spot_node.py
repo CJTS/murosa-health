@@ -137,7 +137,7 @@ class Spot(Agent):
         )
         return self.environment_client.call_async(self.action_request)
 
-    def a_approach_nurse(self, nurse, spotrobot):
+    def a_approach_nurse(self, spotrobot, nurse):
         if self._from_local_replan:
             self._send_belief_to_jason(spotrobot, 'milestone1')
             self._send_belief_to_jason(
@@ -145,7 +145,7 @@ class Spot(Agent):
                 f'trigger_a_approach_nurse({spotrobot},{nurse})'
             )
             self._from_local_replan = False
-        if all('a_approach_nurse' not in action for action in self.wating_response):
+        if not self.is_waiting_for('a_approach_nurse', nurse):
             self.get_logger().info("Here first, waiting for nurse")
             self.ask_for_agent(nurse, 'a_approach_nurse')
         else:
@@ -153,15 +153,15 @@ class Spot(Agent):
             self.acting_for_agent(nurse, 'a_approach_nurse')
 
     def a_authenticate_nurse(self, spotrobot, nurse):
-        if all('a_authenticate_nurse' not in action for action in self.wating_response):
+        if not self.is_waiting_for('a_authenticate_nurse', nurse):
             self.get_logger().info("Here first, waiting for nurse")
             self.ask_for_agent(nurse, 'a_authenticate_nurse')
         else:
             self.get_logger().info("Nurse is waiting, send action message")
             self.acting_for_agent(nurse, 'a_authenticate_nurse')
-    
-    def a_authorize_patrol(self, spotrobot,nurse):
-        if all('a_authorize_patrol' not in action for action in self.wating_response):
+
+    def a_authorize_patrol(self, spotrobot, nurse):
+        if not self.is_waiting_for('a_authorize_patrol', nurse):
             self.get_logger().info("Here first, waiting for nurse")
             self.ask_for_agent(nurse, 'a_authorize_patrol')
         else:
@@ -172,7 +172,7 @@ class Spot(Agent):
         self.action_request = Action.Request()
         self.action_request.action = ','.join(('a_patrol_room', spotrobot, room))
         return self.environment_client.call_async(self.action_request)
-    
+
     def a_authorize_disinfect(self, uvdrobot_,spotrobot_):
         if self._from_local_replan:
             self._send_belief_to_jason(uvdrobot_, 'milestone1')
@@ -180,8 +180,8 @@ class Spot(Agent):
                 uvdrobot_,
                 f'trigger_a_authorize_disinfect({uvdrobot_},{spotrobot_})'
             )
-            self._from_local_replan = False 
-        if all('a_authorize_disinfect' not in action for action in self.wating_response):
+            self._from_local_replan = False
+        if not self.is_waiting_for('a_authorize_disinfect', uvdrobot_):
             self.get_logger().info("Here first, lwaiting for spotrobot")
             self.ask_for_agent(uvdrobot_, 'a_authorize_disinfect')
         else:

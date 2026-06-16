@@ -11,8 +11,8 @@ from agents.helpers.FIPAPerformatives import FIPAPerformative
 class Nurse(Agent):
     def __init__(self, className):
         super().__init__(className)
-        self.counter = 0
         self.generate_sample = False
+        self.start_missiobn = True
 
     def send_collect_sample(self):
         message = FIPAMessage(FIPAPerformative.INFORM.value, self.get_name(), 'Coordinator', 'InitialTrigger|CollectSampleMission,' + self.current_room).encode()
@@ -30,6 +30,15 @@ class Nurse(Agent):
         small_resources_list = ['resource1', 'resource2']
         large_resources_list = ['resource3', 'resource4']
         message = FIPAMessage(FIPAPerformative.INFORM.value, self.get_name(), 'Coordinator', 'InitialTrigger|DeliverSampleMission,' + room + ',' + random.choice(small_resources_list) + ',' + random.choice(large_resources_list)).encode()
+        ros_msg = Message.Request()
+        ros_msg.content = message
+        self.wating_for_material = True
+        return self.cli.call_async(ros_msg)
+
+    def receive_full_mission(self, room):
+        small_resources_list = ['resource1', 'resource2']
+        large_resources_list = ['resource3', 'resource4']
+        message = FIPAMessage(FIPAPerformative.INFORM.value, self.get_name(), 'Coordinator', 'InitialTrigger|FullMission,' + room + ',' + random.choice(small_resources_list) + ',' + random.choice(large_resources_list)).encode()
         ros_msg = Message.Request()
         ros_msg.content = message
         self.wating_for_material = True
@@ -82,6 +91,7 @@ class Nurse(Agent):
         if future != None:
             self.get_logger().info("Waiting for response")
             rclpy.spin_until_future_complete(self, future)
+            self.get_logger().info("Received response")
             response = future.result()
             self.get_logger().info(response.observation)
 
@@ -106,7 +116,7 @@ class Nurse(Agent):
         return self.environment_client.call_async(self.action_request)
 
     def a_authorize_patrol(self, spotrobot, nurse):
-        if all('a_authorize_patrol' not in action for action in self.wating_response):
+        if not self.is_waiting_for('a_authorize_patrol', spotrobot):
             self.get_logger().info("Here first, waiting for robot")
             self.ask_for_agent(spotrobot, 'a_authorize_patrol')
         else:
@@ -114,7 +124,7 @@ class Nurse(Agent):
             self.acting_for_agent(spotrobot, 'a_authorize_patrol')
 
     def a_approach_nurse(self, spotrobot, nurse):
-        if all('a_approach_nurse' not in action for action in self.wating_response):
+        if not self.is_waiting_for('a_approach_nurse', spotrobot):
             self.get_logger().info("Here first, waiting for robot")
             self.ask_for_agent(spotrobot, 'a_approach_nurse')
         else:
@@ -151,7 +161,7 @@ class Nurse(Agent):
 
     def a_authenticate_nurse(self, robot, nurse):
         self.get_logger().info("a_authenticate_nurse")
-        if all('a_authenticate_nurse' not in action for action in self.wating_response):
+        if not self.is_waiting_for('a_authenticate_nurse', robot):
             self.get_logger().info("Here first, waiting for robot")
             self.ask_for_agent(robot, 'a_authenticate_nurse')
         else:
@@ -167,7 +177,7 @@ class Nurse(Agent):
 
     def a_deposit(self, nurse, robot):
         self.get_logger().info("a_deposit")
-        if all('a_deposit' not in action for action in self.wating_response):
+        if not self.is_waiting_for('a_deposit', robot):
             self.get_logger().info("Here first, waiting for robot")
             self.ask_for_agent(robot, 'a_deposit')
         else:
@@ -178,38 +188,35 @@ class Nurse(Agent):
         while rclpy.ok():
             rclpy.spin_once(self, timeout_sec=0.001)
             if self.current_room is None:
+                self.get_logger().info('Finding room...')
                 future = self.what_room()
+                self.get_logger().info('Waiting for what_room response...')
                 rclpy.spin_until_future_complete(self, future)
+                self.get_logger().info('Received what_room response.')
                 response = future.result()
                 if response.observation != 'none':
                     self.current_room = response.observation
             else:
                 if not self.wating:
                     self.act()
-                self.counter = self.counter + 1
                 if self.generate_sample:
                     self.get_logger().info("Generating sample in " + self.current_room)
                     future = self.a_generate_sample()
+                    self.get_logger().info('Waiting for generate_sample response...')
                     rclpy.spin_until_future_complete(self, future)
+                    self.get_logger().info('Received generate_sample response.')
                     self.send_has_infected_room(room)
                     self.generate_sample = False
-                if self.counter == 1000:
+                if self.start_missiobn:
                     rooms = ['room1', 'room2', 'room3', 'room4', 'room5', 'room6']
                     room = random.choice(rooms)
-                    if self.should_use_bdi:
-                        self.actions.append(('a_navto', self.current_room, room))
-                    self.a_navto(self.current_room, room)
-                    self.get_logger().info(f"Checking for infected room {self.current_room} after 10000 cycles")
-                    future = self.a_infected_room()
-                    rclpy.spin_until_future_complete(self, future)
-                    self.send_has_infected_room(room)
-                    # self.send_need_material_room(room)
-                    # self.counter = 0
-
+                    self.get_logger().info(f"Received message to collect sample in {self.current_room}")
+                    self.receive_full_mission(room)
+                    self.start_missiobn = False
 
 def main():
     rclpy.init()
-    nurse = Nurse('Nurse_Disinfected')
+    nurse = Nurse('Nurse')
     try:
         nurse.run()
         # rclpy.spin(nurse)

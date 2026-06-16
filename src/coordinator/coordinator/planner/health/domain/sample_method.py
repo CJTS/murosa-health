@@ -17,20 +17,8 @@ def pickup_and_deliver_sample(state, nurse_, room_, robot_, arm_):
         ]
 methods.declare_task_methods('m_pickup_and_deliver_sample', [pickup_and_deliver_sample])
 
-
-def pickup_and_deliver_sample(state, nurse_, room_, robot_, arm_):
-    if state.sample[room_] == True:
-        return [
-            ('m_collect_sample', nurse_, room_),
-            ('m_approach_nurse', robot_, nurse_),
-            ('m_pick_sample', robot_, nurse_),
-            ('m_approach_arm', robot_, arm_, nurse_),
-            ('m_unload_sample', robot_, arm_)
-        ]
-methods.declare_task_methods('m_pickup_and_deliver_sample', [pickup_and_deliver_sample])
-
 def collect_sample(state, nurse_, room_):
-    return [('a_navto', nurse_, room_), ('a_collect_sample', nurse_, room_)]
+    return [('a_collect_sample', nurse_, room_)]
 methods.declare_task_methods('m_collect_sample', [collect_sample])
 
 def approach_nurse(state, robot_, nurse_):

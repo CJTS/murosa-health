@@ -22,7 +22,7 @@ class MissionStatus(Enum):
 
 class RobotStatus(Enum):
     CREATED = 1
-    READY = 2
+    RESERVED = 2
     OCCUPIED = 3
 
 class MissionRobot():
@@ -33,6 +33,7 @@ class MissionRobot():
         self.plan_version = 1
         self.current_bdi = {}
         self.status = RobotStatus.CREATED
+        self.ready = False
 
     def __str__(self):
         return self.robot
@@ -49,6 +50,7 @@ class Mission():
         self.state = {}
         self.error = None
         self.requester = None
+        self.params = None
 
 class AgnosticCoordinator(Node):
     def __init__(self, name):
@@ -154,17 +156,15 @@ class AgnosticCoordinator(Node):
 
     def get_team(self, mission: Mission) -> List[MissionRobot]:
         team = []
-        self.get_logger().info(str(mission))
-        self.get_logger().info(str(mission.roles))
         for role in mission.roles:
-            free_robot = next((robot for robot in self.robots if robot.status == RobotStatus.READY and robot.role == role), None)
-            self.get_logger().info(str(free_robot))
+            free_robot = next((robot for robot in self.robots if robot.status == RobotStatus.CREATED and robot.role == role), None)
             if free_robot is not None:
-                free_robot.status = RobotStatus.OCCUPIED
+                free_robot.status = RobotStatus.RESERVED
                 team.append(free_robot)
 
-        self.get_logger().info(str(team))
         if(len(team) is not len(mission.roles)):
+            for robot in team:
+                robot.status = RobotStatus.CREATED
             return None
 
         return team
@@ -175,7 +175,7 @@ class AgnosticCoordinator(Node):
     def set_agent_ready(self, decoded_msg):
         self.get_logger().info(f"Setting {decoded_msg.sender} as ready")
         robot = next((robot for robot in self.robots if robot.robot == decoded_msg.sender), None)
-        robot.status = RobotStatus.READY
+        robot.ready = True
         return 'success'
 
     def listener_callback(self, msg):
@@ -199,19 +199,19 @@ class AgnosticCoordinator(Node):
 
     def analyze_missions(self):
         for mission in self.missions:
-            if mission.status == MissionStatus.CREATED:
+            if mission.status == MissionStatus.CREATED and all(robot.ready == True for robot in self.robots):
                 self.start_mission(mission)
                 mission.status = MissionStatus.RUNNING
             elif mission.status == MissionStatus.ERROR:
                 self.fix_missions(mission)
                 mission.status = MissionStatus.RUNNING
-            elif mission.status == MissionStatus.WAITING_TEAM:
+            elif mission.status == MissionStatus.WAITING_TEAM and all(robot.ready == True for robot in self.robots):
                 # TODO check if a mission finished recently
                 team = self.get_team(mission)
                 if team == None:
                     continue
                 self.get_logger().info("Team found to start mission")
-                start_context = self.get_start_context(team, mission.trigger)
+                start_context = self.get_start_context(mission.type, team, mission.params)
                 # TODO NOT AGNOSTIC
                 mission.team = team
                 mission.context = start_context

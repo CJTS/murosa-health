@@ -72,7 +72,7 @@ class Nurse(Agent):
 
     def a_authenticate_nurse(self, robot, nurse):
         self.get_logger().info("a_authenticate_nurse")
-        if all('a_authenticate_nurse' not in action for action in self.wating_response):
+        if not self.is_waiting_for('a_authenticate_nurse', nurse):
             self.get_logger().info("Here first, waiting for robot")
             self.ask_for_agent(robot, 'a_authenticate_nurse')
         else:
@@ -88,7 +88,7 @@ class Nurse(Agent):
 
     def a_deposit(self, nurse, robot):
         self.get_logger().info("a_deposit")
-        if all('a_deposit' not in action for action in self.wating_response):
+        if not self.is_waiting_for('a_deposit', robot):
             self.get_logger().info("Here first, waiting for robot")
             self.ask_for_agent(robot, 'a_deposit')
         else:

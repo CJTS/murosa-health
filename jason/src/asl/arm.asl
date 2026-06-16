@@ -1,8 +1,41 @@
-+start(Nurse, NurseRoom, Robot, ArmRoom, Arm): true <- +start(Nurse, NurseRoom, Robot, ArmRoom, Arm).
++stop: start(Nurse, NurseRoom, SmallDeliveryRobot, SmallStorage, SmallResource, LargeDeliveryRobot, LargeStorage, LargeResource, Collector, ArmRoom, Arm, SpotRobot, UvdRobot) <-
+    -milestone_arm1_1;
+    -success_a_pick_up_sample(Arm, Collector);
+    -start(Nurse, NurseRoom, SmallDeliveryRobot, SmallStorage, SmallResource, LargeDeliveryRobot, LargeStorage, LargeResource, Collector, ArmRoom, Arm, SpotRobot, UvdRobot);
+    -stop.
 
-+trigger_a_approach_arm(Robot, Arm): start(Nurse, NurseRoom, Robot, ArmRoom, Arm) <- !a_approach_arm(Robot, Arm).
-+!a_approach_arm(Robot, Arm): milestone6 <- a_approach_arm(Robot, Arm).
-+success_a_approach_arm(Robot, Arm): milestone6 <- -milestone6.
-+trigger_a_pick_up_sample(Arm, Robot): start(Nurse, NurseRoom, Robot, ArmRoom, Arm) <- !a_pick_up_sample(Arm, Robot).
-+!a_pick_up_sample(Arm, Robot): milestone8 <- a_pick_up_sample(Arm, Robot).
-+success_a_pick_up_sample(Arm, Robot): milestone8 <- -milestone8; end.
++start(Nurse, NurseRoom, SmallDeliveryRobot, SmallStorage, SmallResource, LargeDeliveryRobot, LargeStorage, LargeResource, Collector, ArmRoom, Arm, SpotRobot, UvdRobot):
+	start(Nurse, NurseRoom, SmallDeliveryRobot, SmallStorage, SmallResource, LargeDeliveryRobot, LargeStorage, LargeResource, Collector, ArmRoom, Arm, SpotRobot, UvdRobot) <-
+	!a_approach_arm(Collector, Arm).
+
++!a_approach_arm(Collector, Arm):
+	start(Nurse, NurseRoom, SmallDeliveryRobot, SmallStorage, SmallResource, LargeDeliveryRobot, LargeStorage, LargeResource, Collector, ArmRoom, Arm, SpotRobot, UvdRobot) & not low_battery <-
+	a_approach_arm(Collector, Arm).
+
++success_a_approach_arm(Collector, Arm):
+	start(Nurse, NurseRoom, SmallDeliveryRobot, SmallStorage, SmallResource, LargeDeliveryRobot, LargeStorage, LargeResource, Collector, ArmRoom, Arm, SpotRobot, UvdRobot) <-
+	+milestone_arm1_1;
+	!a_pick_up_sample(Arm, Collector).
+
++!a_pick_up_sample(Arm, Collector):
+	start(Nurse, NurseRoom, SmallDeliveryRobot, SmallStorage, SmallResource, LargeDeliveryRobot, LargeStorage, LargeResource, Collector, ArmRoom, Arm, SpotRobot, UvdRobot) & not low_battery & milestone_arm1_1<-
+	a_pick_up_sample(Arm, Collector).
+
++success_a_pick_up_sample(Arm, Collector):
+	start(Nurse, NurseRoom, SmallDeliveryRobot, SmallStorage, SmallResource, LargeDeliveryRobot, LargeStorage, LargeResource, Collector, ArmRoom, Arm, SpotRobot, UvdRobot) & milestone_arm1_1 <-
+	-milestone_arm1_1;
+	-start(Nurse, NurseRoom, SmallDeliveryRobot, SmallStorage, SmallResource, LargeDeliveryRobot, LargeStorage, LargeResource, Collector, ArmRoom, Arm, SpotRobot, UvdRobot);
+	-a_pick_up_sample(Arm, Collector);
+	end.
+
++low_battery_failure(Task): true <-
+    .print("Charging");
+    +after_charging(Task);
+    +low_battery;
+    a_charge.
+
++success_a_charge: low_battery & after_charging(Task) <-
+    .print("Finished charging");
+    -after_charging(Task);
+    -low_battery;
+    !Task.

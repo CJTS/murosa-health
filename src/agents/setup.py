@@ -32,6 +32,7 @@ setup(
             'uvd = agents.nodes.uvd_node:main',
             'small = agents.nodes.small_delivery_robot_node:main',
             'large = agents.nodes.large_delivery_robot_node:main',
+            'service = agents.helpers.service_member_function:main',
         ],
     },
 )

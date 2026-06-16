@@ -87,7 +87,7 @@ class Navigator(Node):
 
     def receive_message(self, request, response):
         actionTuple = tuple(request.action.split(','))
-        self.get_logger().info(str(request.action))
+        # self.get_logger().info(str(request.action))
         if actionTuple[0] == 'path':
             response.observation = ','.join(self.astar(actionTuple[1], actionTuple[2]))
             # self.get_logger().info(str(response.observation))
@@ -132,7 +132,7 @@ class Navigator(Node):
                     heapq.heappush(open_set, (f_score[neighbor], neighbor))
         return []
 
-    def compute_velocity(self, current_node, next_node, speed=0.2):
+    def compute_velocity(self, current_node, next_node, speed=2):
         x1, y1 = self.nodes[current_node]
         x2, y2 = self.nodes[next_node]
         dx, dy = x2 - x1, y2 - y1
@@ -141,7 +141,7 @@ class Navigator(Node):
             return (0.0, 0.0)
         return (dx/dist * speed, dy/dist * speed)
 
-    def has_reached_node(self, current_pos, target_node, tolerance=1.0):
+    def has_reached_node(self, current_pos, target_node, tolerance=3.0):
         """
         current_pos: (x, y) robot’s current position
         target_node: string key of the node we are heading to

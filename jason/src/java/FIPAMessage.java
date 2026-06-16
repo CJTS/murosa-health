@@ -1,3 +1,5 @@
+package src.java;
+
 import com.google.gson.Gson;
 
 class FIPAMessage {

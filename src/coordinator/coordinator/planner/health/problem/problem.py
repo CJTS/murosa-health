@@ -18,7 +18,7 @@ init_state.loc = {
     'spotrobot2': 'ds',
     'collector1': 'ds',
     'collector2': 'ds',
-    'arm1': 'ds'
+    'arm1': 'lab'
 }
 init_state.doors = {
     'room1': True,
@@ -28,10 +28,11 @@ init_state.doors = {
     'room5': True,
     'room6': True,
     'lab': True,
-    'icu': True
+    'icu': True,
+    'ds': True
 }
 init_state.sample = {
-    'room1': False,
+    'room1': True,
     'room2': False,
     'room3': False,
     'room4': False,
@@ -59,7 +60,7 @@ init_state.cleaned = {
     'icu': True
 }
 init_state.disinfected = {
-    'room1': True,
+    'room1': False,
     'room2': True,
     'room3': True,
     'room4': True,
@@ -68,10 +69,10 @@ init_state.disinfected = {
     'icu': True
 }
 init_state.low_battery = {
-    'uvdrobot1': False,
-    'spotrobot1': False,
-    'uvdrobot2': False,
-    'spotrobot2': False,
+    'uvd1': False,
+    'spot1': False,
+    'uvd2': False,
+    'spot2': False,
     'collector1': False,
     'collector2': False,
     'arm1': False

@@ -15,6 +15,38 @@ class RobotRoles(Enum):
     SMALL_DELIVERY_ROBOT = 6
     LARGE_DELIVERY_ROBOT = 7
 
+class FullMission(Mission):
+    def __init__(self, team: List[MissionRobot], context):
+        super().__init__(team, context)
+        self.priority = 0
+        self.roles = [
+            RobotRoles.SMALL_DELIVERY_ROBOT,
+            RobotRoles.LARGE_DELIVERY_ROBOT,
+            RobotRoles.COLLECTOR,
+            RobotRoles.ARM,
+            RobotRoles.NURSE,
+            RobotRoles.SPOT,
+            RobotRoles.UVD,
+        ]
+        self.mission_context = "start(Nurse, NurseRoom, SmallDeliveryRobot, SmallStorage, SmallResource, LargeDeliveryRobot, LargeStorage, LargeResource, Collector, ArmRoom, Arm, SpotRobot, UvdRobot)"
+        self.variables = [
+            "SmallDeliveryRobot",
+            "SmallStorage",
+            "SmallResource",
+            "NurseRoom",
+            "LargeDeliveryRobot",
+            "LargeStorage",
+            "LargeResource",
+            "Nurse",
+            "Collector",
+            "ArmRoom",
+            "Arm",
+            "SpotRobot",
+            "UvdRobot"
+        ]
+        self.room = None
+        self.type = 'FullMission'
+
 class DisinfectRoomMission(Mission):
     def __init__(self, team: List[MissionRobot], context):
         super().__init__(team, context)
@@ -50,8 +82,8 @@ class DeliverSampleMission(Mission):
         super().__init__(team, context)
         self.priority = 1
         self.roles = [RobotRoles.SMALL_DELIVERY_ROBOT, RobotRoles.LARGE_DELIVERY_ROBOT]
-        self.mission_context = "start(Collector, Resource, Storage, Room)"
-        self.variables = ["Collector", "Resource", "Storage", "Room"]
+        self.mission_context = "start(SmallDeliveryRobot, SmallStorage, SmallResource, LargeDeliveryRobot, LargeStorage, LargeResource, NurseRoom)"
+        self.variables = ["SmallDeliveryRobot", "SmallStorage", "SmallResource", "NurseRoom", "LargeDeliveryRobot", "LargeStorage", "LargeResource"]
         self.room = None
         self.type = 'DeliverSampleMission'
 
@@ -194,15 +226,19 @@ class Coordinator(AgnosticCoordinator):
 
         mission = self.create_mission(mission_type, room)
         team = self.get_team(mission)
+        params = [room]
+
+        if (mission_type == 'DeliverSampleMission' or mission_type == 'FullMission'):
+            params.append(message.split(',')[2]) # small resource
+            params.append(message.split(',')[3]) # large resource
+
+        if (mission_type == 'FullMission'):
+            params.append('lab') # nurse location
+
+        mission.params = params
 
         if(team is not None):
             mission.team = team
-            params = [room]
-
-            if (mission_type == 'DeliverSampleMission'):
-                params.append(message.split(',')[2]) # small resource
-                params.append(message.split(',')[3]) # large resource
-
             mission.context = self.get_start_context(mission_type, team, params)
             self.get_logger().info(f"Mission context: {str(mission.context)}")
         else:
@@ -233,6 +269,8 @@ class Coordinator(AgnosticCoordinator):
             mission = CollectSampleMission([], {})
         elif (mission_type == 'DeliverSampleMission'):
             mission = DeliverSampleMission([], {})
+        elif (mission_type == 'FullMission'):
+            mission = FullMission([], {})
 
         mission.trigger = trigger
         return mission
@@ -262,6 +300,22 @@ class Coordinator(AgnosticCoordinator):
                 params[2],
                 params[0],
             )
+        elif (mission_type == 'FullMission'):
+            context = (
+                team[4].robot,                          # Nurse
+                params[0],                              # Nurse Location
+                team[0].robot,                          # small delivery robot
+                self.state['resource_at'][params[1]],   # small resource location
+                params[1],                              # small resource
+                team[1].robot,                          # large delivery robot
+                self.state['resource_at'][params[2]],   # large resource location
+                params[2],                              # large resource
+                team[2].robot,                          # collector
+                params[3],                              # arm room
+                team[3].robot,                          # arm
+                team[5].robot,                          # spot
+                team[6].robot                           # uvd
+            )
         self.get_logger().info(f"context: {str(context)}")
         return context
 
@@ -282,7 +336,7 @@ class Coordinator(AgnosticCoordinator):
         for mission in self.missions:
             for mission_robot in mission.team:
                 if mission_robot.robot == agent:
-                    mission_robot.status = RobotStatus.READY
+                    mission_robot.status = RobotStatus.CREATED
                     return
 
     def treat_error(self, error_desc, mission: Mission):

@@ -237,13 +237,13 @@ class Environment(Node):
                 self.get_logger().info(f"Resource {actionTuple[2]} is not at {actionTuple[3]}")
                 response.observation = 'resource not available'
         elif actionTuple[0] == 'move':
-            self.get_logger().info(f"Moving {actionTuple[1]} with velocity ({actionTuple[2]}, {actionTuple[3]})")
+            # self.get_logger().info(f"Moving {actionTuple[1]} with velocity ({actionTuple[2]}, {actionTuple[3]})")
             self.state['pos'][actionTuple[1]] = (
                 self.state['pos'][actionTuple[1]][0] + float(actionTuple[2]),
                 self.state['pos'][actionTuple[1]][1] + float(actionTuple[3])
             )
             response.observation = ','.join([str(self.state['pos'][actionTuple[1]][0]), str(self.state['pos'][actionTuple[1]][1])])
-            self.get_logger().info(str(response.observation))
+            # self.get_logger().info(str(response.observation))
 
         elif actionTuple[0] == 'a_generate_sample':
             self.get_logger().info(f"Generating sample in {request.action}")

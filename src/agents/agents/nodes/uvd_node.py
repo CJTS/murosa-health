@@ -70,7 +70,7 @@ class Uvd(Agent):
         return self.environment_client.call_async(self.action_request)
 
     def a_authorize_disinfect(self, uvdrobot_,spotrobot_):
-        if all('a_authorize_disinfect' not in action for action in self.wating_response):
+        if not self.is_waiting_for('a_authorize_disinfect', spotrobot_):
             self.get_logger().info("Here first, waiting for spotrobot")
             self.ask_for_agent(spotrobot_, 'a_authorize_disinfect')
         else:

@@ -74,3 +74,7 @@ Then, start the env and agent nodes.
 ```
 BDI=False PROBLEM_RATE=0 ros2 launch agents health.launch.py
 ```
+
+```
+ros2 run agents service
+```

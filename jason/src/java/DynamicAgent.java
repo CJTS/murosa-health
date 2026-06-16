@@ -1,3 +1,6 @@
+package src.java;
+
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -35,7 +38,7 @@ public class DynamicAgent extends AgArch {
                 MessageUnpacker<PrimitiveMsg<String>> unpacker = new MessageUnpacker<>(PrimitiveMsg.class);
                 PrimitiveMsg<String> msg = unpacker.unpackRosMessage(data);
                 FIPAMessage decodedMessage = FIPAMessage.decode(msg.data);
-             
+
                 if(decodedMessage.getReceiver().equals(getAgName())) {
 				    logger.info(msg.data);
                     String regex = "[|]";
@@ -44,7 +47,7 @@ public class DynamicAgent extends AgArch {
                     if(decodedMessage.getPerformative().equals("request")) {
                         if(decodedContent[0].equals("Start")) {
                             try {
-                                logger.info("Starting("+getAgName()+"): " + "start(" + decodedContent[1] + ")");
+                                logger.log(Level.INFO, "Starting({0}): start({1})", new Object[]{getAgName(), decodedContent[1]});
                                 getTS().getAg().addBel(Literal.parseLiteral("start(" + decodedContent[1] + ")"));
                             } catch (RevisionFailedException ex) {
                                 System.err.println("Error: " + ex.getMessage());
@@ -63,7 +66,7 @@ public class DynamicAgent extends AgArch {
                         } else if (decodedContent[0].equals("Belief")) {
                             try {
                                 getTS().getAg().addBel(Literal.parseLiteral(decodedContent[1]));
-                            } catch (RevisionFailedException ex) { 
+                            } catch (RevisionFailedException ex) {
                                 System.err.println("Error: " + ex.getMessage());
                             }
                         }

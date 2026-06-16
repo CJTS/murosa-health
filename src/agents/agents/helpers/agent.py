@@ -31,6 +31,7 @@ class Agent(Node):
         self.local_state = None
         self._from_local_replan = False
         self._local_replan_enabled = False
+
         # Coordinator Client
         self.cli = self.create_client(Message, 'coordinator')
         while not self.cli.wait_for_service(timeout_sec=1.0):
@@ -42,14 +43,6 @@ class Agent(Node):
         )
         while not self.environment_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('environment service not available, waiting again...')
-
-        # self.subscription_coordinator = self.create_subscription(
-        #         String, '/coordinator/agent/plan', self.listener_plan_callback, 10
-        #     )
-
-        # self.subscription_coordinator_plan = self.create_subscription(
-        #     String, '/coordinator/agent/plan', self.listener_agent_plan_callback, 10
-        # )
 
         self.publisher_coordinator = self.create_publisher(
                 String, '/agent/coordinator/action', 10
@@ -100,7 +93,9 @@ class Agent(Node):
     def initialize(self):
         # Send message to coordinator to be inserted in agent pools
         future = self.send_registration_request()
+        self.get_logger().info('Waiting for registration response from coordinator...')
         rclpy.spin_until_future_complete(self, future)
+        self.get_logger().info('Received registration response from coordinator.')
         response = future.result()
         if response.response == 'success':
             if self.should_use_bdi:
@@ -226,7 +221,7 @@ class Agent(Node):
         self.get_logger().info('I heard: "%s"' % msg.data)
         self.get_logger().info('And it is for me')
         if "Ready" == decoded_msg.content.split("|")[0]:
-            if all(decoded_msg.content.split("|")[1] not in action for action in self.wating_response):
+            if all(decoded_msg.content.split("|")[1] not in action and decoded_msg.sender != sender for sender, action in self.wating_response):
                 self.get_logger().info('No there yet ' + decoded_msg.content.split("|")[1])
                 self.wating_response.append((decoded_msg.sender, decoded_msg.content.split("|")[1]))
             else:
@@ -307,17 +302,19 @@ class Agent(Node):
 
     def move(self):
         if(self.path == None and self.vx == None and self.vy == None):
-            self.get_logger().info("Creating path to %s" % self.goal_room)
+            # self.get_logger().info("Creating path to %s" % self.goal_room)
             self.action_request = Action.Request()
             self.action_request.action = ','.join(('path', self.current_room, self.goal_room))
             future = self.navigator_client.call_async(self.action_request)
+            # self.get_logger().info('Waiting for path response...')
             rclpy.spin_until_future_complete(self, future)
+            # self.get_logger().info('Received path response.')
             response = future.result()
-            self.get_logger().info(response.observation)
+            # self.get_logger().info(response.observation)
             self.path = response.observation.split(',')
         elif self.vx == None and self.vy == None:
             if len(self.path) < 2:
-                self.get_logger().info('Finished moving to %s' % self.goal_room)
+                # self.get_logger().info('Finished moving to %s' % self.goal_room)
                 self.current_room = self.goal_room
                 self.path = None
                 self.vx = None
@@ -333,41 +330,58 @@ class Agent(Node):
 
             self.action_request = Action.Request()
             self.next_room = self.path.pop(1)
-            self.get_logger().info("Determining velocity to next room %s" % self.next_room)
+            # self.get_logger().info("Determining velocity to next room %s" % self.next_room)
             self.action_request.action = ','.join(('velocity', self.current_room, self.next_room))
             future = self.navigator_client.call_async(self.action_request)
+            # self.get_logger().info('Waiting for velocity response...')
             rclpy.spin_until_future_complete(self, future)
+            # self.get_logger().info('Received velocity response.')
             response = future.result()
 
             vx, vy = response.observation.split(',')
             self.vx = float(vx)
             self.vy = float(vy)
         else:
-            self.get_logger().info("Moving with velocity (%s, %s) to %s" % (self.vx, self.vy, self.next_room))
+            # self.get_logger().info("Moving with velocity (%s, %s) to %s" % (self.vx, self.vy, self.next_room))
             self.action_request = Action.Request()
             self.action_request.action = ','.join(('move', self.get_name(), str(self.vx), str(self.vy)))
             future = self.environment_client.call_async(self.action_request)
-            rclpy.spin_until_future_complete(self, future, None, 5.0)
-            response = future.result()
-            pos = response.observation.split(',')
-            self.get_logger().info("Current position: (%s, %s)" % (pos[0], pos[1]))
+            # self.get_logger().info('Waiting for move response...')
+            rclpy.spin_until_future_complete(self, future, None, 0.5)
+            if future.done():
+                try:
+                    response = future.result()
+                    # self.get_logger().info('Received move response.')
+                    # response = future.result()
+                    # self.get_logger().info(str(response))
+                    pos = response.observation.split(',')
+                    # self.get_logger().info("Current position: (%s, %s)" % (pos[0], pos[1]))
 
-            self.action_request = Action.Request()
-            self.action_request.action = ','.join(('reached', pos[0], pos[1], self.next_room))
-            future = self.navigator_client.call_async(self.action_request)
-            rclpy.spin_until_future_complete(self, future, None, 5.0)
-            response = future.result()
-            self.get_logger().info("Has reached next room %s? %s" % (self.next_room, response.observation))
-            if(response.observation == "True"):
-                self.get_logger().info('Reached room %s' % self.next_room)
+                    self.action_request = Action.Request()
+                    self.action_request.action = ','.join(('reached', pos[0], pos[1], self.next_room))
+                    future = self.navigator_client.call_async(self.action_request)
+                    # self.get_logger().info('Waiting for reached response...')
+                    rclpy.spin_until_future_complete(self, future, None, 5.0)
+                    # self.get_logger().info('Received reached response.')
+                    response = future.result()
+                    # self.get_logger().info("Has reached next room %s? %s" % (self.next_room, response.observation))
+                    if(response.observation == "True"):
+                        # self.get_logger().info('Reached room %s' % self.next_room)
+                        self.vx = None
+                        self.vy = None
+                        self.current_room = self.next_room
+                        self.action_request = Action.Request()
+                        self.action_request.action = ','.join(('a_navto', self.get_name(), self.current_room))
+                        future = self.environment_client.call_async(self.action_request)
+                        # self.get_logger().info('Waiting for navto response...')
+                        rclpy.spin_until_future_complete(self, future)
+                        # self.get_logger().info('Received navto response.')
+                except Exception as e:
+                    self.get_logger().info(f'Service call failed: {e}')
+            else:
+                self.get_logger().info('Move action timed out, retrying...')
                 self.vx = None
                 self.vy = None
-                self.current_room = self.next_room
-                self.action_request = Action.Request()
-                self.action_request.action = ','.join(('a_navto', self.get_name(), self.current_room))
-                future = self.environment_client.call_async(self.action_request)
-                rclpy.spin_until_future_complete(self, future)
-
 
     # def notifyError(self, error):
     #     message = FIPAMessage(FIPAPerformative.INFORM.value, self.get_name(), 'Coordinator', 'ERROR|' + error).encode()
@@ -384,6 +398,7 @@ class Agent(Node):
     #         self.wating = False
     #         self.with_plan = False
     #         self.goal_room = None
+
     def notifyError(self, error):
         error_desc = error.split(',')
         if self.try_local_replan(error_desc):
@@ -394,7 +409,9 @@ class Agent(Node):
         ros_msg = Message.Request()
         ros_msg.content = message
         future = self.cli.call_async(ros_msg)
+        self.get_logger().info('Waiting for error response from coordinator...')
         rclpy.spin_until_future_complete(self, future)
+        self.get_logger().info('Received error response from coordinator.')
         response = future.result()
         self.get_logger().info('%s' % (response.response))
         if not self.should_use_bdi:
@@ -454,15 +471,25 @@ class Agent(Node):
         self.wating = False
         return True
 
+    def is_waiting_for(self, action, sender):
+        return any(action == waiting_action and sender == waiting_sender for waiting_sender, waiting_action in self.wating_response)
+
     def run(self):
+        self.get_logger().info('Agent %s started' % self.get_name())
         while rclpy.ok():
             rclpy.spin_once(self, timeout_sec=0.001)
             if self.current_room is None:
+                self.get_logger().info('Finding room...')
                 future = self.what_room()
+                self.get_logger().info('Waiting for what_room response...')
                 rclpy.spin_until_future_complete(self, future)
+                self.get_logger().info('Received what_room response.')
                 response = future.result()
                 if response.observation != 'none':
+                    self.get_logger().info('Current room: %s' % response.observation)
                     self.current_room = response.observation
+                else:
+                    self.get_logger().info('Current room is none, retrying...')
             else:
                 if not self.wating:
                     self.act()

@@ -29,7 +29,7 @@ class Arm(Agent):
 
     def a_pick_up_sample(self, arm, robot):
         self.get_logger().info("a_pick_up_sample")
-        if all('a_pick_up_sample' not in action for action in self.wating_response):
+        if not self.is_waiting_for('a_pick_up_sample', robot):
             self.get_logger().info("Here first, waiting for robot")
             self.ask_for_agent(robot, 'a_pick_up_sample')
         else:
