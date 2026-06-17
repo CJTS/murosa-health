@@ -100,7 +100,7 @@ public class RosEnv extends Environment {
 					} else if (decodedMessage.getPerformative().equals("request")) {
 						if (decodedContent[0].equals("Create")) {
 							Collection<String> collection = new ArrayList<>();
-							collection.add("DynamicAgent");
+							collection.add("src.java.DynamicAgent");
 							String createRegex = "[,]";
 							String[] decodedCreateContent = decodedContent[1].split(createRegex);
 
@@ -121,15 +121,15 @@ public class RosEnv extends Environment {
 					}
 				});
 
-		ServiceClient client = bridge.createClient("add_two_ints", "std_msgs/AddTwoInts");
-		AddTwoInts request = new AddTwoInts(1, 2);
+		// ServiceClient client = bridge.createClient("add_two_ints", "std_msgs/AddTwoInts");
+		// // AddTwoInts request = new AddTwoInts(1, 2);
 
-		try {
-			JsonNode response = client.call(request);
-			System.getLogger(RosEnv.class.getName()).log(System.Logger.Level.INFO, response);
-		} catch (Exception ex) {
-			System.getLogger(RosEnv.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
-		}
+		// try {
+		// 	JsonNode response = client.call(request);
+		// 	System.getLogger(RosEnv.class.getName()).log(System.Logger.Level.INFO, response);
+		// } catch (Exception ex) {
+		// 	System.getLogger(RosEnv.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
+		// }
 	}
 
 	@Override

@@ -234,6 +234,7 @@ class Coordinator(AgnosticCoordinator):
 
         if (mission_type == 'FullMission'):
             params.append('lab') # nurse location
+            self.state['disinfected'][room] = False
 
         mission.params = params
 
@@ -249,6 +250,7 @@ class Coordinator(AgnosticCoordinator):
             self.state['loc'][decoded_msg.sender] = room
             self.state['disinfected'][room] = False
         elif (mission_type == 'CollectSampleMission'):
+            self.state['disinfected'][room] = False
             self.state['samples'][room] = True
             self.state['sample'][room] = True
             self.state['sample'][decoded_msg.sender] = True
