@@ -7,14 +7,13 @@ from coordinator.planner.health.domain.common_method import methods
 
 # ******************************************        Method Definitions      ****************************************** #
 def pickup_and_deliver_sample(state, nurse_, room_, robot_, arm_):
-    if state.sample[room_] == True:
-        return [
-            ('m_collect_sample', nurse_, room_),
-            ('m_approach_nurse', robot_, nurse_),
-            ('m_pick_sample', robot_, nurse_),
-            ('m_approach_arm', robot_, arm_, nurse_),
-            ('m_unload_sample', robot_, arm_)
-        ]
+    return [
+        ('m_collect_sample', nurse_, room_),
+        ('m_approach_nurse', robot_, nurse_),
+        ('m_pick_sample', robot_, nurse_),
+        ('m_approach_arm', robot_, arm_, nurse_),
+        ('m_unload_sample', robot_, arm_)
+    ]
 methods.declare_task_methods('m_pickup_and_deliver_sample', [pickup_and_deliver_sample])
 
 def collect_sample(state, nurse_, room_):
@@ -26,7 +25,6 @@ def approach_nurse(state, robot_, nurse_):
         return [('a_navto', robot_, state.loc[nurse_]), ('a_approach_nurse', robot_, nurse_), ('a_authenticate_nurse', robot_, nurse_)]
     else:
         return [('m_handle_door_closed', robot_, state.loc[nurse_]), ('a_navto', robot_, state.loc[nurse_]), ('a_approach_nurse', robot_, nurse_), ('a_authenticate_nurse', robot_, nurse_)]
-
 methods.declare_task_methods('m_approach_nurse', [approach_nurse])
 
 def pick_sample(state, robot_, nurse_):

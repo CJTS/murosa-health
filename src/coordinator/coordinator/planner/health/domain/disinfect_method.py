@@ -44,10 +44,8 @@ methods.declare_task_methods('m_disinfect_room', [disinfect_room])
 
 def m_handle_door_closed(state, spotrobot_, room_):
     return [
-        ('a_detect_macanet',     spotrobot_, room_),
+        ('a_detect_macanet', spotrobot_, room_),
         ('a_open_door', spotrobot_, room_),
-        
-        
     ]
 methods.declare_task_methods('m_handle_door_closed', [m_handle_door_closed])
 

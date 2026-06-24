@@ -88,8 +88,9 @@ def a_charge(state, robot_,):
     return state
 
 def a_collect_sample(state, nurse_, room_):
-    state.sample[room_] = False
+    state.sample[room_] = True
     state.sample[nurse_] = True
+    state.disinfected[room_] = False
     return state
 
 def a_request_resource(state, robot_, storage_, resource_):

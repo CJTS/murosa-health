@@ -30,14 +30,14 @@ class FullMission(Mission):
         ]
         self.mission_context = "start(Nurse, NurseRoom, SmallDeliveryRobot, SmallStorage, SmallResource, LargeDeliveryRobot, LargeStorage, LargeResource, Collector, ArmRoom, Arm, SpotRobot, UvdRobot)"
         self.variables = [
+            "Nurse",
+            "NurseRoom",
             "SmallDeliveryRobot",
             "SmallStorage",
             "SmallResource",
-            "NurseRoom",
             "LargeDeliveryRobot",
             "LargeStorage",
             "LargeResource",
-            "Nurse",
             "Collector",
             "ArmRoom",
             "Arm",

@@ -340,6 +340,7 @@ def generate_bdi(agents, actions, context, variables):
 
         # Remove mission context beliefs.
         stop_lines.append(f"    -{context};")
+        stop_lines.append("    stop;\n")
         stop_lines.append("    -stop.\n")
 
         bdies[agent].insert(

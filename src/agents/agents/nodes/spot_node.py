@@ -38,9 +38,9 @@ class Spot(Agent):
         if actionTuple[0] == 'a_navto':
             if(self.battery > 2):
                 self.get_logger().info('Doing a_navto')
-                self.a_navto(actionTuple[1], actionTuple[2])
+                future = self.a_navto(actionTuple[1], actionTuple[2])
                 # self.battery -= 1
-                return ActionResult.MOVING
+                # return ActionResult.MOVING
             else:
                 self.get_logger().info('low_battery')
                 return ActionResult.BATTERY_FAILURE
@@ -145,35 +145,20 @@ class Spot(Agent):
                 f'trigger_a_approach_nurse({spotrobot},{nurse})'
             )
             self._from_local_replan = False
-        if not self.is_waiting_for('a_approach_nurse', nurse):
-            self.get_logger().info("Here first, waiting for nurse")
-            self.ask_for_agent(nurse, 'a_approach_nurse')
-        else:
-            self.get_logger().info("Nurse is waiting, send action message")
-            self.acting_for_agent(nurse, 'a_approach_nurse')
+        self.wating_action("a_approach_nurse", spotrobot, nurse)
 
     def a_authenticate_nurse(self, spotrobot, nurse):
-        if not self.is_waiting_for('a_authenticate_nurse', nurse):
-            self.get_logger().info("Here first, waiting for nurse")
-            self.ask_for_agent(nurse, 'a_authenticate_nurse')
-        else:
-            self.get_logger().info("Nurse is waiting, send action message")
-            self.acting_for_agent(nurse, 'a_authenticate_nurse')
+        self.wating_action("a_authenticate_nurse", spotrobot, nurse)
 
     def a_authorize_patrol(self, spotrobot, nurse):
-        if not self.is_waiting_for('a_authorize_patrol', nurse):
-            self.get_logger().info("Here first, waiting for nurse")
-            self.ask_for_agent(nurse, 'a_authorize_patrol')
-        else:
-            self.get_logger().info("Nurse is waiting, send action message")
-            self.acting_for_agent(nurse, 'a_authorize_patrol')
+        self.wating_action("a_authenticate_nurse", spotrobot, nurse)
 
     def a_patrol_room(self, spotrobot, room):
         self.action_request = Action.Request()
         self.action_request.action = ','.join(('a_patrol_room', spotrobot, room))
         return self.environment_client.call_async(self.action_request)
 
-    def a_authorize_disinfect(self, uvdrobot_,spotrobot_):
+    def a_authorize_disinfect(self, uvdrobot_, spotrobot_):
         if self._from_local_replan:
             self._send_belief_to_jason(uvdrobot_, 'milestone1')
             self._send_belief_to_jason(
@@ -181,12 +166,7 @@ class Spot(Agent):
                 f'trigger_a_authorize_disinfect({uvdrobot_},{spotrobot_})'
             )
             self._from_local_replan = False
-        if not self.is_waiting_for('a_authorize_disinfect', uvdrobot_):
-            self.get_logger().info("Here first, lwaiting for spotrobot")
-            self.ask_for_agent(uvdrobot_, 'a_authorize_disinfect')
-        else:
-            self.get_logger().info("Nurse is waiting, send action message")
-            self.acting_for_agent(uvdrobot_, 'a_authorize_disinfect')
+        self.wating_action("a_authorize_disinfect", spotrobot_, uvdrobot_)
 
     def a_detect_macanet(self, spotrobot, room):
         self.action_request = Action.Request()

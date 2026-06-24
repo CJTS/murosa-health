@@ -71,13 +71,7 @@ class Nurse(Agent):
         return self.environment_client.call_async(self.action_request)
 
     def a_authenticate_nurse(self, robot, nurse):
-        self.get_logger().info("a_authenticate_nurse")
-        if not self.is_waiting_for('a_authenticate_nurse', nurse):
-            self.get_logger().info("Here first, waiting for robot")
-            self.ask_for_agent(robot, 'a_authenticate_nurse')
-        else:
-            self.get_logger().info("Robot is waiting, send action message")
-            self.acting_for_agent(robot, 'a_authenticate_nurse')
+        self.wating_action("a_authenticate_nurse", nurse, robot)
 
     def a_open_door(self, nurse, room):
         self.action_request = Action.Request()
@@ -87,13 +81,7 @@ class Nurse(Agent):
         return self.environment_client.call_async(self.action_request)
 
     def a_deposit(self, nurse, robot):
-        self.get_logger().info("a_deposit")
-        if not self.is_waiting_for('a_deposit', robot):
-            self.get_logger().info("Here first, waiting for robot")
-            self.ask_for_agent(robot, 'a_deposit')
-        else:
-            self.get_logger().info("Robot is waiting, send action message")
-            self.acting_for_agent(robot, 'a_deposit')
+        self.wating_action("a_deposit", nurse, robot)
 
 def main():
     rclpy.init()

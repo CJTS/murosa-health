@@ -9,10 +9,11 @@ from interfaces.srv import Message, Action
 from coordinator.helpers.helper import FIPAMessage, action_string_to_tuple, action_tuple_to_string
 from coordinator.helpers.BDIParser import generate_bdi
 from coordinator.helpers.FIPAPerformatives import FIPAPerformative
-from enum import Enum
+from enum import IntEnum
 from typing import List
+from agents.helpers.MessageHelper import MessageHelper
 
-class MissionStatus(Enum):
+class MissionStatus(IntEnum):
     CREATED = 1
     WAITING_TEAM = 2
     RUNNING = 3
@@ -20,7 +21,7 @@ class MissionStatus(Enum):
     FINISHED = 6
     CANCELED = 7
 
-class RobotStatus(Enum):
+class RobotStatus(IntEnum):
     CREATED = 1
     RESERVED = 2
     OCCUPIED = 3
@@ -38,6 +39,17 @@ class MissionRobot():
     def __str__(self):
         return self.robot
 
+    def to_dict(self):
+        return {
+            "robot": self.robot,
+            "finished": self.finished,
+            "trigger": self.trigger,
+            "plan_version": self.plan_version,
+            "current_bdi": self.current_bdi,
+            "status": self.status,
+            "ready": self.ready
+        }
+
 class Mission():
     def __init__(self, team: List[MissionRobot], context):
         self.team = team
@@ -51,6 +63,21 @@ class Mission():
         self.error = None
         self.requester = None
         self.params = None
+
+    def to_dict(self):
+        return {
+            "team": list(map(MissionRobot.to_dict, self.team)),
+            "status": self.status,
+            "context": self.context,
+            "priority": self.priority,
+            "mission_context": self.mission_context,
+            "variables": self.variables,
+            "plan": self.plan,
+            "state": self.state,
+            "error": self.error,
+            "requester": self.requester,
+            "params": self.params
+        }
 
 class AgnosticCoordinator(Node):
     def __init__(self, name):
@@ -105,6 +132,8 @@ class AgnosticCoordinator(Node):
         )
         while not self.planner_communication_sync_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('planner sync service not available, waiting again...')
+
+        self.front_publisher = self.create_publisher(String, '/coordinator/front/state', 10)
 
     def coordinator_server_callback(self, request, response):
         """2. Receive request to coordinator, register agents, initial triggers and errors found"""
@@ -298,25 +327,14 @@ class AgnosticCoordinator(Node):
         return agent[:-1]
 
     def send_monitor_state_request(self, action):
-        self.update_state_request = Action.Request()
-        self.update_state_request.action = action
-        return self.environment_client.call_async(self.update_state_request)
+        update_state_request = Action.Request()
+        update_state_request.action = action
+        response = MessageHelper.send_client_message(self.environment_client, update_state_request, self)
+        self.state = json.loads(response.observation)
+        self.update_planner_state(json.dumps(self.state))
 
     def check_env(self):
-        future = self.send_monitor_state_request(','.join(('monitor',)))
-        rclpy.spin_until_future_complete(self, future)
-        response = future.result()
-        new_state = json.loads(response.observation)
-        if hasattr(self, 'state'):
-            new_state['doors'] = self.state['doors']
-            new_state['cleaned'] = self.state['cleaned']
-            new_state['disinfected'] = self.state['disinfected']
-            new_state['loc'] = self.state['loc']
-        self.state = new_state
-        self.update_planner_state(json.dumps(self.state))
-        # self.state = json.loads(response.observation)
-        # self.update_planner_state(response.observation)
-        # self.verify_initial_trigger()
+        self.send_monitor_state_request(','.join(('monitor',)))
 
     def verify_initial_trigger(self):
         raise NotImplementedError("This method should be implemented by the subclass")
@@ -343,7 +361,7 @@ class AgnosticCoordinator(Node):
         self.get_logger().info('Plan received for: %s ' % (
             ','.join([str(robot) for robot in mission.team])
         ))
-        self.get_logger().info(plan_response.observation)
+        # self.get_logger().info(plan_response.observation)
 
         if plan_response.observation == '':
             self.get_logger().info('No plan found, stopping mission')
@@ -360,7 +378,7 @@ class AgnosticCoordinator(Node):
                 current_plan_bdi.append(parts[0] + '(' + ','.join(parts[1:]) + ')')
             team_names = [a.robot for a in team]
 
-            self.get_logger().info(str(current_plan_bdi))
+            # self.get_logger().info(str(current_plan_bdi))
 
             bdies = generate_bdi(team_names, current_plan_bdi, mission.mission_context, mission.variables)
             for agent, rules in bdies.items():
@@ -368,6 +386,8 @@ class AgnosticCoordinator(Node):
                 for rule in rules:
                     plans.append(rule)
                 msg = String()
+                # self.get_logger().info(str(agent))
+                # self.get_logger().info(str('\n'.join(plans)))
                 msg.data = FIPAMessage(FIPAPerformative.INFORM.value, 'Coordinator', agent, 'Plan|' + '/'.join(plans)).encode()
                 self.agent_publisher.publish(msg)
 
@@ -422,7 +442,7 @@ class AgnosticCoordinator(Node):
 
     def send_need_plan_request(self, mission_type, team):
         self.action_request = Action.Request()
-        self.action_request.action = 'need_plan|' + mission_type+ ',' + team
+        self.action_request.action = 'need_plan|' + mission_type + ',' + team
         return self.planner_communication_sync_client.call_async(self.action_request)
 
     def stop_low_priority_mission(self):
@@ -580,8 +600,18 @@ class AgnosticCoordinator(Node):
         self.get_logger().info(f"Dependency percentage: {percentage}% ({multi_robot_count} out of {total_actions} actions involve multiple robots)")
         return percentage
 
+    def get_state(self):
+        return {
+            "name": self.get_name(),
+            "missions": list(map(Mission.to_dict, self.missions)),
+            "robots": list(map(MissionRobot.to_dict, self.robots)),
+        }
+
     def run(self):
         while rclpy.ok():
             rclpy.spin_once(self, timeout_sec=0.001)
             self.check_env()
             self.analyze_missions()
+            msg = String()
+            msg.data = FIPAMessage(FIPAPerformative.REQUEST.value, self.get_name(), 'Front', json.dumps(self.get_state())).encode()
+            self.front_publisher.publish(msg)

@@ -14,8 +14,8 @@ class Collector(Agent):
         future = None
         if actionTuple[0] == 'a_navto':
             self.get_logger().info('Doing a_navto:' + actionTuple[2])
-            self.a_navto(actionTuple[1], actionTuple[2])
-            return ActionResult.MOVING
+            future = self.a_navto(actionTuple[1], actionTuple[2])
+            # return ActionResult.MOVING
         elif actionTuple[0] == 'a_approach_nurse':
             self.get_logger().info('Doing a_approach_nurse')
             self.a_approach_nurse(actionTuple[1], actionTuple[2])
@@ -69,22 +69,10 @@ class Collector(Agent):
         return ActionResult.SUCCESS
 
     def a_approach_nurse(self, robot, nurse):
-        self.get_logger().info("a_approach_nurse")
-        if not self.is_waiting_for('a_approach_nurse', nurse):
-            self.get_logger().info("Here first, waiting for nurse")
-            self.ask_for_agent(nurse, 'a_approach_nurse')
-        else:
-            self.get_logger().info("Nurse is waiting, send action message")
-            self.acting_for_agent(nurse, 'a_approach_nurse')
+        self.wating_action("a_pick_up_sample", robot, nurse)
 
     def a_authenticate_nurse(self, robot, nurse):
-        self.get_logger().info("a_authenticate_nurse")
-        if not self.is_waiting_for('a_authenticate_nurse', nurse):
-            self.get_logger().info("Here first, waiting for nurse")
-            self.ask_for_agent(nurse, 'a_authenticate_nurse')
-        else:
-            self.get_logger().info("Nurse is waiting, send action message")
-            self.acting_for_agent(nurse, 'a_authenticate_nurse')
+        self.wating_action("a_authenticate_nurse", robot, nurse)
 
     def a_open_drawer(self, robot):
         possibilityChoices = [True, False]
@@ -108,21 +96,11 @@ class Collector(Agent):
 
     def a_deposit(self, nurse, robot):
         self.get_logger().info("a_deposit")
-        if not self.is_waiting_for('a_deposit', nurse):
-            self.get_logger().info("Here first, waiting for nurse")
-            self.ask_for_agent(nurse, 'a_deposit')
-        else:
-            self.get_logger().info("Nurse is waiting, send action message")
-            self.acting_for_agent(nurse, 'a_deposit')
+        self.wating_action("a_deposit", robot, nurse)
 
     def a_pick_up_sample(self, arm, robot):
         self.get_logger().info("a_pick_up_sample")
-        if not self.is_waiting_for('a_pick_up_sample', arm):
-            self.get_logger().info("Here first, waiting for arm")
-            self.ask_for_agent(arm, 'a_pick_up_sample')
-        else:
-            self.get_logger().info("Arm is waiting, send action message")
-            self.acting_for_agent(arm, 'a_pick_up_sample')
+        self.wating_action("a_pick_up_sample", robot, arm)
 
 def main():
     rclpy.init()

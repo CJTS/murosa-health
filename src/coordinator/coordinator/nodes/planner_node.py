@@ -60,13 +60,46 @@ class Planner(Node):
                 self.get_logger().info('Creating plan for: %s %s %s %s %s %s %s' % (
                     actionTuple[1], actionTuple[2], actionTuple[3], actionTuple[4], actionTuple[5], actionTuple[6], actionTuple[7]
                 ))
+            elif actionTuple[0] == 'FullMission':
+                goal = 'm_full_mission'
+                plan_param = [(
+                    goal,
+                    actionTuple[3],
+                    actionTuple[4],
+                    actionTuple[5],
+                    actionTuple[6],
+                    actionTuple[7],
+                    actionTuple[8],
+                    actionTuple[2],
+                    actionTuple[1],
+                    actionTuple[9],
+                    actionTuple[11],
+                    actionTuple[12],
+                    actionTuple[13],
+                )]
+                self.get_logger().info('Creating plan for: %s %s %s %s %s %s %s %s %s %s %s %s' % (
+                    actionTuple[3],
+                    actionTuple[4],
+                    actionTuple[5],
+                    actionTuple[6],
+                    actionTuple[7],
+                    actionTuple[8],
+                    actionTuple[2],
+                    actionTuple[1],
+                    actionTuple[9],
+                    actionTuple[11],
+                    actionTuple[12],
+                    actionTuple[13],
+                ))
 
             self.planner = IPyHOP(methods, actions)
+
+            # self.get_logger().info(str(self.state))
             plan = self.planner.plan(self.state, plan_param, verbose=1)
 
             for action in plan:
                 responsePlan.append(','.join(action))
-                self.get_logger().info(str(action))
+                # self.get_logger().info(str(action))
 
             response.observation = '/'.join(responsePlan)
 

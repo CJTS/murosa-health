@@ -1,0 +1,33 @@
+<mat-card class="example-card" appearance="outlined">
+  <mat-card-header>
+    <mat-card-title>{{ robot.robot }}</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    finished: <mat-checkbox [disabled]="true" [checked]="robot.finished"></mat-checkbox>
+    ready: <mat-checkbox [disabled]="true" [checked]="robot.ready"></mat-checkbox> <br>
+    trigger: {{ robot.trigger }} <br>
+    plan_version: {{ robot.plan_version }} <br>
+    <!-- current_bdi: {{ robot.current_bdi | json }} <br> -->
+    status: {{ robot.status | robotStatus }} <br>
+    @if (agent) {
+      name: {{ agent.name }} <br>
+      finished_actions: {{ agent.finished_actions | json }} <br>
+      actions: {{ agent.actions }} <br>
+      plan: {{ agent.plan }} <br>
+      wating_response: {{ agent.wating_response }} <br>
+      wating: {{ agent.wating }} <br>
+      should_use_bdi: {{ agent.should_use_bdi }} <br>
+      with_plan: {{ agent.with_plan }} <br>
+      moving: {{ agent.moving }} <br>
+      current: {{ agent.current }} <br>
+      goal: {{ agent.goal }} <br>
+      path: {{ agent.path }} <br>
+      vx: {{ agent.vx }} <br>
+      vy: {{ agent.vy }} <br>
+      mission: {{ agent.mission }} <br>
+      local: {{ agent.local }} <br>
+      _from_local_replan: {{ agent._from_local_replan }} <br>
+      _local_replan_enabled: {{ agent._local_replan_enabled }} <br>
+    }
+  </mat-card-content>
+</mat-card>

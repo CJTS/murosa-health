@@ -40,6 +40,10 @@ class Environment(Node):
             100 - uncleaned_percentage, uncleaned_percentage), k=1)
         door4 = random.choices(doorOptions, weights=(
             100 - uncleaned_percentage, uncleaned_percentage), k=1)
+        door5 = random.choices(doorOptions, weights=(
+            100 - uncleaned_percentage, uncleaned_percentage), k=1)
+        door6 = random.choices(doorOptions, weights=(
+            100 - uncleaned_percentage, uncleaned_percentage), k=1)
         resource4 = random.choices(resource_at_stor4, weights=(
             100 - uncleaned_percentage, uncleaned_percentage), k=1)
 
@@ -60,6 +64,36 @@ class Environment(Node):
                 'small_delivery_robot2': 'ds',
                 'large_delivery_robot1': 'ds',
                 'large_delivery_robot2': 'ds'
+            },
+            'nodes': {
+                "int1": (35, 80),
+                "int2": (85, 80),
+                "int3": (135, 80),
+                "int4": (185, 80),
+                "int5": (235, 80),
+
+                "int6": (235, 170),
+                "int7": (185, 170),
+                "int8": (135, 170),
+                "int9": (85, 170),
+                "int10": (35, 170),
+
+                "room1": (35, 50),
+                "room2": (85, 50),
+                "room3": (135, 50),
+                "lab": (185, 50),
+                "ds": (235, 50),
+                "icu": (285, 80),
+
+                "room4": (35, 125),
+                "room5": (85, 125),
+                "room6": (135, 125),
+                "nr": (185, 125),
+
+                "stor1": (35, 215),
+                "stor2": (85, 215),
+                "stor3": (135, 215),
+                "stor4": (185, 215),
             },
             'pos': {
                 'nurse1': (185, 125),
@@ -83,10 +117,26 @@ class Environment(Node):
                 'room2': door2[0],
                 'room3': door3[0],
                 'room4': door4[0],
-                'room5': False,
-                'room6': False,
+                'room5': door5[0],
+                'room6': door6[0],
                 'icu': door4[0],
-                'lab': False
+                'lab': True,
+                "int1": True,
+                "int2": True,
+                "int3": True,
+                "int4": True,
+                "int5": True,
+                "int6": True,
+                "int7": True,
+                "int8": True,
+                "int9": True,
+                "int10": True,
+                "nr": True,
+                "ds": True,
+                "stor1": True,
+                "stor2": True,
+                "stor3": True,
+                "stor4": True,
             },
             'cleaned': {
                 'room1': uncleaned1[0],
@@ -187,6 +237,10 @@ class Environment(Node):
         while not self.cli.wait_for_service(timeout_sec=1.0):
             self.get_logger().info('service not available, waiting again...')
 
+        self.end_simulation_subscription = self.create_subscription(
+            String, '/agent/move', self.move, 20
+        )
+
         self.get_logger().info('Environment server started')
 
     def end_simulation_callback(self, msg):
@@ -205,6 +259,7 @@ class Environment(Node):
             response.observation = 'success'
         elif actionTuple[0] == 'a_navto':
             room = actionTuple[2]
+            self.get_logger().info(f"Room {room} is {self.state['doors'][room]} and {room not in self.state['doors']}")
             if room not in self.state['doors']:
                 self.state['loc'][actionTuple[1]] = room
                 response.observation = 'success'
@@ -232,19 +287,11 @@ class Environment(Node):
             response.observation = self.state['loc'][actionTuple[1]]
         elif actionTuple[0] == 'a_collect_sample':
             self.state['disinfected'][actionTuple[2]] = False
+            self.state['sample'][actionTuple[2]] = True
         elif actionTuple[0] == 'a_request_resource':
             if not self.state['resource_at'][actionTuple[3]] == actionTuple[2]:
                 self.get_logger().info(f"Resource {actionTuple[2]} is not at {actionTuple[3]}")
                 response.observation = 'resource not available'
-        elif actionTuple[0] == 'move':
-            # self.get_logger().info(f"Moving {actionTuple[1]} with velocity ({actionTuple[2]}, {actionTuple[3]})")
-            self.state['pos'][actionTuple[1]] = (
-                self.state['pos'][actionTuple[1]][0] + float(actionTuple[2]),
-                self.state['pos'][actionTuple[1]][1] + float(actionTuple[3])
-            )
-            response.observation = ','.join([str(self.state['pos'][actionTuple[1]][0]), str(self.state['pos'][actionTuple[1]][1])])
-            # self.get_logger().info(str(response.observation))
-
         elif actionTuple[0] == 'a_generate_sample':
             self.get_logger().info(f"Generating sample in {request.action}")
             self.state['sample'][actionTuple[1]] = True
@@ -252,6 +299,14 @@ class Environment(Node):
             self.state['samples'][actionTuple[2]] = True
 
         return response
+
+    def move(self, msg):
+        actionTuple = tuple(msg.split(','))
+        if actionTuple[0] == 'move':
+            self.state['pos'][actionTuple[1]] = (
+                self.state['pos'][actionTuple[1]][0] + float(actionTuple[2]),
+                self.state['pos'][actionTuple[1]][1] + float(actionTuple[3])
+            )
 
     def sample_initial_trigger(self, room):
         resources_list = ['resource1', 'resource2', 'resource3', 'resource4',]

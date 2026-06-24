@@ -13,16 +13,26 @@
     </mat-card-actions>
   </mat-card>
 </div>
+
+<button matButton (click)="startMission()">start</button>
 <div class="tabs-container">
   <mat-tab-group mat-stretch-tabs="false" mat-align-tabs="start">
-    <mat-tab label="Agents">
+    <mat-tab label="Agent Position">
       <ul>
         @for (agentName of agents; track agentName) {
-        <li>{{ agentName }} ({{ state?.pos[agentName] }})</li>
+          <li>{{ agentName }} ({{ state?.pos[agentName] }})</li>
         } @empty {
-        <li>No items found.</li>
+          <li>No items found.</li>
         }
       </ul>
     </mat-tab>
+      @if(coordinator) {
+        <mat-tab label="Missões">
+            <app-missions [missions]="coordinator.missions"></app-missions>
+        </mat-tab>
+        <mat-tab label="Robos">
+            <app-robots [robots]="coordinator.robots" [agentsData]="agentsData"></app-robots>
+        </mat-tab>
+      }
   </mat-tab-group>
 </div>

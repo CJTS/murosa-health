@@ -8,6 +8,13 @@ from coordinator.planner.ipyhop import Methods
 # ******************************************        Method Definitions      ****************************************** #
 methods = Methods()
 
+def nurse_navto(state, nurse_, room_):
+    if state.doors[room_]:
+        return [('a_navto', nurse_, room_)]
+    else:
+        return [('m_handle_door_closed', nurse_, room_), ('a_navto', nurse_, room_)]
+methods.declare_task_methods('m_nurse_navto', [nurse_navto])
+
 def full_mission(
         state,
         small_box_delivery_robot_,
@@ -24,7 +31,7 @@ def full_mission(
         uvdrobot_
     ):
     return [
-        ('a_navto', nurse_, room_),
+        ('m_nurse_navto', nurse_, room_),
         ('m_deliver_resource_task', small_box_delivery_robot_, small_box_storage_, small_resource_, large_box_delivery_robot_, large_box_storage_, large_resource_, room_),
         ('m_pickup_and_deliver_sample', nurse_, room_, robot_, arm_),
         ('m_patrol_and_disinfect', nurse_, room_, spotrobot_, uvdrobot_)

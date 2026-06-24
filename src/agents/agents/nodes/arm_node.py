@@ -28,13 +28,7 @@ class Arm(Agent):
         return ActionResult.SUCCESS
 
     def a_pick_up_sample(self, arm, robot):
-        self.get_logger().info("a_pick_up_sample")
-        if not self.is_waiting_for('a_pick_up_sample', robot):
-            self.get_logger().info("Here first, waiting for robot")
-            self.ask_for_agent(robot, 'a_pick_up_sample')
-        else:
-            self.get_logger().info("Robot is waiting, send action message")
-            self.acting_for_agent(robot, 'a_pick_up_sample')
+        self.wating_action("a_pick_up_sample", arm, robot)
 
 def main():
     rclpy.init()

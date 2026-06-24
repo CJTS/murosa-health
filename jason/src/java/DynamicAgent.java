@@ -104,8 +104,8 @@ public class DynamicAgent extends AgArch {
 
 		FIPAMessage message = new FIPAMessage("inform", getAgName(), "coordinator");
 		message.setContent("Ready");
-        Publisher navigation = new Publisher("/agent/coordinator/action", "std_msgs/String", bridge);
-		navigation.publish(new PrimitiveMsg<>(message.encode()));
+        Publisher coordinatorPublisher = new Publisher("/agent/coordinator/action", "std_msgs/String", bridge);
+		coordinatorPublisher.publish(new PrimitiveMsg<>(message.encode()));
     };
 
     private void addPlanDynamically(String planStr) {

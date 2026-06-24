@@ -14,8 +14,8 @@ class LargeDeliveryRobot(Agent):
         future = None
         if actionTuple[0] == 'a_navto':
             self.get_logger().info('Doing a_navto:' + actionTuple[2])
-            self.a_navto(actionTuple[1], actionTuple[2])
-            return ActionResult.MOVING
+            future = self.a_navto(actionTuple[1], actionTuple[2])
+            # return ActionResult.MOVING
         elif actionTuple[0] == 'a_request_resource':
             self.get_logger().info('Doing a_request_resource')
             future = self.a_request_resource(actionTuple[1], actionTuple[2], actionTuple[3])

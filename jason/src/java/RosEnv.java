@@ -97,27 +97,6 @@ public class RosEnv extends Environment {
 						default -> {
 						}
 					}
-				} else if (decodedMessage.getPerformative().equals("request")) {
-					if (decodedContent[0].equals("Create")) {
-						Collection<String> collection = new ArrayList<>();
-						collection.add("src.java.DynamicAgent");
-						String createRegex = "[,]";
-						String[] decodedCreateContent = decodedContent[1].split(createRegex);
-
-						try {
-							getEnvironmentInfraTier().getRuntimeServices().createAgent(
-									decodedCreateContent[0], // agent name
-									decodedCreateContent[1] + ".asl", // AgentSpeak source
-									null, // default agent class
-									collection, // default architecture class
-									null, // bbpars
-									null, // settings
-									null); // father
-							getEnvironmentInfraTier().getRuntimeServices().startAgent(decodedCreateContent[0]);
-						} catch (Exception ex) { }
-					} else if (decodedContent[0].equals("End")) {
-						getEnvironmentInfraTier().getRuntimeServices().killAgent(decodedContent[1], "", 0);
-					}
 				}
 			});
 
@@ -131,15 +110,42 @@ public class RosEnv extends Environment {
 		// 	System.getLogger(RosEnv.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
 		// }
 
-		bridge.createService("/jason", "interfaces/Message", r -> {
+		bridge.createService("jason", "interfaces/Message", r -> {
 			ObjectMapper mapper = new ObjectMapper();
 			MessageRequest request;
-			logger.log(Level.INFO, r.toString());
 
 			try {
 				request = mapper.readValue(r.toString(), MessageRequest.class);
 				logger.log(Level.INFO, request.content);
-				MessageResponse response = new MessageResponse(request.content);
+				FIPAMessage decodedMessage = FIPAMessage.decode(request.content);
+				String regex = "[|]";
+				String[] decodedContent = decodedMessage.getContent().split(regex);
+
+				if (decodedMessage.getPerformative().equals("request")) {
+					if (decodedContent[0].equals("Create")) {
+						Collection<String> collection = new ArrayList<>();
+						collection.add("src.java.DynamicAgent");
+						String createRegex = "[,]";
+						String[] decodedCreateContent = decodedContent[1].split(createRegex);
+
+						try {
+							getEnvironmentInfraTier().getRuntimeServices().createAgent(
+								decodedCreateContent[0], 			// agent name
+								decodedCreateContent[1] + ".asl", 	// AgentSpeak source
+								null, 								// default agent class
+								collection,							// default architecture class
+								null, 								// bbpars
+								null, 								// settings
+								null								// father
+							);
+							getEnvironmentInfraTier().getRuntimeServices().startAgent(decodedCreateContent[0]);
+						} catch (Exception ex) { }
+					} else if (decodedContent[0].equals("End")) {
+						getEnvironmentInfraTier().getRuntimeServices().killAgent(decodedContent[1], "", 0);
+					}
+				}
+
+				MessageResponse response = new MessageResponse("success");
 				return response;
 			} catch (IOException ex) {
 				System.getLogger(RosEnv.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
@@ -158,6 +164,8 @@ public class RosEnv extends Environment {
 			clearPercepts();
 			clearPercepts(agName);
 			message.setContent("Mission Completed");
+		} else if(action.getFunctor().equals("stop")) {
+			message.setContent("Reset Mission");
 		} else {
 			List<Term> terms = action.getTerms();
 			String termsStr = action.getFunctor();
