@@ -135,6 +135,30 @@ class AgnosticCoordinator(Node):
 
         self.front_publisher = self.create_publisher(String, '/coordinator/front/state', 10)
 
+    # def coordinator_server_callback(self, request, response):
+    #     """2. Receive request to coordinator, register agents, initial triggers and errors found"""
+    #     decoded_msg = FIPAMessage.decode(request.content)
+
+    #     if decoded_msg.performative == FIPAPerformative.REQUEST.value:
+    #         if decoded_msg.content == 'Register':
+    #             response.response = self.register_agent(decoded_msg)
+    #     elif decoded_msg.performative == FIPAPerformative.INFORM.value:
+    #         if "ERROR" in decoded_msg.content:
+    #             self.get_logger().info('Error found')
+    #             mission = self.get_mission(decoded_msg.sender)
+    #             if mission is None:
+    #                 self.get_logger().info(f"No mission found for {decoded_msg.sender}")
+    #                 return response
+    #             mission.status = MissionStatus.ERROR
+    #             mission.error = decoded_msg.content
+    #             self.stop_mission(mission)
+    #             time.sleep(1)
+    #             response.response = 'Treating error'
+    #         elif "InitialTrigger" in decoded_msg.content:
+    #             self.initial_trigger(decoded_msg)
+
+    #     return response
+
     def coordinator_server_callback(self, request, response):
         """2. Receive request to coordinator, register agents, initial triggers and errors found"""
         decoded_msg = FIPAMessage.decode(request.content)
@@ -144,11 +168,18 @@ class AgnosticCoordinator(Node):
                 response.response = self.register_agent(decoded_msg)
         elif decoded_msg.performative == FIPAPerformative.INFORM.value:
             if "ERROR" in decoded_msg.content:
-                self.get_logger().info('Error found')
                 mission = self.get_mission(decoded_msg.sender)
                 if mission is None:
                     self.get_logger().info(f"No mission found for {decoded_msg.sender}")
                     return response
+
+                if mission.status == MissionStatus.ERROR:
+                    # Já tem um erro sendo tratado pra essa missão, ignora duplicado
+                    self.get_logger().info(f"Erro já em tratamento para essa missão, ignorando duplicado de {decoded_msg.sender}")
+                    response.response = 'Treating error'
+                    return response
+
+                self.get_logger().info('Error found')
                 mission.status = MissionStatus.ERROR
                 mission.error = decoded_msg.content
                 self.stop_mission(mission)

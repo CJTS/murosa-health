@@ -348,10 +348,25 @@ class Agent(Node):
         # self.goal_room = room
         # self.moving = True
         action_request = Action.Request()
-        action_request.action = ','.join(('a_navto', self.get_name(), self.current_room))
+        # action_request.action = ','.join(('a_navto', self.get_name(), self.current_room))
+        action_request.action = ','.join(('a_navto', self.get_name(), room))
         return self.environment_client.call_async(action_request)
 
 
+    # def wait_for_door_then_navto(self, agent_name, room):
+    #     while rclpy.ok():
+    #         future = self.a_navto(agent_name, room)
+    #         rclpy.spin_until_future_complete(self, future)
+    #         response = future.result()
+
+    #         if response.observation == 'success':
+    #             self.pos = room
+    #             return ActionResult.SUCCESS
+    #         if response.observation != 'door closed':
+    #             return ActionResult.FAILURE
+
+    #         self.get_logger().info(f'Porta de {room} fechada, aguardando o spot abrir...')
+    #         time.sleep(1)
     def move(self):
         if(self.path == None and self.vx == None and self.vy == None):
             self.get_logger().info("Creating path to %s" % self.goal_room)

@@ -258,16 +258,18 @@ class Environment(Node):
         elif actionTuple[0] == 'a_detect_macanet':
             response.observation = 'success'
         elif actionTuple[0] == 'a_navto':
+            agent = actionTuple[1]
             room = actionTuple[2]
+            is_nurse = 'nurse' in agent
             self.get_logger().info(f"Room {room} is {self.state['doors'][room]} and {room not in self.state['doors']}")
             if room not in self.state['doors']:
                 self.state['loc'][actionTuple[1]] = room
                 response.observation = 'success'
-            elif not self.state['doors'][room]:
-                response.observation = 'door closed'
-            else:
-                self.state['loc'][actionTuple[1]] = room
+            if is_nurse or room not in self.state['doors'] or self.state['doors'][room]:
+                self.state['loc'][agent] = room
                 response.observation = 'success'
+            else:
+                response.observation = 'door closed'
         elif actionTuple[0] == 'monitor':
             response.observation = json.dumps(self.state)
         elif actionTuple[0] == 'a_infected_room':
