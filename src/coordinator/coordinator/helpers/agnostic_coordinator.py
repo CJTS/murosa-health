@@ -92,7 +92,7 @@ class AgnosticCoordinator(Node):
         self.register_queue = []
         self.known_errors = []
         self.agents_actions = {}
-
+        self.invisible_fields = {}
         self.declare_parameter('replan', rclpy.Parameter.Type.BOOL)
         self.declare_parameter('bdi', rclpy.Parameter.Type.BOOL)
         self.should_replan = self.get_parameter('replan').get_parameter_value().bool_value
@@ -187,6 +187,9 @@ class AgnosticCoordinator(Node):
                 response.response = 'Treating error'
             elif "InitialTrigger" in decoded_msg.content:
                 self.initial_trigger(decoded_msg)
+            elif "STATE_UPDATE" in decoded_msg.content:
+                self.apply_state_update(decoded_msg.content.split('|')[1])
+                response.response = 'State updated'
 
         return response
 
@@ -361,7 +364,11 @@ class AgnosticCoordinator(Node):
         update_state_request = Action.Request()
         update_state_request.action = action
         response = MessageHelper.send_client_message(self.environment_client, update_state_request, self)
-        self.state = json.loads(response.observation)
+        env_state = json.loads(response.observation)
+        for field, values in env_state.items():
+            if field in self.invisible_fields:
+                continue
+            self.state[field] = values
         self.update_planner_state(json.dumps(self.state))
 
     def check_env(self):

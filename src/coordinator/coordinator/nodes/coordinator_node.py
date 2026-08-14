@@ -187,6 +187,7 @@ class Coordinator(AgnosticCoordinator):
                 'resource4': 'stor4'
             },
         }
+        self.invisible_fields = {'cleaned', 'doors'}
 
     def register_agent(self, decoded_msg):
         """3. Register agents by creating the MissionRobot with its respective specific RobotRole"""

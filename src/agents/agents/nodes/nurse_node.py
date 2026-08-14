@@ -13,7 +13,7 @@ from agents.helpers.FIPAPerformatives import FIPAPerformative
 class Nurse(Agent):
     def __init__(self, className):
         super().__init__(className)
-
+        self.update_actions={'a_clean_room': ('cleaned', -1, True)}
         self.front_sub = self.create_subscription(
             String, '/front/start', self.start, 10
         )

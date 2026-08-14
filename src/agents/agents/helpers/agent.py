@@ -33,8 +33,8 @@ class Agent(Node):
         self.mission_context_data = []
         self.local_state = None
         self._from_local_replan = False
-        self._local_replan_enabled = False
-
+        self._local_replan_enabled = True
+        self.update_actions = {}
         # Coordinator Client
         self.cli = self.create_client(Message, 'coordinator')
         while not self.cli.wait_for_service(timeout_sec=1.0):
@@ -70,6 +70,10 @@ class Agent(Node):
             self.jason_client = self.create_client(Message, 'jason')
             while not self.jason_client.wait_for_service(timeout_sec=1.0):
                 self.get_logger().info('service not available, waiting again...')
+
+        self.subscription_context = self.create_subscription(
+            String, '/coordinator/agent/plan', self.listener_context_callback, 10
+        )
 
         # Subscriber para falar com o Coordenador (Ação)
         if not self.should_use_bdi:
@@ -180,6 +184,15 @@ class Agent(Node):
             self.vy = None
         else:
             self.add_action(decoded_msg)
+
+    def listener_context_callback(self, msg):
+        decoded_msg = FIPAMessage.decode(msg.data)
+        if not self.is_for_me(decoded_msg):
+            return
+        message = decoded_msg.content.split('|')
+        if message[0] == 'Start':
+            self.mission_context_data = message[1].split(',')
+            self.get_logger().info('Mission context saved: %s' % str(self.mission_context_data))
 
     def listener_plan_callback(self, msg):
         # Receive messagem from jason
@@ -312,6 +325,8 @@ class Agent(Node):
                 elif result == ActionResult.SUCCESS:
                     # self.get_logger().info(f"{action} finished")
                     self.finished_actions.append(action)
+                    if action[0] in self.update_actions:
+                        self.notifyStateUpdate(action)
             elif(len(self.actions) > 0 and self.should_use_bdi):
                 # self.get_logger().info('Acting with actions: %s' % (str(self.actions)))
                 time.sleep(1)
@@ -499,6 +514,21 @@ class Agent(Node):
             self.wating = False
             self.with_plan = False
             self.goal_room = None
+
+    def notifyStateUpdate(self, action):
+        field, arg_index, value = self.update_actions[action[0]]
+        key = action[arg_index]
+        update_desc = ','.join((field, key, str(value)))
+        self.get_logger().info('Notifying state update to coordinator: %s' % update_desc)
+        message = FIPAMessage(FIPAPerformative.INFORM.value, self.get_name(), 'Coordinator', 'STATE_UPDATE|' + update_desc).encode()
+        ros_msg = Message.Request()
+        ros_msg.content = message
+        future = self.cli.call_async(ros_msg)
+        self.get_logger().info('Waiting for state update response from coordinator...')
+        rclpy.spin_until_future_complete(self, future)
+        self.get_logger().info('Received state update response from coordinator.')
+        response = future.result()
+        self.get_logger().info('%s' % (response.response))
 
     def what_room(self):
         self.action_request = Action.Request()

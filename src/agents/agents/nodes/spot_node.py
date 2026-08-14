@@ -14,7 +14,7 @@ class Spot(Agent):
         self.battery = 3
         self._local_planner = SpotrobotPlanner()
         self.goal_room = None
-
+        self.update_actions={'a_open_door':  ('doors', -1, True)}
     def get_local_planner(self):
         return self._local_planner
 
@@ -112,6 +112,7 @@ class Spot(Agent):
             if response.observation == 'success':
                 self.pos = actionTuple[2]
                 self._local_planner.update_state(actionTuple)
+                
             elif response.observation == 'door closed':
                 self.plan = []
                 self._from_local_replan = False
